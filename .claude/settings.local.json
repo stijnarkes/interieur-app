@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe /c \"cd /d \"\"C:\\\\Users\\\\Stijn\\\\Downloads\\\\Coderen\\\\interieur-app\"\" && composer require barryvdh/laravel-dompdf 2>&1\")"
+    ]
+  }
+}

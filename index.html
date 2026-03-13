@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Woonstijl & Moodboard MVP</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header card">
+        <h1>Ontdek jouw woonstijl met Boer Staphorst</h1>
+        <p>Beantwoord een paar vragen en ontvang een persoonlijk interieuradvies, een moodboard en inspiratie voor jouw ruimte.</p>
+      </header>
+
+      <ol class="stepper" aria-label="Stappen">
+        <li class="step is-active" data-step-indicator="1">1 Stijl</li>
+        <li class="step" data-step-indicator="2">2 Ruimte</li>
+        <li class="step" data-step-indicator="3">3 E-mail</li>
+        <li class="step" data-step-indicator="4">4 Resultaat</li>
+      </ol>
+
+      <form id="wizardForm" novalidate>
+        <section class="card step-card" data-step="1">
+          <h2>Stap 1: Stijl</h2>
+          <p class="step-help">Kies je voorkeuren zodat we een passend profiel kunnen maken.</p>
+
+          <div class="field">
+            <label for="style">Woonstijl</label>
+            <div class="style-grid" id="styleGrid">
+              <button type="button" class="style-card" data-style-card="Japandi">
+                <span class="style-preview preview-japandi" aria-hidden="true"></span>
+                <span class="style-content">
+                  <strong>Japandi</strong>
+                  <span>Rustige mix van Japans minimalisme en Scandinavische warmte.</span>
+                </span>
+              </button>
+              <button type="button" class="style-card" data-style-card="Scandinavisch">
+                <span class="style-preview preview-scandi" aria-hidden="true"></span>
+                <span class="style-content">
+                  <strong>Scandinavisch</strong>
+                  <span>Licht, functioneel en natuurlijk met zachte contrasten.</span>
+                </span>
+              </button>
+              <button type="button" class="style-card" data-style-card="Industrieel">
+                <span class="style-preview preview-industrieel" aria-hidden="true"></span>
+                <span class="style-content">
+                  <strong>Industrieel</strong>
+                  <span>Stoere materialen, zwarte accenten en rauwe details.</span>
+                </span>
+              </button>
+              <button type="button" class="style-card" data-style-card="Modern">
+                <span class="style-preview preview-modern" aria-hidden="true"></span>
+                <span class="style-content">
+                  <strong>Modern</strong>
+                  <span>Strakke lijnen, comfort en een ruimtelijk geheel.</span>
+                </span>
+              </button>
+              <button type="button" class="style-card" data-style-card="Landelijk">
+                <span class="style-preview preview-landelijk" aria-hidden="true"></span>
+                <span class="style-content">
+                  <strong>Landelijk</strong>
+                  <span>Tijdloze gezelligheid met natuurlijke texturen en hout.</span>
+                </span>
+              </button>
+              <button type="button" class="style-card" data-style-card="Hotel chique">
+                <span class="style-preview preview-hotel" aria-hidden="true"></span>
+                <span class="style-content">
+                  <strong>Hotel chique</strong>
+                  <span>Elegant, gelaagd en luxe met rijke materialen.</span>
+                </span>
+              </button>
+            </div>
+            <select id="style" name="style" required class="fallback-select" aria-label="Woonstijl fallback">
+              <option value="">Kies een stijl</option>
+              <option>Japandi</option>
+              <option>Scandinavisch</option>
+              <option>Industrieel</option>
+              <option>Modern</option>
+              <option>Landelijk</option>
+              <option>Hotel chique</option>
+            </select>
+            <p class="hint">Verplicht</p>
+            <p class="error" id="styleError" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label for="moodWords">Mood woorden</label>
+            <div class="chip-grid" id="moodChips">
+              <button type="button" class="chip" data-mood="rustig">rustig</button>
+              <button type="button" class="chip" data-mood="warm">warm</button>
+              <button type="button" class="chip" data-mood="licht">licht</button>
+              <button type="button" class="chip" data-mood="minimalistisch">minimalistisch</button>
+              <button type="button" class="chip" data-mood="natuurlijk">natuurlijk</button>
+              <button type="button" class="chip" data-mood="luxe">luxe</button>
+              <button type="button" class="chip" data-mood="sfeervol">sfeervol</button>
+              <button type="button" class="chip" data-mood="modern">modern</button>
+            </div>
+            <input id="moodWords" name="moodWords" type="text" placeholder="rustig, warm, licht..." />
+            <p class="hint">Scheid woorden met komma's.</p>
+          </div>
+
+          <div class="field">
+            <label for="colors">Voorkeurskleuren</label>
+            <div class="color-grid" id="colorSwatches">
+              <button type="button" class="color-swatch" data-color-name="beige" title="beige"><span style="background:#dcc7a1"></span><em>beige</em></button>
+              <button type="button" class="color-swatch" data-color-name="zand" title="zand"><span style="background:#c8b18a"></span><em>zand</em></button>
+              <button type="button" class="color-swatch" data-color-name="olijfgroen" title="olijfgroen"><span style="background:#7f8660"></span><em>olijfgroen</em></button>
+              <button type="button" class="color-swatch" data-color-name="terracotta" title="terracotta"><span style="background:#c7774e"></span><em>terracotta</em></button>
+              <button type="button" class="color-swatch" data-color-name="lichtgrijs" title="lichtgrijs"><span style="background:#d7d8d9"></span><em>lichtgrijs</em></button>
+              <button type="button" class="color-swatch" data-color-name="donkerblauw" title="donkerblauw"><span style="background:#243b59"></span><em>donkerblauw</em></button>
+              <button type="button" class="color-swatch" data-color-name="zwart" title="zwart"><span style="background:#1f1f1f"></span><em>zwart</em></button>
+              <button type="button" class="color-swatch" data-color-name="warm wit" title="warm wit"><span style="background:#f2ede2"></span><em>warm wit</em></button>
+            </div>
+            <input id="colors" name="colors" type="text" placeholder="beige, zand, olijfgroen..." />
+            <p class="hint">Optioneel, helpt bij het samenstellen van het palet.</p>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="nextStep1">Volgende</button>
+          </div>
+        </section>
+
+        <section class="card step-card" data-step="2" hidden>
+          <h2>Stap 2: Ruimte</h2>
+          <p class="step-help">Upload eventueel een foto en voeg een korte context toe.</p>
+
+          <div class="field">
+            <label for="roomPhoto">Foto van ruimte (jpg/png)</label>
+            <input id="roomPhoto" name="roomPhoto" type="file" accept="image/jpeg,image/png" />
+            <p class="hint">Maximaal 5 MB. Upload is optioneel.</p>
+            <p class="hint" id="fileMeta">Geen bestand geselecteerd.</p>
+            <p class="error" id="fileError" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label for="note">Korte notitie</label>
+            <textarea id="note" name="note" rows="4" placeholder="Bijv. kleine woonkamer, weinig daglicht..."></textarea>
+            <p class="hint">Optioneel</p>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" id="backStep2">Terug</button>
+            <button type="button" class="btn btn-primary" id="nextStep2">Volgende</button>
+          </div>
+        </section>
+
+        <section class="card step-card" data-step="3" hidden>
+          <h2>Stap 3: E-mail</h2>
+          <p class="step-help">Genereer je resultaat en stuur het optioneel naar e-mail.</p>
+
+          <div class="field">
+            <label for="name">Naam</label>
+            <input id="name" name="name" type="text" />
+            <p class="hint">Optioneel</p>
+          </div>
+
+          <div class="field">
+            <label for="email">E-mailadres</label>
+            <input id="email" name="email" type="email" required />
+            <p class="hint">Verplicht voor verzenden.</p>
+            <p class="error" id="emailError" aria-live="polite"></p>
+          </div>
+
+          <div class="field checkbox-row">
+            <input id="marketingOptIn" name="marketingOptIn" type="checkbox" />
+            <label for="marketingOptIn">Ik ontvang graag tips en inspiratie per e-mail.</label>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" id="backStep3">Terug</button>
+            <button type="button" class="btn btn-primary" id="generateBtn">Genereer resultaat</button>
+            <button type="button" class="btn btn-secondary" id="sendBtn" disabled>Stuur naar mijn e-mail</button>
+          </div>
+          <section class="loading-state card" id="loadingState" hidden aria-live="polite">
+            <p class="loading-step" id="loadingStep">1/3 We analyseren jouw woonstijl</p>
+            <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Generatie voortgang">
+              <span class="progress-fill" id="loadingProgressBar"></span>
+            </div>
+            <p class="loading-percent" id="loadingPercent">0%</p>
+            <p class="hint" id="loadingMessage">Dit duurt meestal 20 tot 40 seconden.</p>
+          </section>
+          <p class="hint" id="sendStatus" aria-live="polite"></p>
+        </section>
+      </form>
+
+      <section class="card results report" id="results" hidden>
+        <div class="results-head">
+          <h2>Jouw persoonlijk interieuradvies</h2>
+          <button type="button" class="btn btn-link" id="restartBtn">Opnieuw beginnen</button>
+        </div>
+
+        <section class="result-card style-hero">
+          <h3>Jouw woonstijl</h3>
+          <p class="style-label-pill" id="styleLabel">-</p>
+          <p class="section-intro" id="styleEditorialIntro"></p>
+          <ul id="adviceBullets" class="highlight-list"></ul>
+        </section>
+
+        <section class="result-card">
+          <h3>Kleurpalet voor jouw ruimte</h3>
+          <p class="section-intro" id="paletteIntro"></p>
+          <div id="palette" class="palette"></div>
+        </section>
+
+        <section class="result-card">
+          <h3>Materiaaladvies</h3>
+          <p class="section-intro" id="materialsIntro"></p>
+          <div id="materials" class="materials-grid"></div>
+        </section>
+
+        <section class="result-card">
+          <h3>Indelingstips</h3>
+          <p class="section-intro" id="layoutIntro"></p>
+          <div id="layoutTips" class="tips-grid"></div>
+        </section>
+
+        <section class="result-card">
+          <h3>Productideeën</h3>
+          <p class="section-intro" id="productIntro"></p>
+          <div id="productIdeas" class="product-grid"></div>
+        </section>
+
+        <section class="result-card image-section">
+          <h3>Moodboard</h3>
+          <p class="section-intro">Een sfeerbeeld van kleuren, materialen en stijlcombinaties die passen bij jouw woonwens.</p>
+          <div class="images single" id="moodboardImage" aria-live="polite"></div>
+        </section>
+
+        <section class="result-card image-section">
+          <h3>Jouw ruimte in deze stijl</h3>
+          <p class="section-intro">Zo kan jouw ruimte aanvoelen wanneer je deze stijl vertaalt naar meubels, indeling en materiaalkeuzes.</p>
+          <div class="images single" id="roomPreviewImage" aria-live="polite"></div>
+        </section>
+
+        <section class="cta card">
+          <h3>Wil je dit interieuradvies verder laten uitwerken?</h3>
+          <div class="actions">
+            <a class="btn btn-primary" id="ctaPrimary" href="https://www.boerstaphorst.nl/interieuradvies-placeholder" target="_blank" rel="noopener">Plan interieuradvies bij Boer Staphorst</a>
+            <a class="btn btn-secondary" href="https://www.boerstaphorst.nl/winkels-placeholder" target="_blank" rel="noopener">Neem dit advies mee naar de winkel</a>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/src/main.js"></script>
+  </body>
+</html>
