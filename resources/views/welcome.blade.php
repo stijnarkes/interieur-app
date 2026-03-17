@@ -123,7 +123,7 @@
         {{-- Stap 2: Ruimte --}}
         <section class="card step-card" data-step="2" hidden>
             <h2>Stap 2: Ruimte</h2>
-            <p class="step-help">Upload eventueel een foto en voeg een korte context toe.</p>
+            <p class="step-help">Upload een foto van je ruimte en ontvang een visuele inspiratie op basis van jouw eigen interieur.</p>
 
             <div class="field">
                 <label for="roomPhoto">Foto van ruimte (jpg/png)</label>
