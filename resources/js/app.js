@@ -749,6 +749,48 @@ elements.roomPhoto.addEventListener("change", (event) => {
   validateFile(state.selectedFile);
 });
 
+// ── Camera ────────────────────────────────────────────────────────────────────
+const cameraModal   = document.getElementById("cameraModal");
+const cameraPreview = document.getElementById("cameraPreview");
+const cameraCanvas  = document.getElementById("cameraCanvas");
+
+let cameraStream = null;
+
+async function openCamera() {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    cameraPreview.srcObject = cameraStream;
+    cameraModal.hidden = false;
+  } catch {
+    alert("Camera kon niet worden geopend. Controleer of je toestemming hebt gegeven.");
+  }
+}
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  cameraPreview.srcObject = null;
+  cameraModal.hidden = true;
+}
+
+function capturePhoto() {
+  cameraCanvas.width  = cameraPreview.videoWidth;
+  cameraCanvas.height = cameraPreview.videoHeight;
+  cameraCanvas.getContext("2d").drawImage(cameraPreview, 0, 0);
+  cameraCanvas.toBlob((blob) => {
+    const file = new File([blob], "camera-foto.jpg", { type: "image/jpeg" });
+    state.selectedFile = file;
+    validateFile(file);
+    closeCamera();
+  }, "image/jpeg", 0.9);
+}
+
+document.getElementById("openCameraBtn").addEventListener("click", openCamera);
+document.getElementById("closeCameraBtn").addEventListener("click", closeCamera);
+document.getElementById("captureBtn").addEventListener("click", capturePhoto);
+
 elements.generateBtn.addEventListener("click", handleGenerate);
 elements.sendBtn.addEventListener("click", handleSendEmail);
 document.getElementById("restartBtn").addEventListener("click", resetAll);

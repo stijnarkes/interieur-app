@@ -395,6 +395,54 @@ a.btn-primary:hover {
   border-color: #dbc8b3;
 }
 
+.photo-input-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.btn-file-label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+  width: 100%;
+}
+
+#cameraPreview {
+  width: 100%;
+  border-radius: 8px;
+  background: #000;
+}
+
+.camera-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 .btn-link {
   background: transparent;
   border: none;
