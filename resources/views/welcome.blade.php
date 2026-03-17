@@ -126,29 +126,11 @@
             <p class="step-help">Upload eventueel een foto en voeg een korte context toe.</p>
 
             <div class="field">
-                <label>Foto van ruimte (optioneel)</label>
-                <div class="photo-input-row">
-                    <label for="roomPhoto" class="btn btn-secondary btn-file-label">Bestand kiezen</label>
-                    <input id="roomPhoto" name="roomPhoto" type="file" accept="image/jpeg,image/png" style="display:none" />
-                    <button type="button" class="btn btn-secondary" id="openCameraBtn">📷 Maak foto</button>
-                </div>
+                <label for="roomPhoto">Foto van ruimte (jpg/png)</label>
+                <input id="roomPhoto" name="roomPhoto" type="file" accept="image/jpeg,image/png" />
                 <p class="hint">Maximaal 5 MB. Upload is optioneel.</p>
                 <p class="hint" id="fileMeta">Geen bestand geselecteerd.</p>
                 <p class="error" id="fileError" aria-live="polite"></p>
-
-                {{-- Camera modal --}}
-                <div id="cameraModal" hidden>
-                    <div class="camera-overlay">
-                        <div class="camera-box">
-                            <video id="cameraPreview" autoplay playsinline></video>
-                            <div class="camera-actions">
-                                <button type="button" class="btn btn-primary" id="captureBtn">Foto maken</button>
-                                <button type="button" class="btn btn-secondary" id="closeCameraBtn">Annuleren</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <canvas id="cameraCanvas" hidden></canvas>
             </div>
 
 
