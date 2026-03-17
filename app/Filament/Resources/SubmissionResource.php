@@ -207,43 +207,43 @@ class SubmissionResource extends Resource
                     ->schema([
                         TextEntry::make('advice_bullets')
                             ->label('Adviespunten')
-                            ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? implode("\n", array_map(fn ($v) => is_string($v) ? $v : json_encode($v), $state))
-                                : ($state ?? '—')
-                            )
-                            ->placeholder('—'),
+                            ->getStateUsing(fn (Submission $record): string =>
+                                is_array($record->advice_bullets)
+                                    ? implode(' • ', array_map(fn ($v) => is_string($v) ? $v : '', $record->advice_bullets))
+                                    : '—'
+                            ),
 
                         TextEntry::make('palette')
                             ->label('Kleurenpalet')
-                            ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? collect($state)->map(fn ($c) => is_array($c) ? "{$c['name']} ({$c['hex']})" : (string)$c)->implode(', ')
-                                : '—'
-                            )
-                            ->placeholder('—'),
+                            ->getStateUsing(fn (Submission $record): string =>
+                                is_array($record->palette)
+                                    ? collect($record->palette)->map(fn ($c) => is_array($c) ? "{$c['name']} ({$c['hex']})" : (string) $c)->implode(', ')
+                                    : '—'
+                            ),
 
                         TextEntry::make('materials')
                             ->label('Materialen')
-                            ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? collect($state)->map(fn ($m) => is_array($m) ? ($m['category'] ?? '') . ': ' . implode(', ', $m['recommendations'] ?? []) : (string)$m)->implode(' | ')
-                                : '—'
-                            )
-                            ->placeholder('—'),
+                            ->getStateUsing(fn (Submission $record): string =>
+                                is_array($record->materials)
+                                    ? collect($record->materials)->map(fn ($m) => is_array($m) ? ($m['category'] ?? '') . ': ' . implode(', ', $m['recommendations'] ?? []) : (string) $m)->implode(' | ')
+                                    : '—'
+                            ),
 
                         TextEntry::make('layout_tips')
                             ->label('Indelingstips')
-                            ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? implode("\n", array_map(fn ($v) => is_string($v) ? $v : json_encode($v), $state))
-                                : ($state ?? '—')
-                            )
-                            ->placeholder('—'),
+                            ->getStateUsing(fn (Submission $record): string =>
+                                is_array($record->layout_tips)
+                                    ? implode(' • ', array_map(fn ($v) => is_string($v) ? $v : '', $record->layout_tips))
+                                    : '—'
+                            ),
 
                         TextEntry::make('product_ideas')
                             ->label('Productideeën')
-                            ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? collect($state)->map(fn ($p) => is_array($p) ? "{$p['category']}: {$p['exampleSpecs']} ({$p['material']})" : (string)$p)->implode(' | ')
-                                : '—'
-                            )
-                            ->placeholder('—'),
+                            ->getStateUsing(fn (Submission $record): string =>
+                                is_array($record->product_ideas)
+                                    ? collect($record->product_ideas)->map(fn ($p) => is_array($p) ? "{$p['category']}: {$p['exampleSpecs']} ({$p['material']})" : (string) $p)->implode(' | ')
+                                    : '—'
+                            ),
                     ])
                     ->columns(1),
             ]);
