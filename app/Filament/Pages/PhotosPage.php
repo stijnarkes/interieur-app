@@ -28,7 +28,7 @@ class PhotosPage extends Page
 
     public function getPhotoUrl(Submission $submission): string
     {
-        if ($submission->room_photo_path) {
+        if ($submission->room_photo_path && Storage::disk('public')->exists($submission->room_photo_path)) {
             return Storage::disk('public')->url($submission->room_photo_path);
         }
 

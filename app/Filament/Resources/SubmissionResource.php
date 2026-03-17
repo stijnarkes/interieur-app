@@ -207,13 +207,16 @@ class SubmissionResource extends Resource
                     ->schema([
                         TextEntry::make('advice_bullets')
                             ->label('Adviespunten')
-                            ->listWithLineBreaks()
+                            ->formatStateUsing(fn ($state): string => is_array($state)
+                                ? implode("\n", array_map(fn ($v) => is_string($v) ? $v : json_encode($v), $state))
+                                : ($state ?? '—')
+                            )
                             ->placeholder('—'),
 
                         TextEntry::make('palette')
                             ->label('Kleurenpalet')
                             ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? collect($state)->map(fn ($c) => "{$c['name']} ({$c['hex']})")->implode(', ')
+                                ? collect($state)->map(fn ($c) => is_array($c) ? "{$c['name']} ({$c['hex']})" : (string)$c)->implode(', ')
                                 : '—'
                             )
                             ->placeholder('—'),
@@ -221,20 +224,23 @@ class SubmissionResource extends Resource
                         TextEntry::make('materials')
                             ->label('Materialen')
                             ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? collect($state)->map(fn ($m) => $m['category'] . ': ' . implode(', ', $m['recommendations'] ?? []))->implode(' | ')
+                                ? collect($state)->map(fn ($m) => is_array($m) ? ($m['category'] ?? '') . ': ' . implode(', ', $m['recommendations'] ?? []) : (string)$m)->implode(' | ')
                                 : '—'
                             )
                             ->placeholder('—'),
 
                         TextEntry::make('layout_tips')
                             ->label('Indelingstips')
-                            ->listWithLineBreaks()
+                            ->formatStateUsing(fn ($state): string => is_array($state)
+                                ? implode("\n", array_map(fn ($v) => is_string($v) ? $v : json_encode($v), $state))
+                                : ($state ?? '—')
+                            )
                             ->placeholder('—'),
 
                         TextEntry::make('product_ideas')
                             ->label('Productideeën')
                             ->formatStateUsing(fn ($state): string => is_array($state)
-                                ? collect($state)->map(fn ($p) => "{$p['category']}: {$p['exampleSpecs']} ({$p['material']})")->implode(' | ')
+                                ? collect($state)->map(fn ($p) => is_array($p) ? "{$p['category']}: {$p['exampleSpecs']} ({$p['material']})" : (string)$p)->implode(' | ')
                                 : '—'
                             )
                             ->placeholder('—'),
