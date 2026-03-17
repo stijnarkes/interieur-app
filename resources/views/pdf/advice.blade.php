@@ -281,23 +281,28 @@ body {
 
 /* ─── Layout tips ─── */
 .tip-item {
-    display: block;
+    width: 100%;
+    border-collapse: collapse;
     margin-bottom: 9px;
-    padding: 11px 14px 11px 50px;
-    background: #fffaf5;
     border: 1px solid #e8d8c4;
+    background: #fffaf5;
     border-radius: 6px;
     font-size: 10pt;
     color: #2d2620;
     line-height: 1.55;
-    position: relative;
+}
+.tip-item td {
+    padding: 11px 14px;
+    vertical-align: middle;
+}
+.tip-item td.tip-badge-cell {
+    width: 36px;
+    padding-right: 0;
+    text-align: center;
 }
 
 .tip-number-badge {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    margin-top: -12px;
+    display: inline-block;
     width: 24px;
     height: 24px;
     background: #b7794d;
@@ -568,10 +573,14 @@ body {
             <div class="section-label">Praktisch advies</div>
             <div class="section-title">Indelingstips</div>
             @foreach($submission->layout_tips as $index => $tip)
-            <div class="tip-item avoid-break">
-                <span class="tip-number-badge">{{ $index + 1 }}</span>
-                {{ $tip }}
-            </div>
+            <table class="tip-item avoid-break">
+                <tr>
+                    <td class="tip-badge-cell">
+                        <span class="tip-number-badge">{{ $index + 1 }}</span>
+                    </td>
+                    <td>{{ $tip }}</td>
+                </tr>
+            </table>
             @endforeach
         </div>
         @endif

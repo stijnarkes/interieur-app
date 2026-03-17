@@ -524,6 +524,20 @@ async function stopLoading(success) {
   elements.loadingState.hidden = true;
 }
 
+// Pollt GET /api/generations/{id} elke 3 seconden totdat status completed of failed is
+async function pollGeneration(generationId, csrfToken) {
+  const maxAttempts = 100; // 100 × 3s = 5 minuten
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    const res  = await fetch(`/api/generations/${generationId}`, {
+      headers: { "Accept": "application/json", "X-CSRF-TOKEN": csrfToken }
+    });
+    const json = await res.json();
+    if (json.status === "completed" || json.status === "failed") return json;
+  }
+  throw new Error("Genereren duurt te lang. Probeer het later opnieuw.");
+}
+
 async function handleGenerate() {
   if (state.isGenerating) return;
 
@@ -542,13 +556,12 @@ async function handleGenerate() {
 
   try {
     const imageBase64 = await fileToBase64(file);
-    const response = await fetch("/api/generate", {
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+
+    // Stap 1: job inplannen — server reageert direct met 202
+    const startRes = await fetch("/api/generate", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
-      },
+      headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-TOKEN": csrf },
       body: JSON.stringify({
         style: elements.style.value,
         moodWords: elements.moodWords.value,
@@ -560,8 +573,12 @@ async function handleGenerate() {
       })
     });
 
-    const json = await response.json();
-    if (!response.ok) throw new Error(json.error || "Genereren mislukt.");
+    const startJson = await startRes.json();
+    if (!startRes.ok) throw new Error(startJson.error || "Starten mislukt.");
+
+    // Stap 2: pollen totdat de job klaar is (elke 3 seconden, max 5 minuten)
+    const json = await pollGeneration(startJson.generationId, csrf);
+    if (json.status === "failed") throw new Error(json.error || "Genereren mislukt.");
 
     state.generatedResultId = json.resultId;
     elements.sendBtn.disabled = false;
@@ -579,12 +596,14 @@ async function handleGenerate() {
     // Toon e-mailstatus bovenaan de resultaten
     const emailNotice = document.getElementById('emailNotice');
     if (emailNotice) {
-      if (json.emailSent) {
-        emailNotice.textContent = 'Jouw interieuradvies is ook als PDF verstuurd naar je mailbox.';
-        emailNotice.className = 'email-notice email-notice--success';
-      } else if (json.emailError || (elements.email.value && !json.emailSent)) {
+      if (json.emailError) {
+        // Alleen tonen als de backend expliciet een fout meldt
         emailNotice.textContent = 'Je resultaat is gegenereerd, maar het versturen van de e-mail is niet gelukt.';
         emailNotice.className = 'email-notice email-notice--warning';
+      } else if (elements.email.value) {
+        // E-mailadres ingevuld: bericht wordt verstuurd (eventueel via queue)
+        emailNotice.textContent = 'Je interieuradvies is gegenereerd en e-mail is verstuurd.';
+        emailNotice.className = 'email-notice email-notice--success';
       }
       emailNotice.hidden = false;
     }

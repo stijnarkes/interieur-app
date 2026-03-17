@@ -255,6 +255,10 @@ textarea:focus,
   gap: 4px;
 }
 
+.style-content strong {
+  color: var(--text);
+}
+
 .style-content span {
   font-size: 0.85rem;
   color: var(--muted);
