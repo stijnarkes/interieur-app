@@ -278,6 +278,7 @@ a.btn-primary:hover {
 .quiz-start-facts {
   display: flex;
   justify-content: center;
+  gap: 20px;
   margin-top: 16px;
 }
 

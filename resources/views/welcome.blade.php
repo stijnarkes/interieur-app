@@ -6,7 +6,13 @@
 <main class="app-shell" id="quizRoot">
     {{-- Startscherm --}}
     <section class="card quiz-start" id="quizStart">
-        @php $heroPhotoUrl = \App\Support\QuizImageManifest::url('hero', 'startscherm.webp'); @endphp
+        @php
+            $heroPhotoUrl = \App\Support\QuizImageManifest::url('hero', 'startscherm.webp');
+            // +1 voor de kleurvoorkeur-vraag, die als enige geen rij in quiz_questions heeft
+            // (zie QuizOptionsPage/remoteConfig.js) — zo blijft dit aantal kloppen zodra een
+            // admin later zelf vragen toevoegt of verwijdert.
+            $totalQuestions = \App\Models\QuizQuestion::count() + 1;
+        @endphp
         @if ($heroPhotoUrl)
             <div class="quiz-start-photo">
                 <img src="{{ $heroPhotoUrl }}" alt="" />
@@ -23,7 +29,11 @@
         <div class="quiz-start-facts">
             <span class="quiz-start-fact">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-                &plusmn; 2 minuten
+                &plusmn; 3 minuten
+            </span>
+            <span class="quiz-start-fact">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.75c0 1.75-2.4 2.25-2.4 2.25"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
+                {{ $totalQuestions }} vragen
             </span>
         </div>
     </section>
