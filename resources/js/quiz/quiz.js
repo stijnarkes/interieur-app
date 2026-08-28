@@ -10,6 +10,26 @@ import { renderStyleResult } from "./components/styleResult.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
 
+/**
+ * Downloadt een foto onopvallend op de achtergrond, zodat de browser 'm al gecachet heeft tegen
+ * de tijd dat de gebruiker 'm daadwerkelijk te zien krijgt. Deze foto's zijn bij een eerste
+ * bezoek vaak nog niet aanwezig in Cloudflare's edge-cache, dus het eerste ophalen ervan duurt
+ * merkbaar lang — door dat alvast te doen terwijl de bezoeker nog op het scherm ervóór zit, valt
+ * die eenmalige trage ophaalslag niet meer samen met de daadwerkelijke schermwissel.
+ */
+function prefetchImage(url) {
+  if (!url) return;
+  new Image().src = url;
+}
+
+function prefetchQuestionImages(question) {
+  question.options?.forEach((option) => prefetchImage(option.image));
+}
+
+function prefetchTransitionPhoto(section) {
+  prefetchImage(`/images/interior/transitions/${section.id}.webp`);
+}
+
 function sectionIndexOf(step) {
   return SECTIONS.findIndex((section) => section.id === QUESTIONS[step].section);
 }
@@ -85,6 +105,7 @@ function initQuiz(root) {
   function showSectionTransition(step) {
     const sectionIndex = sectionIndexOf(step);
     stepper.update(sectionIndex, step);
+    prefetchQuestionImages(QUESTIONS[step]);
     renderSectionTransition(els.transition, {
       sectionIndex,
       totalSections: stepperSections.length,
@@ -120,6 +141,15 @@ function initQuiz(root) {
     });
     updateNextButton();
     if (scroll) scrollToTop();
+
+    const nextStep = step + 1;
+    if (nextStep < QUESTIONS.length) {
+      if (QUESTIONS[nextStep].section !== question.section) {
+        prefetchTransitionPhoto(SECTIONS[sectionIndexOf(nextStep)]);
+      } else {
+        prefetchQuestionImages(QUESTIONS[nextStep]);
+      }
+    }
   }
 
   function updateNextButton() {
@@ -140,7 +170,10 @@ function initQuiz(root) {
     renderStyleResult(els.styleResultMount, result);
     renderReportTeaser(els.reportTeaserMount, { result, answers });
     renderLeadForm(els.leadMount, { result, answers });
-    stepper.update(SECTIONS.length, QUESTIONS.length);
+    // stepperSections.length (i.p.v. SECTIONS.length) ligt voorbij alle echte indexen, dus ook
+    // "Jouw woonstijl" zelf krijgt hierdoor is-done (groen) in plaats van is-active (bruin) — de
+    // hele test is immers afgerond, er is geen "huidige stap" meer.
+    stepper.update(stepperSections.length, QUESTIONS.length);
     state.complete();
     showScreen("result");
   }
@@ -181,6 +214,9 @@ function initQuiz(root) {
 
   // Landt altijd op het startscherm; "Start de stijltest" begint altijd fris.
   showScreen("start");
+  // Alvast de eerste overgangsfoto ophalen terwijl de bezoeker de intro leest — dat is het
+  // eerstvolgende scherm na een klik op "Start de stijlanalyse".
+  prefetchTransitionPhoto(SECTIONS[0]);
 }
 
 export { initQuiz };
