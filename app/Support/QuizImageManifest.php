@@ -110,20 +110,39 @@ class QuizImageManifest
         return public_path(ltrim($relativePath, '/'));
     }
 
+    /**
+     * Cache per request voor de vaste-slot-foto's (startscherm/overgangen/sfeerfoto's) — die
+     * hebben, anders dan QuizOption/QuizMaterial, geen eigen databaserij om `has_image` op bij
+     * te houden. Zonder deze cache controleert zowel de "X / Y geüpload"-teller als de
+     * weergave van elke foto apart, dus twee keer, dezelfde bestanden op de schijf. De cache
+     * leeft alleen binnen één PHP-request (statische property overleeft geen requests in
+     * PHP-FPM), dus kan nooit een verouderd resultaat aan een volgend paginabezoek doorgeven.
+     *
+     * @var array<string, int|false>|null false = bestaat niet, int = laatst-gewijzigd-tijdstip
+     */
+    protected static ?array $mtimeCache = null;
+
+    protected static function mtime(string $absolutePath): int|false
+    {
+        self::$mtimeCache ??= [];
+
+        return self::$mtimeCache[$absolutePath] ??= (File::exists($absolutePath) ? File::lastModified($absolutePath) : false);
+    }
+
     public static function existsAtPath(string $relativePath): bool
     {
-        return File::exists(self::absolutePathFor($relativePath));
+        return self::mtime(self::absolutePathFor($relativePath)) !== false;
     }
 
     public static function urlForPath(string $relativePath): ?string
     {
-        $absolute = self::absolutePathFor($relativePath);
+        $mtime = self::mtime(self::absolutePathFor($relativePath));
 
-        if (! File::exists($absolute)) {
+        if ($mtime === false) {
             return null;
         }
 
-        return asset(ltrim($relativePath, '/')).'?v='.File::lastModified($absolute);
+        return asset(ltrim($relativePath, '/')).'?v='.$mtime;
     }
 
     public static function totalCount(array $sections): int
@@ -194,6 +213,7 @@ class QuizImageManifest
 
         File::put($target, $webp);
         $disk->delete($uploadedDiskPath);
+        unset(self::$mtimeCache[$target]);
     }
 
     public static function deleteAtPath(string $relativePath): void
@@ -203,6 +223,8 @@ class QuizImageManifest
         if (File::exists($target)) {
             File::delete($target);
         }
+
+        unset(self::$mtimeCache[$target]);
     }
 
     protected static function downscale(&$image, int $maxWidth): void

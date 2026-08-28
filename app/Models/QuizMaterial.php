@@ -23,14 +23,19 @@ class QuizMaterial extends Model
         return "images/interior/materials/{$this->filename}";
     }
 
+    /** Leest de `has_image`-kolom i.p.v. live de schijf te controleren — zie QuizOption::hasImage(). */
     public function hasImage(): bool
     {
-        return QuizImageManifest::existsAtPath($this->relativePath());
+        return (bool) $this->has_image;
     }
 
     public function thumbnailUrl(): ?string
     {
-        return QuizImageManifest::urlForPath($this->relativePath());
+        if (! $this->has_image) {
+            return null;
+        }
+
+        return asset($this->relativePath()).'?v='.($this->updated_at?->timestamp ?? 0);
     }
 
     public function imagePath(): string
@@ -41,10 +46,12 @@ class QuizMaterial extends Model
     public function storeImage(string $uploadedDiskPath): void
     {
         QuizImageManifest::storeAtPath($this->relativePath(), $uploadedDiskPath);
+        $this->forceFill(['has_image' => true])->save();
     }
 
     public function deleteImage(): void
     {
         QuizImageManifest::deleteAtPath($this->relativePath());
+        $this->forceFill(['has_image' => false])->save();
     }
 }
