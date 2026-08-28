@@ -62,23 +62,32 @@ class QuizOption extends Model
         return $folder ? "/images/interior/{$folder}/{$this->imageFilename()}" : null;
     }
 
+    /**
+     * Leest bewust de `has_image`-kolom in plaats van live de schijf te controleren: deze
+     * methode wordt op de admin-opties-pagina voor alle 66 opties per paginabezoek aangeroepen,
+     * en een losse File::exists() per optie bleek in productie traag genoeg om de
+     * server-timeout te raken. storeImage()/deleteImage() houden de kolom actueel.
+     */
     public function hasImage(): bool
     {
-        $path = $this->resolvedImagePath();
-
-        return $path && QuizImageManifest::existsAtPath($path);
+        return (bool) $this->has_image;
     }
 
     public function thumbnailUrl(): ?string
     {
+        if (! $this->has_image) {
+            return null;
+        }
+
         $path = $this->resolvedImagePath();
 
-        return $path ? QuizImageManifest::urlForPath($path) : null;
+        return $path ? asset(ltrim($path, '/')).'?v='.($this->updated_at?->timestamp ?? 0) : null;
     }
 
     public function storeImage(string $uploadedDiskPath): void
     {
         QuizImageManifest::storeAtPath(ltrim((string) $this->resolvedImagePath(), '/'), $uploadedDiskPath);
+        $this->forceFill(['has_image' => true])->save();
     }
 
     public function deleteImage(): void
@@ -86,5 +95,7 @@ class QuizOption extends Model
         if ($path = $this->resolvedImagePath()) {
             QuizImageManifest::deleteAtPath($path);
         }
+
+        $this->forceFill(['has_image' => false])->save();
     }
 }

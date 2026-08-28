@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\QuizOption;
+use App\Support\QuizImageManifest;
 use Illuminate\Database\Seeder;
 
 /**
@@ -19,10 +20,17 @@ class QuizOptionSeeder extends Seeder
         $options = json_decode(file_get_contents($path), true);
 
         foreach ($options as $option) {
-            QuizOption::firstOrCreate(
+            $record = QuizOption::firstOrCreate(
                 ['option_slug' => $option['option_slug']],
                 $option
             );
+
+            $path = $record->resolvedImagePath();
+            $hasImage = $path && QuizImageManifest::existsAtPath($path);
+
+            if ($record->has_image !== $hasImage) {
+                $record->forceFill(['has_image' => $hasImage])->save();
+            }
         }
     }
 }
