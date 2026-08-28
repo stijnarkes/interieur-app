@@ -172,9 +172,9 @@ class QuizImageManifest
      * Reads the uploaded file from the given public-disk path, converts it
      * to WebP, and stores it at the exact path the quiz expects.
      */
-    public static function store(string $folder, string $filename, string $uploadedDiskPath): void
+    public static function store(string $folder, string $filename, string $uploadedDiskPath, int $maxWidth = 1600): void
     {
-        self::storeAtPath("images/interior/{$folder}/{$filename}", $uploadedDiskPath);
+        self::storeAtPath("images/interior/{$folder}/{$filename}", $uploadedDiskPath, $maxWidth);
     }
 
     public static function delete(string $folder, string $filename): void
@@ -182,7 +182,13 @@ class QuizImageManifest
         self::deleteAtPath("images/interior/{$folder}/{$filename}");
     }
 
-    public static function storeAtPath(string $relativePath, string $uploadedDiskPath): void
+    /**
+     * $maxWidth is bewust een parameter, geen vaste 1600: de grote overgangs-/sfeerfoto's
+     * (ManagesImageSlots) worden bijna schermvullend getoond en hebben die breedte nodig, maar
+     * antwoordoptie-/materiaalfoto's (QuizOption/QuizMaterial) tonen altijd als klein kaartje —
+     * zie storeImage() op die modellen voor de kleinere waarde die zij doorgeven.
+     */
+    public static function storeAtPath(string $relativePath, string $uploadedDiskPath, int $maxWidth = 1600): void
     {
         if (! function_exists('imagewebp')) {
             throw new RuntimeException('Deze server ondersteunt geen WebP-conversie (GD mist WebP-support).');
@@ -201,7 +207,7 @@ class QuizImageManifest
             throw new RuntimeException('Dit bestand kon niet als afbeelding worden gelezen.');
         }
 
-        self::downscale($image, 1600);
+        self::downscale($image, $maxWidth);
 
         $target = self::absolutePathFor($relativePath);
         File::ensureDirectoryExists(dirname($target));
@@ -216,6 +222,41 @@ class QuizImageManifest
         unset(self::$mtimeCache[$target]);
     }
 
+    /**
+     * Verkleint een al opgeslagen bestand achteraf, zonder tussenkomst van een nieuwe upload —
+     * gebruikt door de migratie die de bestaande antwoordoptie-/materiaalfoto's terugbrengt van
+     * de oude 1600px-master naar de kleinere kaartjesgrootte. Doet niets als het bestand al
+     * kleiner is dan $maxWidth (voorkomt een nutteloze, kwaliteitsverlagende her-encode).
+     */
+    public static function resizeInPlace(string $relativePath, int $maxWidth): void
+    {
+        $target = self::absolutePathFor($relativePath);
+
+        if (! File::exists($target)) {
+            return;
+        }
+
+        $image = @imagecreatefromstring(File::get($target));
+
+        if ($image === false) {
+            return;
+        }
+
+        if (! self::downscale($image, $maxWidth)) {
+            imagedestroy($image);
+
+            return;
+        }
+
+        ob_start();
+        imagewebp($image, null, 85);
+        $webp = ob_get_clean();
+        imagedestroy($image);
+
+        File::put($target, $webp);
+        unset(self::$mtimeCache[$target]);
+    }
+
     public static function deleteAtPath(string $relativePath): void
     {
         $target = self::absolutePathFor($relativePath);
@@ -227,13 +268,13 @@ class QuizImageManifest
         unset(self::$mtimeCache[$target]);
     }
 
-    protected static function downscale(&$image, int $maxWidth): void
+    protected static function downscale(&$image, int $maxWidth): bool
     {
         $width = imagesx($image);
         $height = imagesy($image);
 
         if ($width <= $maxWidth) {
-            return;
+            return false;
         }
 
         $newWidth = $maxWidth;
@@ -243,5 +284,7 @@ class QuizImageManifest
         imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
         imagedestroy($image);
         $image = $resized;
+
+        return true;
     }
 }

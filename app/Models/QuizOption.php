@@ -84,9 +84,11 @@ class QuizOption extends Model
         return $path ? asset(ltrim($path, '/')).'?v='.($this->updated_at?->timestamp ?? 0) : null;
     }
 
+    /** 800px is ruim genoeg voor een scherp kaartje op retina-schermen — deze foto's tonen
+     *  nergens groter dan een paar honderd pixels (quizkaartje, PDF-moodboard, adminlijst). */
     public function storeImage(string $uploadedDiskPath): void
     {
-        QuizImageManifest::storeAtPath(ltrim((string) $this->resolvedImagePath(), '/'), $uploadedDiskPath);
+        QuizImageManifest::storeAtPath(ltrim((string) $this->resolvedImagePath(), '/'), $uploadedDiskPath, 800);
         $this->forceFill(['has_image' => true])->save();
     }
 

@@ -43,9 +43,10 @@ class QuizMaterial extends Model
         return "/{$this->relativePath()}";
     }
 
+    /** Zie QuizOption::storeImage() — zelfde reden voor de kleinere maat. */
     public function storeImage(string $uploadedDiskPath): void
     {
-        QuizImageManifest::storeAtPath($this->relativePath(), $uploadedDiskPath);
+        QuizImageManifest::storeAtPath($this->relativePath(), $uploadedDiskPath, 800);
         $this->forceFill(['has_image' => true])->save();
     }
 
