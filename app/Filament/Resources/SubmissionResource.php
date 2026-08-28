@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SubmissionResource\Pages;
 use App\Models\Submission;
 use App\Support\QuizAnswerFormatter;
+use App\Support\QuizStructure;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Actions;
 use Filament\Infolists\Components\Actions\Action as InfolistAction;
@@ -95,12 +96,14 @@ class SubmissionResource extends Resource
             ->filters([
                 SelectFilter::make('style')
                     ->label('Stijl')
-                    ->options(fn (): array => Submission::query()
-                        ->distinct()
-                        ->orderBy('style')
-                        ->pluck('style', 'style')
-                        ->toArray()
-                    ),
+                    // Submission.style slaat het label op (zie QuizLeadController), dus de
+                    // sleutel/waarde van deze opties moet ook het label zijn, niet de
+                    // stijl-key. Vaste lijst i.p.v. een distinct()-query op elk paginabezoek —
+                    // de mogelijke stijlen liggen toch al vast in QuizStructure.
+                    ->options(fn (): array => array_combine(
+                        array_values(QuizStructure::styleOptions()),
+                        array_values(QuizStructure::styleOptions()),
+                    )),
 
                 TernaryFilter::make('email')
                     ->label('E-mail')

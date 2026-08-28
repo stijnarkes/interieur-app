@@ -16,8 +16,23 @@ class StatsOverviewWidget extends BaseWidget
         return Auth::user()?->canViewResults() ?? false;
     }
 
+    /**
+     * Eén samengestelde query i.p.v. 5 losse count()-aanroepen — dit widget draait op elk
+     * bezoek aan het admin-dashboard mee, dus elke bespaarde round-trip naar de (soms trage)
+     * database telt hier direct mee. Alleen "meest voorkomende woonstijl" heeft z'n eigen
+     * GROUP BY nodig en blijft daarom een aparte query.
+     */
     protected function getStats(): array
     {
+        $totals = Submission::query()->selectRaw(
+            'COUNT(*) as total,
+             COUNT(CASE WHEN quiz_result IS NOT NULL THEN 1 END) as completed,
+             COUNT(CASE WHEN email IS NOT NULL AND created_at >= ? THEN 1 END) as new_leads,
+             COUNT(CASE WHEN DATE(created_at) = ? THEN 1 END) as today,
+             COUNT(CASE WHEN email IS NOT NULL THEN 1 END) as with_email',
+            [now()->subDays(7), today()->toDateString()],
+        )->first();
+
         $mostCommonStyle = Submission::query()
             ->whereNotNull('quiz_result')
             ->select('style')
@@ -26,15 +41,15 @@ class StatsOverviewWidget extends BaseWidget
             ->value('style');
 
         return [
-            Stat::make('Totaal inzendingen', Submission::count())
+            Stat::make('Totaal inzendingen', $totals->total)
                 ->icon('heroicon-o-inbox-stack')
                 ->color('primary'),
 
-            Stat::make('Voltooide stijltests', Submission::whereNotNull('quiz_result')->count())
+            Stat::make('Voltooide stijltests', $totals->completed)
                 ->icon('heroicon-o-check-circle')
                 ->color('success'),
 
-            Stat::make('Nieuwe leads (7 dagen)', Submission::whereNotNull('email')->where('created_at', '>=', now()->subDays(7))->count())
+            Stat::make('Nieuwe leads (7 dagen)', $totals->new_leads)
                 ->icon('heroicon-o-user-plus')
                 ->color('info'),
 
@@ -42,11 +57,11 @@ class StatsOverviewWidget extends BaseWidget
                 ->icon('heroicon-o-sparkles')
                 ->color('warning'),
 
-            Stat::make('Vandaag', Submission::whereDate('created_at', today())->count())
+            Stat::make('Vandaag', $totals->today)
                 ->icon('heroicon-o-calendar-days')
                 ->color('gray'),
 
-            Stat::make('E-mailadressen', Submission::whereNotNull('email')->count())
+            Stat::make('E-mailadressen', $totals->with_email)
                 ->icon('heroicon-o-envelope')
                 ->color('gray'),
         ];

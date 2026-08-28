@@ -21,6 +21,11 @@ class StatsPage extends Page
 
     protected static string $view = 'filament.pages.stats-page';
 
+    /** De blade-view roept getTopTraits() twee keer aan (lijst + leeg-check) — dit voorkomt dat
+     *  de volledige quiz_result-kolom van alle inzendingen daardoor twee keer wordt opgehaald
+     *  en in PHP verwerkt. */
+    protected ?Collection $topTraits = null;
+
     public static function canAccess(): bool
     {
         return Auth::user()?->canViewResults() ?? false;
@@ -44,6 +49,11 @@ class StatsPage extends Page
 
     /** Kenmerken (traits) van de winnende stijl, opgeteld over alle stijltest-inzendingen. */
     public function getTopTraits(): Collection
+    {
+        return $this->topTraits ??= $this->computeTopTraits();
+    }
+
+    protected function computeTopTraits(): Collection
     {
         $counts = [];
         foreach (Submission::whereNotNull('quiz_result')->pluck('quiz_result') as $result) {
