@@ -7,14 +7,20 @@ use App\Models\Submission;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Support\Facades\Auth;
 
 class RecentSubmissionsWidget extends BaseWidget
 {
     protected static ?int $sort = 2;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?string $heading = 'Recente inzendingen';
+
+    public static function canView(): bool
+    {
+        return Auth::user()?->canViewResults() ?? false;
+    }
 
     public function table(Table $table): Table
     {

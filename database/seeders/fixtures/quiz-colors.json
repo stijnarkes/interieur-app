@@ -1,0 +1,156 @@
+[
+  {
+    "color_slug": "warm-white",
+    "title": "Warm wit",
+    "color_hex": "#f5f0e6",
+    "color_family": "neutral",
+    "temperature": "warm",
+    "brightness": "light",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 0
+  },
+  {
+    "color_slug": "sand",
+    "title": "Zand",
+    "color_hex": "#d8c5a7",
+    "color_family": "neutral",
+    "temperature": "warm",
+    "brightness": "light",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 1
+  },
+  {
+    "color_slug": "beige",
+    "title": "Beige",
+    "color_hex": "#cbb188",
+    "color_family": "neutral",
+    "temperature": "warm",
+    "brightness": "light",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 2
+  },
+  {
+    "color_slug": "greige",
+    "title": "Greige",
+    "color_hex": "#c9bea6",
+    "color_family": "neutral",
+    "temperature": "warm",
+    "brightness": "light",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 3
+  },
+  {
+    "color_slug": "taupe",
+    "title": "Taupe",
+    "color_hex": "#a8967d",
+    "color_family": "neutral",
+    "temperature": "warm",
+    "brightness": "medium",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 4
+  },
+  {
+    "color_slug": "dark-brown",
+    "title": "Donkerbruin",
+    "color_hex": "#4a3323",
+    "color_family": "brown",
+    "temperature": "warm",
+    "brightness": "dark",
+    "saturation": "rich",
+    "is_active": true,
+    "sort_order": 5
+  },
+  {
+    "color_slug": "terracotta",
+    "title": "Terracotta",
+    "color_hex": "#b3663f",
+    "color_family": "orange",
+    "temperature": "warm",
+    "brightness": "medium",
+    "saturation": "rich",
+    "is_active": true,
+    "sort_order": 6
+  },
+  {
+    "color_slug": "ochre",
+    "title": "Oker",
+    "color_hex": "#b98a4a",
+    "color_family": "yellow",
+    "temperature": "warm",
+    "brightness": "medium",
+    "saturation": "rich",
+    "is_active": true,
+    "sort_order": 7
+  },
+  {
+    "color_slug": "olive-green",
+    "title": "Olijfgroen",
+    "color_hex": "#74765a",
+    "color_family": "green",
+    "temperature": "warm",
+    "brightness": "medium",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 8
+  },
+  {
+    "color_slug": "moss-green",
+    "title": "Mosgroen",
+    "color_hex": "#5f6b4a",
+    "color_family": "green",
+    "temperature": "warm",
+    "brightness": "dark",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 9
+  },
+  {
+    "color_slug": "deep-blue",
+    "title": "Diepblauw",
+    "color_hex": "#2c3a4d",
+    "color_family": "blue",
+    "temperature": "cool",
+    "brightness": "dark",
+    "saturation": "rich",
+    "is_active": true,
+    "sort_order": 10
+  },
+  {
+    "color_slug": "bordeaux",
+    "title": "Bordeaux",
+    "color_hex": "#5c2530",
+    "color_family": "red",
+    "temperature": "warm",
+    "brightness": "dark",
+    "saturation": "rich",
+    "is_active": true,
+    "sort_order": 11
+  },
+  {
+    "color_slug": "light-gray",
+    "title": "Lichtgrijs",
+    "color_hex": "#d3d0c9",
+    "color_family": "gray",
+    "temperature": "cool",
+    "brightness": "light",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 12
+  },
+  {
+    "color_slug": "anthracite",
+    "title": "Antraciet",
+    "color_hex": "#3d3f42",
+    "color_family": "gray",
+    "temperature": "cool",
+    "brightness": "dark",
+    "saturation": "muted",
+    "is_active": true,
+    "sort_order": 13
+  }
+]

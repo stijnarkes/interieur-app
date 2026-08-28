@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cmd.exe /c \"cd /d \"\"C:\\\\Users\\\\Stijn\\\\Downloads\\\\Coderen\\\\interieur-app\"\" && composer require barryvdh/laravel-dompdf 2>&1\")"
+      "Bash(cmd.exe /c \"cd /d \"\"C:\\\\Users\\\\Stijn\\\\Downloads\\\\Coderen\\\\interieur-app\"\" && composer require barryvdh/laravel-dompdf 2>&1\")",
+      "PowerShell(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object {$_.LocalPort -ge 7900 -and $_.LocalPort -le 8100} | Format-Table LocalAddress, LocalPort, State, OwningProcess)",
+      "Bash(chromium-cli --session interieur)"
     ]
   }
 }

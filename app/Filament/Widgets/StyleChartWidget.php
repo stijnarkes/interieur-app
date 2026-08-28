@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Submission;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Auth;
 
 class StyleChartWidget extends ChartWidget
 {
@@ -12,6 +13,11 @@ class StyleChartWidget extends ChartWidget
     protected static ?int $sort = 3;
 
     protected int | string | array $columnSpan = 'full';
+
+    public static function canView(): bool
+    {
+        return Auth::user()?->canViewResults() ?? false;
+    }
 
     protected function getData(): array
     {

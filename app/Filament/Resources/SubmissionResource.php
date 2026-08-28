@@ -4,16 +4,22 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SubmissionResource\Pages;
 use App\Models\Submission;
+use App\Support\QuizAnswerFormatter;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\Actions;
+use Filament\Infolists\Components\Actions\Action as InfolistAction;
 use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class SubmissionResource extends Resource
 {
@@ -23,11 +29,18 @@ class SubmissionResource extends Resource
 
     protected static ?string $navigationLabel = 'Inzendingen';
 
+    protected static ?string $navigationGroup = 'Resultaten';
+
     protected static ?string $pluralModelLabel = 'Inzendingen';
 
     protected static ?string $modelLabel = 'Inzending';
 
     protected static ?int $navigationSort = 1;
+
+    public static function canAccess(): bool
+    {
+        return Auth::user()?->canViewResults() ?? false;
+    }
 
     public static function form(Form $form): Form
     {
@@ -59,10 +72,6 @@ class SubmissionResource extends Resource
                     ->badge()
                     ->searchable(),
 
-                Tables\Columns\IconColumn::make('has_room_photo')
-                    ->label('Foto')
-                    ->boolean(),
-
                 Tables\Columns\IconColumn::make('result_generated')
                     ->label('Resultaat')
                     ->boolean(),
@@ -71,9 +80,9 @@ class SubmissionResource extends Resource
                     ->label('E-mail status')
                     ->badge()
                     ->color(fn (?string $state): string => match ($state) {
-                        'sent'   => 'success',
+                        'sent' => 'success',
                         'failed' => 'danger',
-                        default  => 'gray',
+                        default => 'gray',
                     })
                     ->placeholder('—'),
 
@@ -99,11 +108,6 @@ class SubmissionResource extends Resource
                     ->trueLabel('Heeft e-mail')
                     ->falseLabel('Geen e-mail'),
 
-                TernaryFilter::make('has_room_photo')
-                    ->label('Kamerafoto')
-                    ->trueLabel('Met foto')
-                    ->falseLabel('Zonder foto'),
-
                 TernaryFilter::make('result_generated')
                     ->label('Resultaat gegenereerd')
                     ->trueLabel('Gegenereerd')
@@ -112,12 +116,26 @@ class SubmissionResource extends Resource
                 SelectFilter::make('email_status')
                     ->label('E-mail status')
                     ->options([
-                        'sent'   => 'Verstuurd',
+                        'sent' => 'Verstuurd',
                         'failed' => 'Mislukt',
                     ]),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
+
+                Tables\Actions\Action::make('view_pdf')
+                    ->label('Bekijk PDF')
+                    ->icon('heroicon-o-document-text')
+                    ->url(fn (Submission $record): string => route('admin.submissions.pdf', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Submission $record): bool => filled($record->pdf_path)),
+
+                Tables\Actions\Action::make('download_pdf')
+                    ->label('Download PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn (Submission $record): string => route('admin.submissions.pdf.download', $record))
+                    ->visible(fn (Submission $record): bool => filled($record->pdf_path)),
+
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -149,9 +167,9 @@ class SubmissionResource extends Resource
                             ->label('E-mail status')
                             ->badge()
                             ->color(fn (?string $state): string => match ($state) {
-                                'sent'   => 'success',
+                                'sent' => 'success',
                                 'failed' => 'danger',
-                                default  => 'gray',
+                                default => 'gray',
                             })
                             ->placeholder('—'),
                         TextEntry::make('email_sent_at')
@@ -166,23 +184,74 @@ class SubmissionResource extends Resource
                     ])
                     ->columns(2),
 
-                Section::make('Stijlkeuzes')
+                Section::make('Stijltest resultaat')
                     ->schema([
-                        TextEntry::make('style')
-                            ->label('Stijl')
-                            ->badge(),
-                        TextEntry::make('mood_words')
-                            ->label('Sfeerwoorden')
-                            ->placeholder('—'),
-                        TextEntry::make('colors')
-                            ->label('Kleuren')
-                            ->placeholder('—'),
-                        TextEntry::make('note')
-                            ->label('Notitie')
+                        TextEntry::make('quiz_result.resultName')
+                            ->label('Woonstijl')
+                            ->badge()
+                            ->size(TextEntry\TextEntrySize::Large),
+
+                        TextEntry::make('quiz_result.description')
+                            ->label('Omschrijving')
                             ->placeholder('—')
                             ->columnSpanFull(),
+
+                        TextEntry::make('primary_style_display')
+                            ->label('Primaire stijl')
+                            ->badge()
+                            ->color('success')
+                            ->placeholder('—')
+                            ->getStateUsing(fn (Submission $record): ?string => self::formatTopStyle($record, 0)),
+
+                        TextEntry::make('secondary_style_display')
+                            ->label('Secundaire stijl')
+                            ->badge()
+                            ->color('gray')
+                            ->placeholder('—')
+                            ->getStateUsing(fn (Submission $record): ?string => self::formatTopStyle($record, 1)),
+
+                        TextEntry::make('tertiary_style_display')
+                            ->label('Tertiaire stijl')
+                            ->badge()
+                            ->color('gray')
+                            ->placeholder('—')
+                            ->getStateUsing(fn (Submission $record): ?string => self::formatTopStyle($record, 2)),
+
+                        TextEntry::make('traits')
+                            ->label('Kenmerken')
+                            ->getStateUsing(fn (Submission $record): string => collect($record->quiz_result['traits'] ?? [])->implode(' • ') ?: '—'
+                            )
+                            ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->columns(3),
+
+                Section::make('Kleurresultaat')
+                    ->visible(fn (Submission $record): bool => ! empty($record->quiz_result['personalPalette']))
+                    ->schema([
+                        ViewEntry::make('quiz_result.personalPalette')
+                            ->label('')
+                            ->view('filament.infolists.color-palette-entry')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Moodboard')
+                    ->visible(fn (Submission $record): bool => ! empty($record->quiz_result['moodboard']))
+                    ->schema([
+                        ViewEntry::make('quiz_result.moodboard')
+                            ->label('')
+                            ->view('filament.infolists.moodboard-entry')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Gekozen antwoorden')
+                    ->schema([
+                        KeyValueEntry::make('quiz_answers')
+                            ->label('')
+                            ->keyLabel('Stap')
+                            ->valueLabel('Gekozen stijl')
+                            ->getStateUsing(fn (Submission $record): array => QuizAnswerFormatter::format($record->quiz_answers))
+                            ->columnSpanFull(),
+                    ]),
 
                 Section::make('Resultaat')
                     ->schema([
@@ -193,60 +262,35 @@ class SubmissionResource extends Resource
                             ->label('Result-ID')
                             ->placeholder('—')
                             ->copyable(),
-                        IconEntry::make('moodboard_generated')
-                            ->label('Moodboard gegenereerd')
-                            ->boolean(),
-                        IconEntry::make('room_preview_generated')
-                            ->label('Kamerpreview gegenereerd')
-                            ->boolean(),
+
+                        Actions::make([
+                            InfolistAction::make('view_pdf')
+                                ->label('Bekijk PDF')
+                                ->icon('heroicon-o-document-text')
+                                ->url(fn (Submission $record): string => route('admin.submissions.pdf', $record))
+                                ->openUrlInNewTab(),
+
+                            InfolistAction::make('download_pdf')
+                                ->label('Download PDF')
+                                ->icon('heroicon-o-arrow-down-tray')
+                                ->url(fn (Submission $record): string => route('admin.submissions.pdf.download', $record)),
+                        ])
+                            ->visible(fn (Submission $record): bool => filled($record->pdf_path))
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
-
-                Section::make('AI Advies')
-                    ->visible(fn (Submission $record): bool => $record->result_generated)
-                    ->schema([
-                        TextEntry::make('advice_bullets')
-                            ->label('Adviespunten')
-                            ->getStateUsing(fn (Submission $record): string =>
-                                is_array($record->advice_bullets)
-                                    ? implode(' • ', array_map(fn ($v) => is_string($v) ? $v : '', $record->advice_bullets))
-                                    : '—'
-                            ),
-
-                        TextEntry::make('palette')
-                            ->label('Kleurenpalet')
-                            ->getStateUsing(fn (Submission $record): string =>
-                                is_array($record->palette)
-                                    ? collect($record->palette)->map(fn ($c) => is_array($c) ? "{$c['name']} ({$c['hex']})" : (string) $c)->implode(', ')
-                                    : '—'
-                            ),
-
-                        TextEntry::make('materials')
-                            ->label('Materialen')
-                            ->getStateUsing(fn (Submission $record): string =>
-                                is_array($record->materials)
-                                    ? collect($record->materials)->map(fn ($m) => is_array($m) ? ($m['category'] ?? '') . ': ' . implode(', ', $m['recommendations'] ?? []) : (string) $m)->implode(' | ')
-                                    : '—'
-                            ),
-
-                        TextEntry::make('layout_tips')
-                            ->label('Indelingstips')
-                            ->getStateUsing(fn (Submission $record): string =>
-                                is_array($record->layout_tips)
-                                    ? implode(' • ', array_map(fn ($v) => is_string($v) ? $v : '', $record->layout_tips))
-                                    : '—'
-                            ),
-
-                        TextEntry::make('product_ideas')
-                            ->label('Productideeën')
-                            ->getStateUsing(fn (Submission $record): string =>
-                                is_array($record->product_ideas)
-                                    ? collect($record->product_ideas)->map(fn ($p) => is_array($p) ? "{$p['category']}: {$p['exampleSpecs']} ({$p['material']})" : (string) $p)->implode(' | ')
-                                    : '—'
-                            ),
-                    ])
-                    ->columns(1),
             ]);
+    }
+
+    private static function formatTopStyle(Submission $record, int $index): ?string
+    {
+        $style = ($record->quiz_result['topStyles'] ?? [])[$index] ?? null;
+
+        if (! $style) {
+            return null;
+        }
+
+        return "{$style['label']} ({$style['percentage']}%)";
     }
 
     public static function getRelations(): array
@@ -258,7 +302,7 @@ class SubmissionResource extends Resource
     {
         return [
             'index' => Pages\ListSubmissions::route('/'),
-            'view'  => Pages\ViewSubmission::route('/{record}'),
+            'view' => Pages\ViewSubmission::route('/{record}'),
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Submission;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class StatsPage extends Page
 {
@@ -12,11 +13,18 @@ class StatsPage extends Page
 
     protected static ?string $navigationLabel = 'Statistieken';
 
+    protected static ?string $navigationGroup = 'Resultaten';
+
     protected static ?string $title = 'Statistieken';
 
     protected static ?int $navigationSort = 6;
 
     protected static string $view = 'filament.pages.stats-page';
+
+    public static function canAccess(): bool
+    {
+        return Auth::user()?->canViewResults() ?? false;
+    }
 
     public function getTopStyles(): Collection
     {
@@ -28,35 +36,19 @@ class StatsPage extends Page
             ->orderByDesc('count')
             ->get()
             ->map(fn ($row) => [
-                'style'      => $row->style,
-                'count'      => $row->count,
+                'style' => $row->style,
+                'count' => $row->count,
                 'percentage' => $total > 0 ? round(($row->count / $total) * 100, 1) : 0,
             ]);
     }
 
-    public function getTopMoodWords(): Collection
-    {
-        return $this->countCommaList(
-            Submission::whereNotNull('mood_words')->pluck('mood_words')
-        );
-    }
-
-    public function getTopColors(): Collection
-    {
-        return $this->countCommaList(
-            Submission::whereNotNull('colors')->pluck('colors')
-        );
-    }
-
-    private function countCommaList(Collection $rows): Collection
+    /** Kenmerken (traits) van de winnende stijl, opgeteld over alle stijltest-inzendingen. */
+    public function getTopTraits(): Collection
     {
         $counts = [];
-        foreach ($rows as $row) {
-            foreach (explode(',', $row) as $item) {
-                $item = trim(strtolower($item));
-                if ($item !== '') {
-                    $counts[$item] = ($counts[$item] ?? 0) + 1;
-                }
+        foreach (Submission::whereNotNull('quiz_result')->pluck('quiz_result') as $result) {
+            foreach ($result['traits'] ?? [] as $trait) {
+                $counts[$trait] = ($counts[$trait] ?? 0) + 1;
             }
         }
         arsort($counts);
@@ -64,4 +56,5 @@ class StatsPage extends Page
         return collect(array_slice($counts, 0, 20, true))
             ->map(fn ($count, $word) => ['word' => $word, 'count' => $count]);
     }
+
 }
