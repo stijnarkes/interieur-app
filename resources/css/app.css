@@ -498,18 +498,20 @@ a.btn-primary:hover {
 .option-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 12px;
 }
 
 .option-card {
   background: #fffaf5;
   border: 1px solid #dfd0c0;
-  border-radius: 16px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 8px;
   cursor: pointer;
   display: grid;
-  gap: 10px;
+  gap: 6px;
   text-align: left;
+  color: var(--text);
+  font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.25s ease;
   position: relative;
 }
@@ -527,8 +529,9 @@ a.btn-primary:hover {
 
 .option-image {
   display: block;
-  aspect-ratio: 4 / 3;
-  border-radius: 11px;
+  aspect-ratio: 16 / 10;
+  max-height: 160px;
+  border-radius: 10px;
   overflow: hidden;
   background: #f0e8dc;
   position: relative;
@@ -1060,6 +1063,7 @@ a.btn-primary:hover {
   border-radius: 10px;
   border: 1px solid var(--line);
   background: var(--surface);
+  overflow: hidden;
 }
 
 .report-mock-page--back-2 {
@@ -1081,11 +1085,12 @@ a.btn-primary:hover {
 
 .report-mock-label {
   margin: 0 0 4px;
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   color: var(--accent-strong);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .report-mock-style {

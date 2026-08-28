@@ -58,6 +58,12 @@ function initQuiz(root) {
   const progress = createQuizProgress();
   els.progressMount.appendChild(progress.element);
 
+  /** Elke schermovergang begint bovenaan — anders land je op de resterende scrollpositie van
+   *  het vorige scherm, wat op mobiel al snel midden in de nieuwe vraag/pagina uitkomt. */
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   function showScreen(screen) {
     els.start.hidden = screen !== "start";
     els.stepperWrap.hidden = !(screen === "transition" || screen === "result");
@@ -65,6 +71,7 @@ function initQuiz(root) {
     els.transition.hidden = screen !== "transition";
     els.steps.hidden = screen !== "steps";
     els.result.hidden = screen !== "result";
+    scrollToTop();
   }
 
   function showSectionTransition(step) {
@@ -80,10 +87,9 @@ function initQuiz(root) {
       },
     });
     showScreen("transition");
-    els.journey.scrollIntoView({ behavior: "auto", block: "start" });
   }
 
-  function renderStep() {
+  function renderStep({ scroll = false } = {}) {
     const { step, answers } = state.get();
     const question = QUESTIONS[step];
     const sectionIndex = sectionIndexOf(step);
@@ -99,6 +105,7 @@ function initQuiz(root) {
     });
     els.backBtn.disabled = step === 0;
     updateNextButton();
+    if (scroll) scrollToTop();
   }
 
   function updateNextButton() {
@@ -122,7 +129,6 @@ function initQuiz(root) {
     stepper.update(SECTIONS.length, QUESTIONS.length);
     state.complete();
     showScreen("result");
-    els.result.scrollIntoView({ behavior: "auto", block: "start" });
   }
 
   els.startBtn.addEventListener("click", () => {
@@ -142,7 +148,7 @@ function initQuiz(root) {
     if (QUESTIONS[nextStep].section !== QUESTIONS[step].section) {
       showSectionTransition(nextStep);
     } else {
-      renderStep();
+      renderStep({ scroll: true });
     }
   });
 
@@ -150,7 +156,7 @@ function initQuiz(root) {
     const { step } = state.get();
     if (step === 0) return;
     state.goToStep(step - 1);
-    renderStep();
+    renderStep({ scroll: true });
   });
 
   els.restartBtn.addEventListener("click", restart);
