@@ -74,6 +74,14 @@ function initQuiz(root) {
     scrollToTop();
   }
 
+  /**
+   * `step` is altijd de eerste vraag van het onderdeel waar dit overgangsscherm naartoe leidt —
+   * zowel bij de start van een nieuw onderdeel (vanuit "Volgende") als wanneer je via de
+   * terugknop op die eerste vraag opnieuw op dit scherm belandt. Het "terug"-doel volgt daaruit
+   * vanzelf: vóór het eerste onderdeel was je op het startscherm, daarna was je op de laatste
+   * vraag van het vorige onderdeel (altijd direct de rij ervoor, want QUESTIONS staat op
+   * sectievolgorde — zie sectionIndexOf/positionInSection).
+   */
   function showSectionTransition(step) {
     const sectionIndex = sectionIndexOf(step);
     stepper.update(sectionIndex, step);
@@ -85,6 +93,13 @@ function initQuiz(root) {
         showScreen("steps");
         renderStep();
       },
+      onBack: sectionIndex === 0
+        ? () => showScreen("start")
+        : () => {
+            state.goToStep(step - 1);
+            showScreen("steps");
+            renderStep();
+          },
     });
     showScreen("transition");
   }
@@ -103,7 +118,6 @@ function initQuiz(root) {
       state.setAnswer(question.id, optionId);
       renderStep();
     });
-    els.backBtn.disabled = step === 0;
     updateNextButton();
     if (scroll) scrollToTop();
   }
@@ -154,7 +168,11 @@ function initQuiz(root) {
 
   els.backBtn.addEventListener("click", () => {
     const { step } = state.get();
-    if (step === 0) return;
+    const { index } = positionInSection(step);
+    if (index === 0) {
+      showSectionTransition(step);
+      return;
+    }
     state.goToStep(step - 1);
     renderStep({ scroll: true });
   });

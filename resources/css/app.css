@@ -152,6 +152,16 @@ a.btn-primary:hover {
   border-color: #dbc8b3;
 }
 
+.btn-outline {
+  background: transparent;
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+.btn-outline:hover {
+  background: var(--accent-soft);
+}
+
 .btn-link {
   background: transparent;
   border: none;
@@ -433,6 +443,12 @@ a.btn-primary:hover {
 .quiz-transition-actions {
   margin-top: 28px;
   justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+
+.quiz-transition-actions .btn {
+  gap: 8px;
 }
 
 /* Stijltest: quizstap-kaart */
@@ -1337,7 +1353,8 @@ a.btn-primary:hover {
     width: 100%;
   }
 
-  .quiz-nav {
+  .quiz-nav,
+  .quiz-transition-actions {
     flex-direction: column-reverse;
   }
 
