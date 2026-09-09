@@ -248,7 +248,12 @@ class QuizImageManifest
         imagedestroy($image);
 
         $key = ltrim($relativePath, '/');
-        self::disk()->put($key, $webp, 'public');
+        // Geen expliciete 'public'-visibility hier: sommige S3-compatibele providers (o.a.
+        // Cloudflare R2, dat Laravel Cloud's Object Storage aanbiedt) regelen zichtbaarheid op
+        // bucketniveau en wijzen een per-object ACL-verzoek af met een NotImplemented-fout. De
+        // "quiz_images"-disk zet 'visibility' => 'public' al op diskniveau, dus lokaal blijft dit
+        // ongewijzigd; op S3 bepaalt de bucketinstelling het.
+        self::disk()->put($key, $webp);
         $uploadDisk->delete($uploadedDiskPath);
         unset(self::$mtimeCache[$key]);
     }
@@ -284,7 +289,7 @@ class QuizImageManifest
         $webp = ob_get_clean();
         imagedestroy($image);
 
-        self::disk()->put($key, $webp, 'public');
+        self::disk()->put($key, $webp);
         unset(self::$mtimeCache[$key]);
     }
 

@@ -58,7 +58,10 @@ class MigrateQuizImages extends Command
             }
 
             if (! $dryRun) {
-                $to->put($key, $from->get($key), 'public');
+                // Geen expliciete 'public'-visibility: Cloudflare R2 (Laravel Cloud's Object
+                // Storage) regelt zichtbaarheid op bucketniveau en wijst een per-object
+                // ACL-verzoek af — zie QuizImageManifest::storeAtPath().
+                $to->put($key, $from->get($key));
             }
 
             $copied++;
