@@ -70,6 +70,9 @@ const COLOR_PREFERENCE_QUESTION = {
   })),
 };
 
+// `image` is de fallback zolang /api/quiz-config niet (op tijd) antwoordt — zie
+// remoteConfig.js's applyTransitionPhotos(), die dit veld overschrijft met de echte,
+// disk-onafhankelijke URL zodra de fetch lukt.
 const SECTIONS = [
   {
     id: "materials-colors",
@@ -77,6 +80,7 @@ const SECTIONS = [
     tagline: "Ontdek welke kleuren, materialen en afwerkingen het beste bij jouw smaak passen.",
     wrapUp: null,
     cta: "Beginnen",
+    image: "/images/interior/transitions/materials-colors.webp",
   },
   {
     id: "objects",
@@ -84,6 +88,7 @@ const SECTIONS = [
     tagline: "Welke meubels en vormen passen het beste bij jouw ideale interieur?",
     wrapUp: "Mooi! We weten nu welke materialen en kleuren je aanspreken.",
     cta: "Verder naar meubels",
+    image: "/images/interior/transitions/objects.webp",
   },
 ];
 

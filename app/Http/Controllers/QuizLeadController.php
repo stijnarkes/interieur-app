@@ -14,10 +14,15 @@ class QuizLeadController extends Controller
 {
     public function handle(Request $request): JsonResponse
     {
-        // Afbeeldingspaden mogen alleen naar de eigen, publieke interieur-fotomap wijzen — dit
+        // Afbeeldingspaden/-URL's mogen alleen naar de eigen interieur-fotomap wijzen — dit
         // voorkomt dat iemand hier een willekeurig bestandspad (bv. met "../") in stopt, dat later
-        // door de PDF-generator van de schijf gelezen zou worden (padtraversal).
-        $imagePathRule = 'regex:/^\/images\/interior\/[a-zA-Z0-9\/_-]+\.(webp|jpe?g|png)$/';
+        // door de PDF-generator gelezen zou worden (padtraversal). Twee vormen zijn toegestaan:
+        // het oude root-relatieve pad (bestaande inzendingen, en lokaal zolang QUIZ_IMAGES_DISK op
+        // de standaard lokale disk staat) en een volledige URL (zodra afbeeldingen op S3/een CDN
+        // staan, zie QuizConfigController). Een afwijkende host in die URL levert geen extra risico
+        // op: QuizImageManifest::contentsFor() leest hoe dan ook alleen van de eigen, geconfigureerde
+        // disk, dus een gemanipuleerde host resulteert simpelweg in "niet gevonden".
+        $imagePathRule = 'regex:/^(\/images\/interior\/[a-zA-Z0-9\/_-]+\.(webp|jpe?g|png)|https?:\/\/[a-zA-Z0-9.-]+(:\d+)?\/[a-zA-Z0-9\/_-]*images\/interior\/[a-zA-Z0-9\/_-]+\.(webp|jpe?g|png)(\?[a-zA-Z0-9=&._~-]*)?)$/';
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -91,7 +96,7 @@ class QuizLeadController extends Controller
 
         try {
             $pdfPath = (new QuizResultPdfService)->generate($submission);
-            $submission->update(['pdf_path' => "submissions/{$submission->id}/quiz-result.pdf"]);
+            $submission->update(['pdf_path' => $pdfPath]);
 
             Mail::to($submission->email)->send(new QuizResultMail($submission, $pdfPath));
 

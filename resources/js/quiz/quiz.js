@@ -27,7 +27,7 @@ function prefetchQuestionImages(question) {
 }
 
 function prefetchTransitionPhoto(section) {
-  prefetchImage(`/images/interior/transitions/${section.id}.webp`);
+  prefetchImage(section.image);
 }
 
 function sectionIndexOf(step) {

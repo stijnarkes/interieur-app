@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\Storage;
 
 class QuizResultPdfService
 {
+    /**
+     * Slaat het PDF-bestand op via de geconfigureerde PDF-disk (zie
+     * config('filesystems.quiz_pdfs_disk')) i.p.v. hardcoded op de lokale "public"-disk (al blijft
+     * dat wel de standaard) — zo kan dit later ook naar S3 verhuizen zonder codewijziging, zonder
+     * dat bestaande inzendingen hun PDF kwijtraken (zie de config-uitleg daar). Geeft de
+     * storage-key terug, geen absoluut pad — zie QuizLeadController/QuizResultMail voor hoe die
+     * key verder gebruikt wordt.
+     */
     public function generate(Submission $submission): string
     {
         $pdf = Pdf::loadView('pdf.quiz-result', [
@@ -18,8 +26,8 @@ class QuizResultPdfService
         $pdf->setPaper('A4', 'portrait');
 
         $path = "submissions/{$submission->id}/quiz-result.pdf";
-        Storage::disk('public')->put($path, $pdf->output());
+        Storage::disk(config('filesystems.quiz_pdfs_disk'))->put($path, $pdf->output());
 
-        return Storage::disk('public')->path($path);
+        return $path;
     }
 }

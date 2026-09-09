@@ -109,7 +109,17 @@ class QuizOption extends Model
 
         $path = $this->resolvedImagePath();
 
-        return $path ? asset(ltrim($path, '/')).'?v='.($this->updated_at?->timestamp ?? 0) : null;
+        return $path ? QuizImageManifest::urlForPath($path) : null;
+    }
+
+    /**
+     * Zoals thumbnailUrl(), maar geeft altijd een URL terug — voor de klant-quiz (zie
+     * QuizConfigController), die op een 404 van een niet-bestaande foto vertrouwt om netjes op
+     * de placeholder terug te vallen (optionCard.js).
+     */
+    public function publicImageUrl(): string
+    {
+        return QuizImageManifest::publicUrlForPath((string) $this->resolvedImagePath());
     }
 
     /** 800px is ruim genoeg voor een scherp kaartje op retina-schermen — deze foto's tonen

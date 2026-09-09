@@ -11,7 +11,7 @@ function renderSectionTransition(container, { sectionIndex, totalSections, secti
   const photo = document.createElement("img");
   photo.className = "quiz-transition-photo";
   photo.alt = "";
-  photo.src = `/images/interior/transitions/${section.id}.webp`;
+  photo.src = section.image;
   photo.addEventListener("load", () => container.classList.add("has-photo"), { once: true });
   photo.addEventListener("error", () => photo.remove(), { once: true });
   container.appendChild(photo);

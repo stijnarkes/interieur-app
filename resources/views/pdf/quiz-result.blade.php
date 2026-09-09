@@ -248,18 +248,29 @@ body {
 
 @php
     $primaryStyle = $result['primaryStyle'] ?? null;
+    // Embedt de foto als base64 data-URI i.p.v. een lokaal bestandspad aan dompdf te geven: dat
+    // laatste bestaat niet meer zodra QUIZ_IMAGES_DISK op S3 staat. contentsFor() snapt zowel het
+    // oude root-relatieve pad (oudere inzendingen) als een volledige URL (zie
+    // QuizConfigController), en leest hoe dan ook alleen van de eigen, geconfigureerde disk.
     $resolveImage = function (?string $path) {
         if (! $path) {
             return null;
         }
-        $absolute = realpath(public_path(ltrim($path, '/')));
-        $imagesRoot = realpath(public_path('images'));
 
-        if (! $absolute || ! $imagesRoot || ! str_starts_with($absolute, $imagesRoot.DIRECTORY_SEPARATOR)) {
+        $contents = \App\Support\QuizImageManifest::contentsFor($path);
+
+        if (! $contents) {
             return null;
         }
 
-        return $absolute;
+        $extension = strtolower(pathinfo(parse_url($path, PHP_URL_PATH) ?: $path, PATHINFO_EXTENSION));
+        $mime = match ($extension) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            default => 'image/webp',
+        };
+
+        return 'data:'.$mime.';base64,'.base64_encode($contents);
     };
 @endphp
 

@@ -35,12 +35,22 @@ class QuizMaterial extends Model
             return null;
         }
 
-        return asset($this->relativePath()).'?v='.($this->updated_at?->timestamp ?? 0);
+        return QuizImageManifest::urlForPath($this->relativePath());
     }
 
     public function imagePath(): string
     {
         return "/{$this->relativePath()}";
+    }
+
+    /**
+     * Zoals thumbnailUrl(), maar geeft altijd een URL terug — voor de klant-quiz (zie
+     * QuizConfigController), die op een 404 van een niet-bestaande foto vertrouwt om netjes op
+     * de placeholder terug te vallen (materialsSection.js).
+     */
+    public function publicImageUrl(): string
+    {
+        return QuizImageManifest::publicUrlForPath($this->relativePath());
     }
 
     /** Zie QuizOption::storeImage() — zelfde reden voor de kleinere maat. */

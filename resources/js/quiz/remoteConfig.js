@@ -1,4 +1,4 @@
-import { QUESTIONS } from "./data.js";
+import { QUESTIONS, SECTIONS } from "./data.js";
 import { PALETTE_OPTIONS } from "./paletteData.js";
 import { STYLE_PROFILES } from "./styleProfiles.js";
 
@@ -49,6 +49,8 @@ async function loadRemoteQuizConfig() {
   applyOptions(config.options);
   applyPalettes(config.palettes);
   applyMaterials(config.materials);
+  applyAtmosphere(config.atmosphere);
+  applyTransitionPhotos(config.transitionPhotos);
 }
 
 /**
@@ -137,6 +139,39 @@ function applyMaterials(remoteMaterialsByStyle) {
     const materials = remoteMaterialsByStyle[style.key];
     if (Array.isArray(materials) && materials.length > 0) {
       style.materials = materials;
+    }
+  });
+}
+
+/**
+ * Vervangt de sfeerfoto (hero op de resultatenpagina) per stijl door de echte, disk-onafhankelijke
+ * URL uit de API — zonder dit zou styleProfiles.js's hardcoded `/images/interior/atmosphere/...`-pad
+ * ervan uitgaan dat die foto's altijd onder public/ van deze site staan, wat niet meer klopt zodra
+ * de opslag naar S3 verhuist (zie QuizImageManifest).
+ */
+function applyAtmosphere(remoteAtmosphereByStyle) {
+  if (!remoteAtmosphereByStyle || typeof remoteAtmosphereByStyle !== "object") return;
+
+  STYLE_PROFILES.forEach((style) => {
+    const heroImage = remoteAtmosphereByStyle[style.key];
+    if (heroImage) {
+      style.heroImage = heroImage;
+    }
+  });
+}
+
+/**
+ * Vervangt de overgangsschermfoto per sectie door de echte URL uit de API — zelfde reden als
+ * applyAtmosphere() hierboven, maar dan voor SECTIONS (zie sectionTransition.js/quiz.js, die
+ * section.image gebruiken i.p.v. zelf een pad samen te stellen).
+ */
+function applyTransitionPhotos(remotePhotosBySection) {
+  if (!remotePhotosBySection || typeof remotePhotosBySection !== "object") return;
+
+  SECTIONS.forEach((section) => {
+    const image = remotePhotosBySection[section.id];
+    if (image) {
+      section.image = image;
     }
   });
 }

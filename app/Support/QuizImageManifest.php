@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
 use RuntimeException;
 
 /**
@@ -18,6 +18,13 @@ use RuntimeException;
  * stap-foto's per antwoordoptie staan ook niet hier: die worden per rij beheerd via de database
  * (QuizOption, zie QuizOptionsPage) omdat een admin ze inhoudelijk moet kunnen bewerken
  * (titel/stijl/actief), niet alleen de afbeelding kunnen vervangen.
+ *
+ * Alle daadwerkelijke opslag loopt via de disk in `config('filesystems.quiz_images_disk')`
+ * (default de lokale `quiz_images`-disk, die public/ als root heeft — exact het gedrag van
+ * vóór deze disk bestond). Op Laravel Cloud kan die op de `s3`-disk gezet worden zodra er
+ * Object Storage aan de omgeving hangt: containers zijn daar wegwerpbaar, dus een rechtstreeks
+ * op de lokale schijf geschreven upload overleeft geen volgende deploy — persistente storage
+ * lost dat structureel op, zonder dat lokaal ontwikkelen iets van AWS hoeft te weten.
  */
 class QuizImageManifest
 {
@@ -84,9 +91,9 @@ class QuizImageManifest
         ];
     }
 
-    public static function path(string $folder, string $filename): string
+    protected static function disk(): Filesystem
     {
-        return self::absolutePathFor("images/interior/{$folder}/{$filename}");
+        return Storage::disk(config('filesystems.quiz_images_disk'));
     }
 
     public static function exists(string $folder, string $filename): bool
@@ -100,21 +107,10 @@ class QuizImageManifest
     }
 
     /**
-     * Generieke varianten van path()/exists()/url()/store()/delete() die een volledig relatief
-     * pad accepteren (bv. "images/interior/extra/mijn-optie.webp") in plaats van folder+filename.
-     * Nodig voor QuizOption-rijen met een eigen, expliciet image_path (zie QuizOption::hasImage()
-     * e.a.) — bv. door de admin zelf toegevoegde extra keuzes die geen vaste stijl-slot volgen.
-     */
-    public static function absolutePathFor(string $relativePath): string
-    {
-        return public_path(ltrim($relativePath, '/'));
-    }
-
-    /**
      * Cache per request voor de vaste-slot-foto's (startscherm/overgangen/sfeerfoto's) — die
      * hebben, anders dan QuizOption/QuizMaterial, geen eigen databaserij om `has_image` op bij
      * te houden. Zonder deze cache controleert zowel de "X / Y geüpload"-teller als de
-     * weergave van elke foto apart, dus twee keer, dezelfde bestanden op de schijf. De cache
+     * weergave van elke foto apart, dus twee keer, dezelfde bestanden op de disk. De cache
      * leeft alleen binnen één PHP-request (statische property overleeft geen requests in
      * PHP-FPM), dus kan nooit een verouderd resultaat aan een volgend paginabezoek doorgeven.
      *
@@ -122,27 +118,61 @@ class QuizImageManifest
      */
     protected static ?array $mtimeCache = null;
 
-    protected static function mtime(string $absolutePath): int|false
+    protected static function mtime(string $key): int|false
     {
         self::$mtimeCache ??= [];
 
-        return self::$mtimeCache[$absolutePath] ??= (File::exists($absolutePath) ? File::lastModified($absolutePath) : false);
+        return self::$mtimeCache[$key] ??= (self::disk()->exists($key) ? self::disk()->lastModified($key) : false);
     }
 
     public static function existsAtPath(string $relativePath): bool
     {
-        return self::mtime(self::absolutePathFor($relativePath)) !== false;
+        return self::mtime(ltrim($relativePath, '/')) !== false;
     }
 
     public static function urlForPath(string $relativePath): ?string
     {
-        $mtime = self::mtime(self::absolutePathFor($relativePath));
+        $key = ltrim($relativePath, '/');
+        $mtime = self::mtime($key);
 
         if ($mtime === false) {
             return null;
         }
 
-        return asset(ltrim($relativePath, '/')).'?v='.$mtime;
+        return self::buildUrl($key).'?v='.$mtime;
+    }
+
+    /**
+     * Zoals urlForPath(), maar geeft altijd een URL terug — ook als het bestand (nog) niet
+     * bestaat. Gebruikt door QuizOption/QuizMaterial::publicImageUrl() voor de klant-quiz: die
+     * vertrouwt bewust op een 404 van een niet-bestaande foto om netjes op de placeholder terug
+     * te vallen (zie optionCard.js), dus daar mag dit nooit null opleveren zoals urlForPath()
+     * bij een ontbrekende admin-thumbnail wel doet.
+     */
+    public static function publicUrlForPath(string $relativePath): string
+    {
+        $key = ltrim($relativePath, '/');
+        $mtime = self::mtime($key);
+
+        return self::buildUrl($key).($mtime !== false ? '?v='.$mtime : '');
+    }
+
+    /**
+     * Voor de lokale `quiz_images`-disk bewust root-relatief (`/images/...`) i.p.v. de
+     * APP_URL-voorziene absolute URL die Storage::url() zou geven: APP_URL staat lokaal vaak niet
+     * gelijk aan het adres waarop de site daadwerkelijk draait (Herd's eigen `.test`-domein, een
+     * andere poort via `php -S`/`artisan serve`, …) — een root-relatief pad lost zichzelf altijd
+     * op t.o.v. de pagina die 'm aanvraagt en is dus origin-onafhankelijk, precies zoals vóór deze
+     * disk-abstractie bestond. Alleen bij een echte, andere-origin-disk (S3) is een absolute URL
+     * nodig — die bouwt Storage::url() correct op basis van bucket/region/CDN-config.
+     */
+    protected static function buildUrl(string $key): string
+    {
+        if (config('filesystems.quiz_images_disk') === 'quiz_images') {
+            return '/'.$key;
+        }
+
+        return self::disk()->url($key);
     }
 
     public static function totalCount(array $sections): int
@@ -194,13 +224,16 @@ class QuizImageManifest
             throw new RuntimeException('Deze server ondersteunt geen WebP-conversie (GD mist WebP-support).');
         }
 
-        $disk = Storage::disk('public');
+        // Filament's FileUpload zet de zojuist geüploade brondatei altijd tijdelijk op de
+        // standaard "public"-disk (storage/app/public) — dat is los van waar de definitieve
+        // quizfoto's blijven (self::disk()) en leeft maar heel even, binnen dit ene request.
+        $uploadDisk = Storage::disk('public');
 
-        if (! $disk->exists($uploadedDiskPath)) {
+        if (! $uploadDisk->exists($uploadedDiskPath)) {
             throw new RuntimeException('Geüpload bestand niet gevonden.');
         }
 
-        $contents = $disk->get($uploadedDiskPath);
+        $contents = $uploadDisk->get($uploadedDiskPath);
         $image = @imagecreatefromstring($contents);
 
         if ($image === false) {
@@ -209,17 +242,15 @@ class QuizImageManifest
 
         self::downscale($image, $maxWidth);
 
-        $target = self::absolutePathFor($relativePath);
-        File::ensureDirectoryExists(dirname($target));
-
         ob_start();
         imagewebp($image, null, 85);
         $webp = ob_get_clean();
         imagedestroy($image);
 
-        File::put($target, $webp);
-        $disk->delete($uploadedDiskPath);
-        unset(self::$mtimeCache[$target]);
+        $key = ltrim($relativePath, '/');
+        self::disk()->put($key, $webp, 'public');
+        $uploadDisk->delete($uploadedDiskPath);
+        unset(self::$mtimeCache[$key]);
     }
 
     /**
@@ -230,13 +261,13 @@ class QuizImageManifest
      */
     public static function resizeInPlace(string $relativePath, int $maxWidth): void
     {
-        $target = self::absolutePathFor($relativePath);
+        $key = ltrim($relativePath, '/');
 
-        if (! File::exists($target)) {
+        if (! self::disk()->exists($key)) {
             return;
         }
 
-        $image = @imagecreatefromstring(File::get($target));
+        $image = @imagecreatefromstring(self::disk()->get($key));
 
         if ($image === false) {
             return;
@@ -253,19 +284,66 @@ class QuizImageManifest
         $webp = ob_get_clean();
         imagedestroy($image);
 
-        File::put($target, $webp);
-        unset(self::$mtimeCache[$target]);
+        self::disk()->put($key, $webp, 'public');
+        unset(self::$mtimeCache[$key]);
     }
 
     public static function deleteAtPath(string $relativePath): void
     {
-        $target = self::absolutePathFor($relativePath);
+        $key = ltrim($relativePath, '/');
 
-        if (File::exists($target)) {
-            File::delete($target);
+        self::disk()->delete($key);
+        unset(self::$mtimeCache[$key]);
+    }
+
+    /**
+     * Ruwe bytes van een quizfoto, voor het embedden in het PDF-resultaat (zie
+     * resources/views/pdf/quiz-result.blade.php) i.p.v. rechtstreeks een lokaal bestand te
+     * lezen — dat laatste bestaat niet meer zodra de disk S3 is. Snapt zowel het oude
+     * root-relatieve pad (bestaande inzendingen, bv. "/images/interior/floors/japandi.webp")
+     * als een volledige URL (nieuwe inzendingen, zie QuizOption::publicImageUrl()). Geeft altijd
+     * null terug bij een onbekende/niet-bestaande sleutel — de host in een meegestuurde URL doet
+     * er niet toe, er wordt hoe dan ook alleen van de eigen, geconfigureerde disk gelezen.
+     */
+    public static function contentsFor(string $pathOrUrl): ?string
+    {
+        $key = self::keyFor($pathOrUrl);
+
+        if (! $key) {
+            return null;
         }
 
-        unset(self::$mtimeCache[$target]);
+        try {
+            return self::disk()->exists($key) ? self::disk()->get($key) : null;
+        } catch (\Throwable) {
+            // Flysystem gooit (i.p.v. false/null terug te geven) op bv. een pad-traversal-poging
+            // ("../") in de sleutel, ongeacht de 'throw'-instelling van de disk — dit is een
+            // low-level PDF-hulpmethode voor eigen, bekende paden, geen publieke invoervalidatie,
+            // dus elke onverwachte disk-fout hier resulteert gewoon in "geen afbeelding".
+            return null;
+        }
+    }
+
+    protected static function keyFor(string $pathOrUrl): ?string
+    {
+        $withoutQuery = explode('?', $pathOrUrl, 2)[0];
+
+        if (! str_starts_with($withoutQuery, 'http://') && ! str_starts_with($withoutQuery, 'https://')) {
+            $key = ltrim($withoutQuery, '/');
+
+            return $key !== '' ? $key : null;
+        }
+
+        $path = parse_url($withoutQuery, PHP_URL_PATH) ?: '';
+        $basePath = parse_url((string) self::disk()->url(''), PHP_URL_PATH) ?: '';
+
+        if ($basePath !== '' && str_starts_with($path, $basePath)) {
+            $path = substr($path, strlen($basePath));
+        }
+
+        $key = ltrim($path, '/');
+
+        return $key !== '' ? $key : null;
     }
 
     protected static function downscale(&$image, int $maxWidth): bool
