@@ -10,28 +10,45 @@ import { STYLE_PROFILES } from "./styleProfiles.js";
  * materialsSection.js, paletteEngine.js) leest deze wijziging automatisch mee, zonder zelf
  * aangepast te hoeven worden.
  *
- * Bij een falende of trage fetch gebeurt er niets: de quiz draait dan gewoon door op de
- * statische data.js/paletteData.js-inhoud die al in de bundel zit — inclusief de oorspronkelijke
- * 11 vragen en 8 sfeerpaletten in hun oorspronkelijke volgorde.
+ * Bij een falende of trage fetch (ook na de automatische retry hieronder) valt de quiz terug op
+ * de statische data.js/paletteData.js-inhoud die al in de bundel zit — inclusief de
+ * oorspronkelijke 11 vragen en 8 sfeerpaletten in hun oorspronkelijke volgorde. Dat betekent dan
+ * wel dat admin-wijzigingen (extra/gedeactiveerde opties, herordende vragen, etc.) niet
+ * doorkomen, dus die terugval wordt met een console.warn zichtbaar gemaakt in plaats van stil te
+ * gebeuren.
  */
-async function loadRemoteQuizConfig() {
-  try {
-    const response = await fetch("/api/quiz-config", {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!response.ok) return;
+async function fetchQuizConfig(timeoutMs) {
+  const response = await fetch("/api/quiz-config", {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!response.ok) throw new Error(`Onverwachte status ${response.status}`);
 
-    const config = await response.json();
-    // Volgorde is belangrijk: applyQuestions() herbouwt QUESTIONS (met lege options-lijsten),
-    // applyOptions() vult die vervolgens.
-    applyQuestions(config.questions);
-    applyOptions(config.options);
-    applyPalettes(config.palettes);
-    applyMaterials(config.materials);
-  } catch {
-    // Same-origin fetch mislukt of duurt te lang — geen probleem, zie docblock hierboven.
+  return response.json();
+}
+
+async function loadRemoteQuizConfig() {
+  let config;
+  try {
+    config = await fetchQuizConfig(8000);
+  } catch (firstError) {
+    try {
+      config = await fetchQuizConfig(8000);
+    } catch (secondError) {
+      console.warn(
+        "Kon /api/quiz-config niet ophalen, quiz valt terug op de meegebundelde standaardinhoud (admin-wijzigingen zijn nu niet zichtbaar).",
+        secondError,
+      );
+      return;
+    }
   }
+
+  // Volgorde is belangrijk: applyQuestions() herbouwt QUESTIONS (met lege options-lijsten),
+  // applyOptions() vult die vervolgens.
+  applyQuestions(config.questions);
+  applyOptions(config.options);
+  applyPalettes(config.palettes);
+  applyMaterials(config.materials);
 }
 
 /**
@@ -71,6 +88,7 @@ function applyOptions(remoteOptions) {
       title: option.title,
       image: option.image,
       primaryStyle: option.primaryStyle,
+      styles: option.styles,
       ...(option.colorHex ? { colorHex: option.colorHex, colorFamily: option.colorFamily, colorTemperature: option.colorTemperature } : {}),
     });
     byQuestion.set(option.questionId, list);

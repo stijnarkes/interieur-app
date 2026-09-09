@@ -43,6 +43,7 @@ class QuizConfigController extends Controller
 
         $options = QuizOption::query()
             ->where('is_active', true)
+            ->with('styleLinks')
             ->get()
             ->map(fn (QuizOption $option): array => [
                 'id' => $option->option_slug,
@@ -50,6 +51,7 @@ class QuizConfigController extends Controller
                 'title' => $option->title,
                 'image' => $option->resolvedImagePath(),
                 'primaryStyle' => $option->primary_style,
+                'styles' => $option->styleKeys(),
                 'colorHex' => $option->color_hex,
                 'colorFamily' => $option->color_family,
                 'colorTemperature' => $option->color_temperature,

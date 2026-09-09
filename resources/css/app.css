@@ -522,10 +522,9 @@ a.btn-primary:hover {
   background: #fffaf5;
   border: 1px solid #dfd0c0;
   border-radius: 14px;
-  padding: 0 0 8px;
+  padding: 0;
   cursor: pointer;
   display: grid;
-  gap: 6px;
   text-align: left;
   color: var(--text);
   font-family: inherit;
@@ -549,15 +548,17 @@ a.btn-primary:hover {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
-  max-height: 185px;
-  background: #f0e8dc;
+  max-height: 260px;
+  /* Zelfde rustige kaartkleur als .option-card/.palette-option-card, zodat elke tegel — ook
+     rond een foto die object-fit:contain niet helemaal vult — dezelfde achtergrond toont. */
+  background: #fffaf5;
   position: relative;
 }
 
 .option-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   transition: transform 0.4s ease;
 }

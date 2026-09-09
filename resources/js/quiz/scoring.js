@@ -17,15 +17,20 @@ function getSelectedOptions(answers) {
 }
 
 /**
- * Eenvoudige score: elke keuze geeft 1 punt aan haar primaryStyle. Generiek — kent geen
- * enkele vraag/optie expliciet, en bevat bewust geen gewogen sub-scores.
+ * Eenvoudige score: elke keuze geeft een vol punt aan elke stijl die eraan gekoppeld is
+ * (`option.styles` — meestal 1, in de admin desgewenst meerdere). Generiek — kent geen enkele
+ * vraag/optie expliciet, en bevat bewust geen gewogen sub-scores of puntverdeling over de
+ * gekoppelde stijlen.
  */
 function calculateScores(answers) {
   const styleTotals = Object.fromEntries(STYLE_PROFILES.map((style) => [style.key, 0]));
 
   for (const option of getSelectedOptions(answers)) {
-    if (option.primaryStyle && option.primaryStyle in styleTotals) {
-      styleTotals[option.primaryStyle] += 1;
+    const styles = option.styles ?? (option.primaryStyle ? [option.primaryStyle] : []);
+    for (const style of styles) {
+      if (style in styleTotals) {
+        styleTotals[style] += 1;
+      }
     }
   }
 

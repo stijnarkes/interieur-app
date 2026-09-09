@@ -3,9 +3,11 @@
  *
  * De test draait om 6 vaste woonstijlen. De volledige stijlinhoud (kleuren, materialen,
  * meubeladvies, interieurrecept, etc.) staat in styleProfiles.js — dit bestand gebruikt
- * daarvan alleen key/slug om de quizvragen op te bouwen. Iedere vraag (QUESTIONS) heeft
- * precies 6 opties — één per stijl — opgebouwd via `buildOptions()`, zodat "6 stappen,
- * 6 stijlen" een structurele garantie is en niet alleen een afspraak.
+ * daarvan alleen key/slug om de quizvragen op te bouwen. Dit is alleen de **fallback**-
+ * databron: iedere vraag heeft hier precies 6 opties — één per stijl — opgebouwd via
+ * `buildOptions()`. Zolang `/api/quiz-config` op tijd antwoordt (zie remoteConfig.js) wordt
+ * deze lijst per vraag volledig vervangen door de admin-ingestelde opties, en kan het aantal
+ * dus afwijken van 6 (minder na deactiveren, meer na admin-toevoegingen).
  *
  * @typedef {"japandi"|"hotelChique"|"industrial"|"biophilic"|"modernCountry"|"retroVintage"} InteriorStyle
  *
@@ -43,6 +45,7 @@ function buildOptions(questionSlug, category, titlesByStyle, colorByStyle) {
       title: titlesByStyle[key],
       image: `/images/interior/${category}/${slug}.webp`,
       primaryStyle: key,
+      styles: [key],
       ...(color ? { colorHex: color.hex, colorFamily: color.family, colorTemperature: color.temperature } : {}),
     };
   });

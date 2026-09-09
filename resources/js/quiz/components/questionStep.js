@@ -1,6 +1,6 @@
 import { createOptionCard } from "./optionCard.js";
 
-/** Rendert één vraag met 6 foto-opties. `onSelect` wordt aangeroepen met de gekozen option-id. */
+/** Rendert één vraag met haar foto-opties (aantal is vrij, admin-bepaald). `onSelect` wordt aangeroepen met de gekozen option-id. */
 function renderQuestionStep(container, question, selectedOptionId, onSelect) {
   container.innerHTML = "";
 

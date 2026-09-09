@@ -76,9 +76,13 @@
                                                 onerror="this.style.visibility='hidden'"
                                             />
 
-                                            <x-filament::badge color="primary" class="shrink-0">
-                                                {{ \App\Support\QuizStructure::styleLabel($option->primary_style) }}
-                                            </x-filament::badge>
+                                            <div class="flex shrink-0 flex-wrap gap-1">
+                                                @foreach ($option->styleKeys() as $styleKey)
+                                                    <x-filament::badge color="primary">
+                                                        {{ \App\Support\QuizStructure::styleLabel($styleKey) }}
+                                                    </x-filament::badge>
+                                                @endforeach
+                                            </div>
 
                                             <span class="flex-1 truncate text-sm font-medium text-gray-950 dark:text-white">
                                                 {{ $option->title }}

@@ -63,7 +63,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         $sectionOrder = array_flip(array_keys(QuizStructure::SECTIONS));
 
         return QuizQuestion::query()
-            ->with(['options' => fn ($query) => $query->orderBy('id')])
+            ->with(['options' => fn ($query) => $query->orderBy('id')->with('styleLinks')])
             ->get()
             ->sortBy(fn (QuizQuestion $question): string => sprintf('%d-%08d', $sectionOrder[$question->section] ?? 99, $question->sort_order))
             ->values()
@@ -105,10 +105,11 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->required()
                     ->maxLength(255),
 
-                Select::make('primary_style')
-                    ->label('Gekoppelde woonstijl')
-                    ->helperText('Bepaalt aan welke woonstijl deze keuze punten geeft.')
+                Select::make('styles')
+                    ->label('Gekoppelde woonstijlen')
+                    ->helperText('Bepaalt aan welke woonstijl(en) deze keuze punten geeft — kies er meerdere als de foto bij meerdere stijlen past.')
                     ->options(QuizStructure::styleOptions())
+                    ->multiple()
                     ->required(),
 
                 FileUpload::make('image')
@@ -139,14 +140,19 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                 $uploadedImage = $data['image'];
                 unset($data['image']);
 
+                $styles = $data['styles'];
+                unset($data['styles']);
+
                 $option = QuizOption::create([
                     ...$data,
                     'question_id' => $questionId,
-                    'style_key' => $data['primary_style'],
+                    'primary_style' => $styles[0],
+                    'style_key' => $styles[0],
                     'option_slug' => $slug,
                     'image_path' => "/images/interior/extra/{$slug}.webp",
                 ]);
 
+                $option->syncStyles($styles);
                 $option->storeImage($uploadedImage);
 
                 Notification::make()->title('Antwoordoptie toegevoegd')->success()->send();
@@ -158,17 +164,22 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         return Action::make('editOption')
             ->label('Bewerken')
             ->modalHeading('Antwoordoptie bewerken')
-            ->fillForm(fn (array $arguments): array => QuizOption::findOrFail($arguments['optionId'])->toArray())
+            ->fillForm(function (array $arguments): array {
+                $option = QuizOption::findOrFail($arguments['optionId']);
+
+                return [...$option->toArray(), 'styles' => $option->styleKeys()];
+            })
             ->form([
                 TextInput::make('title')
                     ->label('Titel')
                     ->required()
                     ->maxLength(255),
 
-                Select::make('primary_style')
-                    ->label('Gekoppelde woonstijl')
-                    ->helperText('Bepaalt aan welke woonstijl deze keuze punten geeft. De afbeelding blijft gekoppeld aan de oorspronkelijke stijl-slot.')
+                Select::make('styles')
+                    ->label('Gekoppelde woonstijlen')
+                    ->helperText('Bepaalt aan welke woonstijl(en) deze keuze punten geeft — kies er meerdere als de foto bij meerdere stijlen past. De afbeelding blijft gekoppeld aan de oorspronkelijke stijl-slot.')
                     ->options(QuizStructure::styleOptions())
+                    ->multiple()
                     ->required(),
 
                 Toggle::make('is_active')
@@ -200,7 +211,12 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     $record->storeImage($data['image']);
                 }
                 unset($data['image']);
-                $record->update($data);
+
+                $styles = $data['styles'];
+                unset($data['styles']);
+
+                $record->update([...$data, 'primary_style' => $styles[0]]);
+                $record->syncStyles($styles);
 
                 Notification::make()->title('Antwoordoptie bijgewerkt')->success()->send();
             });

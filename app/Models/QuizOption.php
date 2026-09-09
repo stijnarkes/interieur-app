@@ -33,6 +33,34 @@ class QuizOption extends Model
         'price' => 'decimal:2',
     ];
 
+    public function styleLinks()
+    {
+        return $this->hasMany(QuizOptionStyle::class, 'option_id');
+    }
+
+    /** @return array<int, string> stijl-keys waar deze optie punten aan geeft (zie scoring.js). */
+    public function styleKeys(): array
+    {
+        return $this->styleLinks->pluck('style_key')->all();
+    }
+
+    /**
+     * Vervangt de gekoppelde stijlen door precies `$styleKeys` — gebruikt door
+     * QuizOptionsPage's multi-select in plaats van het oude, enkelvoudige `primary_style`.
+     *
+     * @param  array<int, string>  $styleKeys
+     */
+    public function syncStyles(array $styleKeys): void
+    {
+        $styleKeys = array_values(array_unique($styleKeys));
+
+        $this->styleLinks()->whereNotIn('style_key', $styleKeys)->delete();
+
+        foreach ($styleKeys as $styleKey) {
+            $this->styleLinks()->firstOrCreate(['style_key' => $styleKey]);
+        }
+    }
+
     /** Mapnaam onder public/images/interior/, afgeleid van de vraag (niet bewerkbaar). */
     public function imageFolder(): ?string
     {
