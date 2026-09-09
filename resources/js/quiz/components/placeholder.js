@@ -1,13 +1,15 @@
-// Elke stijl krijgt een vaste placeholder-tint. Omdat elke vraag precies 6 opties heeft —
-// exact één per stijl — zijn de 6 tinten binnen een vraag daardoor altijd verschillend
+// Elke stijl krijgt een vaste placeholder-tint. Omdat elke vraag precies 8 opties heeft —
+// exact één per stijl — zijn de 8 tinten binnen een vraag daardoor altijd verschillend
 // (in plaats van een hash over de losse optie-id, die per vraag kon botsen).
 const STYLE_TINTS = {
-  japandi: 0,
-  hotelChique: 1,
-  industrial: 2,
-  biophilic: 3,
-  modernCountry: 4,
-  retroVintage: 5,
+  hotelLuxe: 0,
+  japandi: 1,
+  kleurExplosie: 2,
+  landelijk: 3,
+  modern: 4,
+  modernLuxe: 5,
+  natuurlijk: 6,
+  scandinavisch: 7,
 };
 
 /**
@@ -17,7 +19,7 @@ const STYLE_TINTS = {
  */
 function placeholderClass(styleKeyOrIndex) {
   if (typeof styleKeyOrIndex === "number") {
-    return `ph-${styleKeyOrIndex % 6}`;
+    return `ph-${styleKeyOrIndex % 8}`;
   }
   return `ph-${STYLE_TINTS[styleKeyOrIndex] ?? 0}`;
 }

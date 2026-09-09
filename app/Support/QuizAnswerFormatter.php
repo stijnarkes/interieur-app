@@ -27,8 +27,20 @@ class QuizAnswerFormatter
         'cabinet' => 'Kast / dressoir',
     ];
 
+    // Bevat zowel de huidige 8 stijlen als de 6 die daarvóór golden — dat laatste blijft nodig
+    // om oudere inzendingen (met option-id's die op de oude stijl-slugs eindigen) leesbaar te
+    // houden. Zie QuizStructure::STYLES voor de actieve set.
     private const STYLE_LABELS = [
+        'hotel-luxe' => 'Hotel luxe',
         'japandi' => 'Japandi',
+        'kleur-explosie' => 'Kleur explosie',
+        'landelijk' => 'Landelijk',
+        'modern' => 'Modern',
+        'modern-luxe' => 'Modern luxe',
+        'natuurlijk' => 'Natuurlijk',
+        'scandinavisch' => 'Scandinavisch',
+        // Oude stijlen (vóór de omzetting naar de 8 hierboven) — alleen voor leesbaarheid van
+        // bestaande inzendingen.
         'hotel-chique' => 'Hotel Chique',
         'industrial' => 'Industrieel',
         'biophilic' => 'Biophilic / Botanisch',

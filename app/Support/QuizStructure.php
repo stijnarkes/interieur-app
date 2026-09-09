@@ -19,14 +19,16 @@ class QuizStructure
         'objects' => ['id' => 'objects', 'title' => 'Meubels & accessoires'],
     ];
 
-    /** camelCase key => {label, slug} — zelfde 6 stijlen als STYLE_PROFILES in styleProfiles.js. */
+    /** camelCase key => {label, slug} — zelfde 8 stijlen als STYLE_PROFILES in styleProfiles.js. */
     private const STYLES = [
+        'hotelLuxe' => ['label' => 'Hotel luxe', 'slug' => 'hotel-luxe'],
         'japandi' => ['label' => 'Japandi', 'slug' => 'japandi'],
-        'hotelChique' => ['label' => 'Hotel Chique', 'slug' => 'hotel-chique'],
-        'industrial' => ['label' => 'Industrieel', 'slug' => 'industrial'],
-        'biophilic' => ['label' => 'Biophilic / Botanisch', 'slug' => 'biophilic'],
-        'modernCountry' => ['label' => 'Landelijk modern', 'slug' => 'modern-country'],
-        'retroVintage' => ['label' => 'Retro / Vintage', 'slug' => 'retro-vintage'],
+        'kleurExplosie' => ['label' => 'Kleur explosie', 'slug' => 'kleur-explosie'],
+        'landelijk' => ['label' => 'Landelijk', 'slug' => 'landelijk'],
+        'modern' => ['label' => 'Modern', 'slug' => 'modern'],
+        'modernLuxe' => ['label' => 'Modern luxe', 'slug' => 'modern-luxe'],
+        'natuurlijk' => ['label' => 'Natuurlijk', 'slug' => 'natuurlijk'],
+        'scandinavisch' => ['label' => 'Scandinavisch', 'slug' => 'scandinavisch'],
     ];
 
     /**

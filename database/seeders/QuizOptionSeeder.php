@@ -7,10 +7,11 @@ use App\Support\QuizImageManifest;
 use Illuminate\Database\Seeder;
 
 /**
- * Seedt quiz_options vanuit een JSON-fixture die 1-op-1 is gedumpt uit de live
- * resources/js/quiz/data.js (zie database/seeders/fixtures/quiz-options.json), zodat er niets
- * met de hand is overgetypt. Gebruikt firstOrCreate: opnieuw draaien overschrijft geen
- * admin-wijzigingen die na de eerste seed zijn gemaakt.
+ * Seedt quiz_options vanuit een JSON-fixture (database/seeders/fixtures/quiz-options.json).
+ * Gebruikt firstOrCreate: opnieuw draaien overschrijft geen admin-wijzigingen die na de eerste
+ * seed zijn gemaakt. De fixture staat momenteel leeg — sinds de omzetting naar de nieuwe set
+ * woonstijlen (zie QuizStructure::STYLES) bouwt de admin de antwoordopties zelf op via de
+ * "Antwoordopties"-pagina in plaats van vanuit een meegeleverde startset.
  */
 class QuizOptionSeeder extends Seeder
 {

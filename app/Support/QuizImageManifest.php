@@ -70,24 +70,17 @@ class QuizImageManifest
 
     protected static function atmosphereSection(): array
     {
-        $styles = [
-            'Japandi', 'Hotel Chique', 'Industrieel',
-            'Biophilic / Botanisch', 'Landelijk modern', 'Retro / Vintage',
-        ];
-
-        $filenames = [
-            'japandi.webp', 'hotel-chique.webp', 'industrial.webp',
-            'biophilic.webp', 'modern-country.webp', 'retro-vintage.webp',
-        ];
-
+        // Rechtstreeks uit QuizStructure::STYLES opgebouwd (i.p.v. een eigen, parallelle lijst
+        // stijlnamen/bestandsnamen) zodat een woonstijl toevoegen/hernoemen daar voortaan de
+        // enige plek is die hoeft te veranderen.
         return [
             'heading' => "Sfeerfoto's op de resultaatpagina",
             'folder' => 'atmosphere',
-            'slots' => array_map(static fn (string $style, string $filename): array => [
-                'filename' => $filename,
-                'style' => $style,
-                'label' => "Complete {$style}-woonkamer",
-            ], $styles, $filenames),
+            'slots' => array_map(static fn (string $key, string $label): array => [
+                'filename' => QuizStructure::styleSlug($key).'.webp',
+                'style' => $label,
+                'label' => "Complete {$label}-woonkamer",
+            ], array_keys(QuizStructure::styleOptions()), array_values(QuizStructure::styleOptions())),
         ];
     }
 
