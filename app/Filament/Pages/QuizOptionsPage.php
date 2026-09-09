@@ -338,19 +338,14 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
             ->color('danger')
             ->requiresConfirmation()
             ->modalHeading('Vraag verwijderen?')
-            ->modalDescription('Dit kan alleen als er geen antwoordopties meer aan deze vraag hangen.')
+            ->modalDescription('Hiermee verdwijnen ook alle antwoordopties (en hun foto\'s) die aan deze vraag hangen. Dit kan niet ongedaan worden gemaakt.')
             ->action(function (array $arguments): void {
                 $question = QuizQuestion::findOrFail($arguments['questionId']);
 
-                if ($question->options()->exists()) {
-                    Notification::make()
-                        ->title('Kan niet verwijderen')
-                        ->body('Verwijder eerst alle antwoordopties bij deze vraag.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
+                $question->options->each(function (QuizOption $option): void {
+                    $option->deleteImage();
+                    $option->delete();
+                });
 
                 $question->delete();
 
