@@ -109,7 +109,7 @@ class QuizOption extends Model
 
         $path = $this->resolvedImagePath();
 
-        return $path ? QuizImageManifest::urlForPath($path) : null;
+        return $path ? QuizImageManifest::urlForKnownPath($path, $this->updated_at?->timestamp) : null;
     }
 
     /**
@@ -119,7 +119,10 @@ class QuizOption extends Model
      */
     public function publicImageUrl(): string
     {
-        return QuizImageManifest::publicUrlForPath((string) $this->resolvedImagePath());
+        return QuizImageManifest::urlForKnownPath(
+            (string) $this->resolvedImagePath(),
+            $this->has_image ? $this->updated_at?->timestamp : null,
+        );
     }
 
     /** 800px is ruim genoeg voor een scherp kaartje op retina-schermen — deze foto's tonen

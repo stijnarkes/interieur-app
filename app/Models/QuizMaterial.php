@@ -35,7 +35,7 @@ class QuizMaterial extends Model
             return null;
         }
 
-        return QuizImageManifest::urlForPath($this->relativePath());
+        return QuizImageManifest::urlForKnownPath($this->relativePath(), $this->updated_at?->timestamp);
     }
 
     public function imagePath(): string
@@ -50,7 +50,10 @@ class QuizMaterial extends Model
      */
     public function publicImageUrl(): string
     {
-        return QuizImageManifest::publicUrlForPath($this->relativePath());
+        return QuizImageManifest::urlForKnownPath(
+            $this->relativePath(),
+            $this->has_image ? $this->updated_at?->timestamp : null,
+        );
     }
 
     /** Zie QuizOption::storeImage() — zelfde reden voor de kleinere maat. */

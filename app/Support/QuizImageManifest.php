@@ -158,6 +158,21 @@ class QuizImageManifest
     }
 
     /**
+     * Zoals publicUrlForPath(), maar doet nooit een disk-aanroep om te bepalen of het bestand
+     * bestaat en welk moment als cache-buster dient — de aanroeper geeft dat al mee (bv. via de
+     * `has_image`-kolom en `updated_at` op QuizOption/QuizMaterial, die toch al geladen zijn).
+     * Cruciaal op S3/R2: exists()/lastModified() zijn daar netwerkverzoeken, geen snelle
+     * bestandssysteem-checks zoals lokaal — een los verzoek per rij liep bij tientallen opties in
+     * quiz-config-responses op tot een timeout. Zie QuizOption/QuizMaterial::publicImageUrl().
+     */
+    public static function urlForKnownPath(string $relativePath, ?int $cacheBuster): string
+    {
+        $key = ltrim($relativePath, '/');
+
+        return self::buildUrl($key).($cacheBuster !== null ? '?v='.$cacheBuster : '');
+    }
+
+    /**
      * Voor de lokale `quiz_images`-disk bewust root-relatief (`/images/...`) i.p.v. de
      * APP_URL-voorziene absolute URL die Storage::url() zou geven: APP_URL staat lokaal vaak niet
      * gelijk aan het adres waarop de site daadwerkelijk draait (Herd's eigen `.test`-domein, een

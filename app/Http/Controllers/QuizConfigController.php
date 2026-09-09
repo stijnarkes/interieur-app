@@ -8,6 +8,7 @@ use App\Models\QuizPalette;
 use App\Support\QuizImageManifest;
 use App\Support\QuizStructure;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Publieke, alleen-lezen configuratie voor de klant-quiz: de admin-bewerkbare inhoud van
@@ -75,15 +76,19 @@ class QuizConfigController extends Controller
         // paden kloppen alleen zolang bestanden onder public/ staan. Hier krijgt de frontend de
         // echte, disk-onafhankelijke URL mee zodat remoteConfig.js die kan overschrijven (zie
         // applyAtmosphere()/applyTransitionPhotos()), ook wanneer de opslag naar S3 verhuist.
-        $atmosphere = collect(QuizStructure::styleOptions())
+        // publicUrlForPath() controleert hier per pad live of het bestand bestaat (er is geen
+        // has_image-achtige kolom voor deze vaste-slot-foto's) — op S3 is dat een netwerkverzoek
+        // per pad, dus 5 minuten cachen om dat niet op elke paginabezoeker te laten drukken. Deze
+        // foto's veranderen toch zelden; een admin ziet een update dan met een kleine vertraging.
+        $atmosphere = Cache::remember('quiz-config:atmosphere-urls', 300, fn () => collect(QuizStructure::styleOptions())
             ->mapWithKeys(fn (string $label, string $key): array => [
                 $key => QuizImageManifest::publicUrlForPath('images/interior/atmosphere/'.QuizStructure::styleSlug($key).'.webp'),
-            ]);
+            ]));
 
-        $transitionPhotos = collect(array_keys(QuizStructure::SECTIONS))
+        $transitionPhotos = Cache::remember('quiz-config:transition-photo-urls', 300, fn () => collect(array_keys(QuizStructure::SECTIONS))
             ->mapWithKeys(fn (string $sectionId): array => [
                 $sectionId => QuizImageManifest::publicUrlForPath("images/interior/transitions/{$sectionId}.webp"),
-            ]);
+            ]));
 
         $palettes = QuizPalette::query()
             ->with(['colors' => fn ($query) => $query->orderBy('sort_order')])
