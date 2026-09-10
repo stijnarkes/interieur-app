@@ -562,8 +562,8 @@ a.btn-primary:hover {
   width: 100%;
   aspect-ratio: 16 / 10;
   max-height: 260px;
-  /* Zelfde rustige kaartkleur als .option-card/.palette-option-card, zodat elke tegel — ook
-     rond een foto die object-fit:contain niet helemaal vult — dezelfde achtergrond toont. */
+  /* Zelfde rustige kaartkleur als .option-card, zodat elke tegel — ook rond een foto die
+     object-fit:contain niet helemaal vult — dezelfde achtergrond toont. */
   background: #fffaf5;
   position: relative;
 }
@@ -637,45 +637,6 @@ a.btn-primary:hover {
 .option-card.is-selected .option-check {
   opacity: 1;
   transform: scale(1);
-}
-
-/* Stijltest: kleurvoorkeur-vraag — een enkele keuze uit sfeerpaletten. Hergebruikt de
-   .option-card/.option-check-mechaniek van de gewone vraagkaarten, alleen met een cluster van
-   grote kleurvlakken in plaats van een productfoto. Vast 4-koloms raster (i.p.v. auto-fill) en
-   een vaste titelhoogte houden alle acht kaarten precies even groot, ook als een sfeernaam over
-   twee regels loopt — de kleur, niet de tekst, moet hier de aandacht trekken. */
-
-.palette-option-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.palette-option-card {
-  padding: 14px;
-}
-
-.palette-option-swatches {
-  display: flex;
-  gap: 6px;
-  border-radius: 11px;
-  overflow: hidden;
-}
-
-.palette-option-chip {
-  flex: 1;
-  height: 108px;
-}
-
-.palette-option-card .option-label {
-  display: flex;
-  align-items: center;
-  min-height: 2.4em;
-  line-height: 1.2;
-}
-
-.palette-option-card.is-selected {
-  background: var(--accent-soft);
 }
 
 .quiz-nav {
@@ -961,34 +922,6 @@ a.btn-primary:hover {
   color: var(--text);
   font-size: 0.92rem;
   line-height: 1.55;
-}
-
-/* Resultaatpagina: kleurenpalet */
-
-.palette-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 12px;
-}
-
-.palette-swatch {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.palette-swatch-color {
-  display: block;
-  aspect-ratio: 1;
-  border-radius: 12px;
-  border: 1px solid rgba(45, 38, 32, 0.12);
-  box-shadow: var(--shadow);
-}
-
-.palette-swatch-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-align: center;
 }
 
 /* Resultaatpagina: materialen */
@@ -1283,10 +1216,6 @@ a.btn-primary:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .palette-option-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .moodboard-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-auto-rows: 80px;
@@ -1347,10 +1276,6 @@ a.btn-primary:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .palette-option-grid {
-    grid-template-columns: 1fr;
-  }
-
   .moodboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: 110px;
@@ -1387,10 +1312,6 @@ a.btn-primary:hover {
 
   .result-hero-image {
     aspect-ratio: 16 / 10;
-  }
-
-  .palette-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .materials-grid-visual {

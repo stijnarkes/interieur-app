@@ -8,10 +8,7 @@
     <section class="card quiz-start" id="quizStart">
         @php
             $heroPhotoUrl = \App\Support\QuizImageManifest::url('hero', 'startscherm.webp');
-            // +1 voor de kleurvoorkeur-vraag, die als enige geen rij in quiz_questions heeft
-            // (zie QuizOptionsPage/remoteConfig.js) — zo blijft dit aantal kloppen zodra een
-            // admin later zelf vragen toevoegt of verwijdert.
-            $totalQuestions = \App\Models\QuizQuestion::count() + 1;
+            $totalQuestions = \App\Models\QuizQuestion::count();
         @endphp
         @if ($heroPhotoUrl)
             <div class="quiz-start-photo">

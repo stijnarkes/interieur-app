@@ -78,7 +78,7 @@ class UserResource extends Resource
 
                     Toggle::make('can_manage_quiz')
                         ->label('Toegang tot Quizbeheer')
-                        ->helperText('Antwoordopties, kleurvoorkeur en sfeer-/materiaalfoto\'s.')
+                        ->helperText('Antwoordopties en sfeer-/materiaalfoto\'s.')
                         ->default(false),
 
                     Toggle::make('can_view_results')

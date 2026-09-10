@@ -2,8 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\QuizPalette;
-
 /**
  * Zet de ruwe quiz_answers ({vraag-id: optie-id}) om naar leesbare labels voor het admin,
  * zonder de volledige stijltest-inhoud (die in resources/js/quiz/ leeft) in PHP te dupliceren.
@@ -48,9 +46,22 @@ class QuizAnswerFormatter
         'retro-vintage' => 'Retro / Vintage',
     ];
 
-    // Alleen nog nodig om oudere inzendingen leesbaar te tonen: vóór de sfeerpaletten koos de
-    // kleurvoorkeur-vraag meerdere losse kleuren (mirror van het inmiddels verwijderde
-    // admin-scherm voor losse kleuren).
+    // Alleen nog nodig om oudere inzendingen leesbaar te tonen: de kleurvoorkeur-vraag (en de
+    // bijbehorende quiz_palettes-tabel) is verwijderd (bezoekers vonden zelf een kleurensfeer
+    // kiezen lastig; het resultaat toont nu gewoon het vaste palet van de winnende woonstijl).
+    // Eerst de 8 sfeerpaletten die tot dan toe bestonden (palette_key => naam, ongewijzigd sinds
+    // hun aanmaak), dan de nog oudere losse-kleuren-vorm van vóór de sfeerpaletten.
+    private const LEGACY_PALETTE_LABELS = [
+        'warm-earthy' => 'Warm & aards',
+        'soft-light' => 'Zacht & licht',
+        'dark-dramatic' => 'Donker & dramatisch',
+        'fresh-cool' => 'Fris & koel',
+        'green-natural' => 'Groen & natuurlijk',
+        'rich-refined' => 'Rijk & verfijnd',
+        'monochrome-sharp' => 'Monochroom & strak',
+        'bold-colorful' => 'Kleurrijk & gedurfd',
+    ];
+
     private const LEGACY_COLOR_LABELS = [
         'warm-white' => 'Warm wit',
         'sand' => 'Zand',
@@ -91,10 +102,9 @@ class QuizAnswerFormatter
     }
 
     /**
-     * Toont zowel het huidige formaat (array van sfeerpalet-id's, sinds meerdere keuzes per
-     * vraag mogelijk zijn), het formaat daarvóór (één sfeerpalet-id, string), als het formaat van
-     * vóór de sfeerpaletten (meerdere losse kleur-id's, array) — oudere inzendingen kunnen elk van
-     * deze drie bevatten.
+     * De kleurvoorkeur-vraag bestaat niet meer, maar oudere inzendingen bevatten 'm nog in drie
+     * mogelijke vormen: een array van sfeerpalet-id's (meerdere keuzes), één sfeerpalet-id
+     * (string, daarvóór), of meerdere losse kleur-id's (nog ouder, van vóór de sfeerpaletten).
      */
     private static function colorPreferenceLabel(mixed $optionId): string
     {
@@ -105,7 +115,7 @@ class QuizAnswerFormatter
         }
 
         return implode(', ', array_map(
-            static fn ($id): string => QuizPalette::where('palette_key', $id)->value('name')
+            static fn ($id): string => self::LEGACY_PALETTE_LABELS[$id]
                 ?? self::LEGACY_COLOR_LABELS[$id]
                 ?? (string) $id,
             $ids

@@ -5,7 +5,6 @@ import { createSectionStepper } from "./components/sectionStepper.js";
 import { createQuizProgress } from "./components/quizProgress.js";
 import { renderSectionTransition } from "./components/sectionTransition.js";
 import { renderQuestionStep } from "./components/questionStep.js";
-import { renderColorQuestionStep } from "./components/colorQuestionStep.js";
 import { renderStyleResult } from "./components/styleResult.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
@@ -134,8 +133,7 @@ function initQuiz(root) {
     stepper.update(sectionIndex, step);
     progress.update(SECTIONS[sectionIndex].title, index + 1, total);
 
-    const renderer = question.type === "color-preference" ? renderColorQuestionStep : renderQuestionStep;
-    renderer(els.stepMount, question, answers[question.id] || [], (optionId) => {
+    renderQuestionStep(els.stepMount, question, answers[question.id] || [], (optionId) => {
       state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
       renderStep();
     });

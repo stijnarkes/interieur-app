@@ -1,4 +1,3 @@
-import { composePersonalPalette } from "../paletteEngine.js";
 import { createCheckIcon } from "./checkIcon.js";
 
 const CHECKLIST_ITEMS = [
@@ -63,11 +62,11 @@ function buildReportMock(primaryStyle, palette) {
 }
 
 /** Teaserblok direct onder het heldenblok: maakt duidelijk wat er in het PDF-rapport zit. */
-function renderReportTeaser(container, { result, answers }) {
+function renderReportTeaser(container, { result }) {
   container.innerHTML = "";
 
   const { primaryStyle } = result;
-  const palette = composePersonalPalette(answers, primaryStyle);
+  const palette = primaryStyle?.colors ?? [];
 
   const card = document.createElement("section");
   card.className = "result-card report-teaser";

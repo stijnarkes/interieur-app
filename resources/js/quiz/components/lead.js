@@ -1,5 +1,4 @@
 import { QUESTIONS } from "../data.js";
-import { composePersonalPalette, buildPaletteExplanation } from "../paletteEngine.js";
 import { createCheckIcon } from "./checkIcon.js";
 
 const EXPECT_ITEMS = [
@@ -11,7 +10,6 @@ const EXPECT_ITEMS = [
 /** De productfoto's die de gebruiker koos (voor de moodboard-sectie in de PDF/e-mail). */
 function buildMoodboardPayload(answers) {
   return QUESTIONS
-    .filter((question) => question.type !== "color-preference")
     .flatMap((question) => {
       const optionIds = answers[question.id] ?? [];
       return optionIds.map((optionId) => {
@@ -20,6 +18,17 @@ function buildMoodboardPayload(answers) {
       });
     })
     .filter(Boolean);
+}
+
+/**
+ * "Jouw kleurenpalet" in de PDF/e-mail toont voortaan gewoon het vaste palet van de winnende
+ * woonstijl (styleProfiles.js) — geen apart samengesteld persoonlijk palet meer, sinds de
+ * kleurvoorkeur-vraag is verwijderd (bezoekers vonden het lastig om daar zelf uit te kiezen).
+ */
+function buildColorExplanation(primaryStyle) {
+  return primaryStyle
+    ? `Dit kleurenpalet is opgebouwd rond de tinten die passen bij jouw ${primaryStyle.label}-stijl.`
+    : "";
 }
 
 /** Alleen de velden die de PDF/e-mail nodig hebben — geen key/slug/productTags. */
@@ -46,8 +55,8 @@ function renderLeadForm(container, { result, answers }) {
         traits: result.traits,
         primaryStyle: buildPrimaryStylePayload(result.primaryStyle),
         secondaryStyleLabel: result.secondaryStyle?.label ?? null,
-        personalPalette: composePersonalPalette(answers, result.primaryStyle),
-        colorExplanation: buildPaletteExplanation(answers, result.primaryStyle),
+        personalPalette: result.primaryStyle?.colors ?? [],
+        colorExplanation: buildColorExplanation(result.primaryStyle),
         moodboard: buildMoodboardPayload(answers),
         answers,
       }),

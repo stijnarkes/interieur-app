@@ -62,7 +62,6 @@ class QuizLeadController extends Controller
             'personalPalette' => 'nullable|array',
             'personalPalette.*.name' => 'nullable|string|max:255',
             'personalPalette.*.hex' => 'nullable|string|regex:/^#[0-9a-fA-F]{3,8}$/',
-            'personalPalette.*.role' => 'nullable|string|max:255',
             'moodboard' => 'nullable|array',
             'moodboard.*.title' => 'nullable|string|max:255',
             'moodboard.*.image' => ['nullable', 'string', $imagePathRule],
