@@ -84,41 +84,54 @@ class QuizAnswerFormatter
                 ?? $questionId;
             $result[$questionLabel] = $questionId === 'colorPreference'
                 ? self::colorPreferenceLabel($optionId)
-                : self::styleLabelFromOptionId((string) $optionId);
+                : self::styleLabelFromOptionId($optionId);
         }
 
         return $result;
     }
 
     /**
-     * Toont zowel het huidige formaat (één sfeerpalet-id, string) als het formaat van vóór de
-     * sfeerpaletten (meerdere losse kleur-id's, array) — oudere inzendingen bevatten nog dat
-     * laatste formaat.
+     * Toont zowel het huidige formaat (array van sfeerpalet-id's, sinds meerdere keuzes per
+     * vraag mogelijk zijn), het formaat daarvóór (één sfeerpalet-id, string), als het formaat van
+     * vóór de sfeerpaletten (meerdere losse kleur-id's, array) — oudere inzendingen kunnen elk van
+     * deze drie bevatten.
      */
     private static function colorPreferenceLabel(mixed $optionId): string
     {
-        if (is_array($optionId)) {
-            if ($optionId === []) {
-                return '—';
-            }
+        $ids = is_array($optionId) ? $optionId : [$optionId];
 
-            return implode(', ', array_map(
-                static fn ($id): string => self::LEGACY_COLOR_LABELS[$id] ?? (string) $id,
-                $optionId
-            ));
+        if ($ids === []) {
+            return '—';
         }
 
-        return QuizPalette::where('palette_key', $optionId)->value('name') ?? (string) $optionId;
+        return implode(', ', array_map(
+            static fn ($id): string => QuizPalette::where('palette_key', $id)->value('name')
+                ?? self::LEGACY_COLOR_LABELS[$id]
+                ?? (string) $id,
+            $ids
+        ));
     }
 
-    private static function styleLabelFromOptionId(string $optionId): string
+    /**
+     * Toont zowel het huidige formaat (array van option-id's, sinds meerdere keuzes per vraag
+     * mogelijk zijn) als het oudere formaat (één option-id, string).
+     */
+    private static function styleLabelFromOptionId(mixed $optionId): string
     {
-        foreach (self::STYLE_LABELS as $slug => $label) {
-            if (str_ends_with($optionId, "-{$slug}")) {
-                return $label;
-            }
+        $ids = is_array($optionId) ? $optionId : [$optionId];
+
+        if ($ids === []) {
+            return '—';
         }
 
-        return $optionId;
+        return implode(', ', array_map(static function ($id): string {
+            foreach (self::STYLE_LABELS as $slug => $label) {
+                if (str_ends_with((string) $id, "-{$slug}")) {
+                    return $label;
+                }
+            }
+
+            return (string) $id;
+        }, $ids));
     }
 }

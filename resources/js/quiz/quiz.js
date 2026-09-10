@@ -135,8 +135,8 @@ function initQuiz(root) {
     progress.update(SECTIONS[sectionIndex].title, index + 1, total);
 
     const renderer = question.type === "color-preference" ? renderColorQuestionStep : renderQuestionStep;
-    renderer(els.stepMount, question, answers[question.id], (optionId) => {
-      state.setAnswer(question.id, optionId);
+    renderer(els.stepMount, question, answers[question.id] || [], (optionId) => {
+      state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
       renderStep();
     });
     updateNextButton();
@@ -155,7 +155,7 @@ function initQuiz(root) {
   function updateNextButton() {
     const { step, answers } = state.get();
     const question = QUESTIONS[step];
-    els.nextBtn.disabled = !answers[question.id];
+    els.nextBtn.disabled = !(answers[question.id]?.length > 0);
     els.nextBtn.textContent = step === QUESTIONS.length - 1 ? "Bekijk mijn resultaat" : "Volgende";
   }
 

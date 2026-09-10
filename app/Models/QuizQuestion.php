@@ -12,10 +12,12 @@ class QuizQuestion extends Model
         'title',
         'folder',
         'sort_order',
+        'max_selections',
     ];
 
     protected $casts = [
         'sort_order' => 'integer',
+        'max_selections' => 'integer',
     ];
 
     public function options()

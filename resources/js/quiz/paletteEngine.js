@@ -40,29 +40,32 @@ function isTooSimilarToAny(hex, chosenColors) {
   return chosenColors.some((c) => colorDistance(hex, c.hex) < SIMILAR_THRESHOLD);
 }
 
-function findAnsweredOption(answers, questionId) {
+/** @returns {object[]} alle gekozen opties voor deze vraag (0 tot maxSelections stuks). */
+function findAnsweredOptions(answers, questionId) {
   const question = QUESTIONS.find((item) => item.id === questionId);
-  const optionId = answers?.[questionId];
-  if (!question || !optionId || Array.isArray(optionId)) return null;
-  return question.options.find((option) => option.id === optionId) ?? null;
+  const optionIds = answers?.[questionId];
+  if (!question || !Array.isArray(optionIds)) return [];
+  return optionIds.map((id) => question.options.find((option) => option.id === id)).filter(Boolean);
 }
 
-function chosenPalette(answers) {
-  const id = answers?.colorPreference;
-  if (!id || typeof id !== "string") return null;
-  return PALETTE_OPTIONS.find((palette) => palette.id === id) ?? null;
+/** @returns {object[]} alle gekozen sfeerpaletten (0 tot maxSelections stuks). */
+function chosenPalettes(answers) {
+  const ids = answers?.colorPreference;
+  if (!Array.isArray(ids)) return [];
+  return ids.map((id) => PALETTE_OPTIONS.find((palette) => palette.id === id)).filter(Boolean);
 }
 
 function explicitColorChoices(answers) {
-  const palette = chosenPalette(answers);
-  if (!palette) return [];
-  return palette.colors.map((color) => ({ name: color.name, hex: color.hex, brightness: brightnessOf(color.hex) }));
+  return chosenPalettes(answers).flatMap((palette) =>
+    palette.colors.map((color) => ({ name: color.name, hex: color.hex, brightness: brightnessOf(color.hex) })),
+  );
 }
 
-function questionColorCandidate(answers, questionId) {
-  const option = findAnsweredOption(answers, questionId);
-  if (!option?.colorHex) return null;
-  return { name: option.title, hex: option.colorHex, brightness: brightnessOf(option.colorHex) };
+/** @returns {object[]} kleurkandidaten van alle gekozen opties bij deze vraag (0 tot maxSelections stuks). */
+function questionColorCandidates(answers, questionId) {
+  return findAnsweredOptions(answers, questionId)
+    .filter((option) => option.colorHex)
+    .map((option) => ({ name: option.title, hex: option.colorHex, brightness: brightnessOf(option.colorHex) }));
 }
 
 function styleColorCandidates(primaryStyle) {
@@ -81,14 +84,21 @@ function styleColorCandidates(primaryStyle) {
  */
 function composePersonalPalette(answers, primaryStyle) {
   const explicit = explicitColorChoices(answers);
-  const wallColor = questionColorCandidate(answers, "wallColor");
-  const sofaColor = questionColorCandidate(answers, "sofaMaterial");
-  const floorColor = questionColorCandidate(answers, "floor");
-  const wallFinishColor = questionColorCandidate(answers, "wallFinish");
-  const rugColor = questionColorCandidate(answers, "rug");
+  const wallColors = questionColorCandidates(answers, "wallColor");
+  const sofaColors = questionColorCandidates(answers, "sofaMaterial");
+  const floorColors = questionColorCandidates(answers, "floor");
+  const wallFinishColors = questionColorCandidates(answers, "wallFinish");
+  const rugColors = questionColorCandidates(answers, "rug");
+  // Bij meerdere keuzes op één vraag telt de eerst gekozen kleur het zwaarst voor de vaste
+  // rollen hieronder — alle overige kleuren doen wel mee in de algemene kandidatenpool.
+  const wallColor = wallColors[0] ?? null;
+  const sofaColor = sofaColors[0] ?? null;
+  const floorColor = floorColors[0] ?? null;
+  const wallFinishColor = wallFinishColors[0] ?? null;
+  const rugColor = rugColors[0] ?? null;
   const styleColors = styleColorCandidates(primaryStyle);
   const styleColorsByLuminance = [...styleColors].sort((a, b) => luminance(a.hex) - luminance(b.hex));
-  const allCandidates = [...explicit, wallColor, sofaColor, floorColor, wallFinishColor, rugColor, ...styleColors].filter(Boolean);
+  const allCandidates = [...explicit, ...wallColors, ...sofaColors, ...floorColors, ...wallFinishColors, ...rugColors, ...styleColors].filter(Boolean);
   // Voor stijlen die van nature geen echt lichte kleur hebben (bv. Industrieel), is de
   // "lichtste beschikbare" kleur een eerlijkere Basis dan geforceerd de (donkere) wandkleur.
   const lightestOverall = [...allCandidates].sort((a, b) => luminance(b.hex) - luminance(a.hex))[0];
@@ -162,9 +172,9 @@ function composePersonalPalette(answers, primaryStyle) {
 
 /** Korte, dynamische uitleg boven het kleurenpalet. */
 function buildPaletteExplanation(answers, primaryStyle) {
-  const palette = chosenPalette(answers);
+  const palettes = chosenPalettes(answers);
 
-  if (!palette) {
+  if (palettes.length === 0) {
     return primaryStyle
       ? `Dit kleurenpalet is opgebouwd rond de tinten die passen bij jouw ${primaryStyle.label}-stijl.`
       : "";
@@ -174,7 +184,10 @@ function buildPaletteExplanation(answers, primaryStyle) {
     ? ` Daarom hebben we die sfeer gecombineerd met tinten uit jouw ${primaryStyle.label}-stijl die daar goed bij passen.`
     : "";
 
-  return `Je koos zelf voor de sfeer "${palette.name}".${styleText}`;
+  const sfeerNamen = palettes.map((palette) => `"${palette.name}"`).join(" en ");
+  const sfeerWoord = palettes.length > 1 ? "sferen" : "sfeer";
+
+  return `Je koos zelf voor de ${sfeerWoord} ${sfeerNamen}.${styleText}`;
 }
 
 export { composePersonalPalette, buildPaletteExplanation };

@@ -51,6 +51,7 @@ async function loadRemoteQuizConfig() {
   applyMaterials(config.materials);
   applyAtmosphere(config.atmosphere);
   applyTransitionPhotos(config.transitionPhotos);
+  applyColorPreferenceMaxSelections(config.colorPreferenceMaxSelections);
 }
 
 /**
@@ -66,6 +67,7 @@ function applyQuestions(remoteQuestions) {
     id: question.id,
     section: question.section,
     title: question.title,
+    maxSelections: question.maxSelections ?? 1,
     options: [],
   }));
 
@@ -174,6 +176,20 @@ function applyTransitionPhotos(remotePhotosBySection) {
       section.image = image;
     }
   });
+}
+
+/**
+ * De kleurvoorkeur-vraag staat niet in quiz_questions (zie applyQuestions()), dus haar
+ * maxSelections komt via het aparte quiz_settings-veld colorPreferenceMaxSelections — zie
+ * QuizSetting/QuizPalettesPage.
+ */
+function applyColorPreferenceMaxSelections(maxSelections) {
+  if (!maxSelections) return;
+
+  const colorPreferenceQuestion = QUESTIONS.find((question) => question.type === "color-preference");
+  if (colorPreferenceQuestion) {
+    colorPreferenceQuestion.maxSelections = maxSelections;
+  }
 }
 
 export { loadRemoteQuizConfig };

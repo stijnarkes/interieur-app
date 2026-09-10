@@ -512,6 +512,13 @@ a.btn-primary:hover {
   line-height: 1.5;
 }
 
+.quiz-question-hint {
+  margin: -12px 0 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .option-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -542,6 +549,12 @@ a.btn-primary:hover {
 .option-card.is-selected {
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 3px rgba(183, 121, 77, 0.22);
+}
+
+.option-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .option-image {

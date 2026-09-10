@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\QuizMaterial;
 use App\Models\QuizOption;
 use App\Models\QuizPalette;
+use App\Models\QuizSetting;
 use App\Support\QuizImageManifest;
 use App\Support\QuizStructure;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +35,7 @@ class QuizConfigController extends Controller
                 'id' => $id,
                 'section' => $question['section'],
                 'title' => $question['title'],
+                'maxSelections' => $question['maxSelections'],
             ])
             ->values();
 
@@ -111,6 +113,7 @@ class QuizConfigController extends Controller
             'materials' => $materials,
             'atmosphere' => $atmosphere,
             'transitionPhotos' => $transitionPhotos,
+            'colorPreferenceMaxSelections' => QuizSetting::current()->color_preference_max_selections,
         ]);
     }
 }

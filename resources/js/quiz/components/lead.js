@@ -12,10 +12,12 @@ const EXPECT_ITEMS = [
 function buildMoodboardPayload(answers) {
   return QUESTIONS
     .filter((question) => question.type !== "color-preference")
-    .map((question) => {
-      const optionId = answers[question.id];
-      const option = question.options.find((candidate) => candidate.id === optionId);
-      return option ? { title: option.title, image: option.image } : null;
+    .flatMap((question) => {
+      const optionIds = answers[question.id] ?? [];
+      return optionIds.map((optionId) => {
+        const option = question.options.find((candidate) => candidate.id === optionId);
+        return option ? { title: option.title, image: option.image } : null;
+      });
     })
     .filter(Boolean);
 }

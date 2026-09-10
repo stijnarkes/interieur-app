@@ -7,12 +7,13 @@
  * zien rond een foto die niet exact de tegelverhouding heeft — dat oogt rustiger dan wisselende
  * kleuren per stijl, en sluit aan bij de vaste kaartkleur van de sfeerpaletten-vraag.
  */
-function createOptionCard(option, { questionTitle, selected, onSelect }) {
+function createOptionCard(option, { questionTitle, selected, disabled = false, onSelect }) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "option-card";
   button.classList.toggle("is-selected", selected);
   button.setAttribute("aria-pressed", String(selected));
+  button.disabled = disabled;
 
   const imageWrap = document.createElement("span");
   imageWrap.className = "option-image";

@@ -47,21 +47,22 @@ function renderMoodboard(container, answers) {
     // thuis in de fotocollage — die kleuren komen terug in het kleurenpalet hierboven.
     if (question.type === "color-preference") return;
 
-    const optionId = answers[question.id];
-    if (!optionId) return;
-    const option = question.options.find((candidate) => candidate.id === optionId);
-    if (!option) return;
-    grid.appendChild(createTile(option, question.title, TILE_SIZE[question.id] ?? "small"));
+    const optionIds = answers[question.id] ?? [];
+    optionIds.forEach((optionId) => {
+      const option = question.options.find((candidate) => candidate.id === optionId);
+      if (!option) return;
+      grid.appendChild(createTile(option, question.title, TILE_SIZE[question.id] ?? "small"));
+    });
   });
 
   container.appendChild(grid);
 
   const swatchSourceIds = ["wallColor", "sofaMaterial"];
   const swatches = swatchSourceIds
-    .map((questionId) => {
+    .flatMap((questionId) => {
       const question = QUESTIONS.find((item) => item.id === questionId);
-      const optionId = answers[questionId];
-      return question?.options.find((option) => option.id === optionId);
+      const optionIds = answers[questionId] ?? [];
+      return optionIds.map((optionId) => question?.options.find((option) => option.id === optionId));
     })
     .filter((option) => option?.colorHex);
 

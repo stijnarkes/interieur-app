@@ -4,7 +4,7 @@
  * component dan questionStep.js/optionCard.js qua opmaak (kleurclusters i.p.v. foto's), maar
  * met dezelfde enkele-keuze-interactie (klik = direct gekozen) als de rest van de quiz.
  */
-function renderColorQuestionStep(container, question, selectedOptionId, onSelect) {
+function renderColorQuestionStep(container, question, selectedOptionIds, onSelect) {
   container.innerHTML = "";
 
   const heading = document.createElement("h2");
@@ -19,17 +19,27 @@ function renderColorQuestionStep(container, question, selectedOptionId, onSelect
     container.appendChild(subtitle);
   }
 
+  const maxSelections = question.maxSelections ?? 1;
+  if (maxSelections > 1) {
+    const hint = document.createElement("p");
+    hint.className = "quiz-question-hint";
+    hint.textContent = `Kies er maximaal ${maxSelections}.`;
+    container.appendChild(hint);
+  }
+
   const grid = document.createElement("div");
   grid.className = "palette-option-grid";
 
   question.options.forEach((option) => {
-    const isSelected = option.id === selectedOptionId;
+    const isSelected = selectedOptionIds.includes(option.id);
+    const isDisabled = !isSelected && maxSelections > 1 && selectedOptionIds.length >= maxSelections;
 
     const button = document.createElement("button");
     button.type = "button";
     button.className = "option-card palette-option-card";
     button.classList.toggle("is-selected", isSelected);
     button.setAttribute("aria-pressed", String(isSelected));
+    button.disabled = isDisabled;
 
     const swatches = document.createElement("span");
     swatches.className = "palette-option-swatches";

@@ -279,6 +279,15 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->label('Sectie')
                     ->options(QuizStructure::sectionOptions())
                     ->required(),
+
+                TextInput::make('max_selections')
+                    ->label('Maximum aantal keuzes')
+                    ->helperText('Hoeveel opties mag een bezoeker bij deze vraag tegelijk kiezen? Standaard 1 (één keuze).')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(10)
+                    ->default(1)
+                    ->required(),
             ])
             ->action(function (array $data): void {
                 $nextOrder = (QuizQuestion::where('section', $data['section'])->max('sort_order') ?? 0) + 10;
@@ -289,6 +298,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     'title' => $data['title'],
                     'folder' => null,
                     'sort_order' => $nextOrder,
+                    'max_selections' => $data['max_selections'],
                 ]);
 
                 Notification::make()
@@ -304,7 +314,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         return Action::make('editQuestion')
             ->label('Vraag bewerken')
             ->modalHeading('Vraag bewerken')
-            ->fillForm(fn (array $arguments): array => QuizQuestion::findOrFail($arguments['questionId'])->only(['title', 'section']))
+            ->fillForm(fn (array $arguments): array => QuizQuestion::findOrFail($arguments['questionId'])->only(['title', 'section', 'max_selections']))
             ->form([
                 TextInput::make('title')
                     ->label('Vraagtekst')
@@ -316,6 +326,14 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->options(QuizStructure::sectionOptions())
                     ->required()
                     ->helperText('Verplaats je de vraag naar de andere sectie, dan komt hij daar achteraan te staan.'),
+
+                TextInput::make('max_selections')
+                    ->label('Maximum aantal keuzes')
+                    ->helperText('Hoeveel opties mag een bezoeker bij deze vraag tegelijk kiezen? Standaard 1 (één keuze).')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(10)
+                    ->required(),
             ])
             ->action(function (array $arguments, array $data): void {
                 $question = QuizQuestion::findOrFail($arguments['questionId']);

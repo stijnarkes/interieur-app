@@ -55,6 +55,7 @@ const COLOR_PREFERENCE_QUESTION = {
   type: "color-preference",
   title: "Welke kleurensfeer spreekt jou het meeste aan?",
   subtitle: "Welke combinatie voelt het meest als jij?",
+  maxSelections: 1,
   options: PALETTE_OPTIONS.map((palette) => ({
     id: palette.id,
     title: palette.name,

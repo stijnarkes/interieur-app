@@ -36,7 +36,7 @@ class QuizStructure
      * binnen die sectie. `sort_order` is bewust alleen lokaal (per sectie) betekenisvol —
      * verplaatsen van een vraag raakt daardoor nooit de andere sectie.
      *
-     * @return array<string, array{section: string, sectionTitle: string, title: string, folder: ?string, order: int}>
+     * @return array<string, array{section: string, sectionTitle: string, title: string, folder: ?string, order: int, maxSelections: int}>
      */
     public static function questions(): array
     {
@@ -52,6 +52,7 @@ class QuizStructure
                     'title' => $question->title,
                     'folder' => $question->folder,
                     'order' => $question->sort_order,
+                    'maxSelections' => $question->max_selections,
                 ],
             ])
             ->all();

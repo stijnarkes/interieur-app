@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\QuizPalette;
 use App\Models\QuizPaletteColor;
+use App\Models\QuizSetting;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -49,7 +50,31 @@ class QuizPalettesPage extends Page implements HasActions, HasForms
 
     protected function getHeaderActions(): array
     {
-        return [$this->createPaletteAction()];
+        return [$this->editSettingsAction(), $this->createPaletteAction()];
+    }
+
+    public function editSettingsAction(): Action
+    {
+        return Action::make('editSettings')
+            ->label('Instellingen')
+            ->icon('heroicon-o-cog-6-tooth')
+            ->color('gray')
+            ->modalHeading('Instellingen kleurvoorkeur-vraag')
+            ->fillForm(fn (): array => QuizSetting::current()->only(['color_preference_max_selections']))
+            ->form([
+                TextInput::make('color_preference_max_selections')
+                    ->label('Maximum aantal keuzes')
+                    ->helperText('Hoeveel sfeerpaletten mag een bezoeker bij de kleurvoorkeur-vraag tegelijk kiezen? Standaard 1 (één keuze).')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(10)
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                QuizSetting::current()->update($data);
+
+                Notification::make()->title('Instellingen bijgewerkt')->success()->send();
+            });
     }
 
     /** @return \Illuminate\Support\Collection<int, QuizPalette> in sort_order, met kleuren erin geladen */

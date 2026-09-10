@@ -10,9 +10,10 @@ function findOption(questionId, optionId) {
   return question?.options.find((option) => option.id === optionId) ?? null;
 }
 
+/** answers[questionId] is een array van gekozen option-id's (ook bij max=1) — zie state.js. */
 function getSelectedOptions(answers) {
   return Object.entries(answers)
-    .map(([questionId, optionId]) => findOption(questionId, optionId))
+    .flatMap(([questionId, optionIds]) => (optionIds ?? []).map((optionId) => findOption(questionId, optionId)))
     .filter(Boolean);
 }
 
