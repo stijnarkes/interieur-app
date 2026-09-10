@@ -1272,8 +1272,10 @@ a.btn-primary:hover {
     padding-top: 18px;
   }
 
+  /* Op smalle telefoonschermen worden de foto's in 2 kolommen te klein om goed te beoordelen —
+     1 kolom houdt elke optiefoto groot genoeg. */
   .option-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .moodboard-grid {
