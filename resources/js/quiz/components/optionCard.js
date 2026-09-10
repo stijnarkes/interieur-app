@@ -30,13 +30,15 @@ function createOptionCard(option, { questionTitle, selected, disabled = false, o
 
   imageWrap.appendChild(img);
 
+  // Kind van imageWrap (i.p.v. rechtstreeks van de knop) zodat het vinkje altijd op de hoek van
+  // de fóto blijft zitten, ongeacht hoeveel padding .option-card rond de afbeelding heeft.
   const check = document.createElement("span");
   check.className = "option-check";
   check.textContent = "✓";
   check.setAttribute("aria-hidden", "true");
+  imageWrap.appendChild(check);
 
   button.appendChild(imageWrap);
-  button.appendChild(check);
 
   button.addEventListener("click", () => onSelect(option.id));
 
