@@ -565,16 +565,25 @@ a.btn-primary:hover {
   /* Zelfde rustige kaartkleur als .option-card, zodat elke tegel — ook rond een foto die
      object-fit:contain niet helemaal vult — dezelfde achtergrond toont. */
   background: #fffaf5;
-  /* Ademruimte tussen de foto zelf en de rand van dit vlak (i.p.v. tussen het vlak en de
-     kaartrand) — de foto vult dus niet meer tot in de hoeken. */
-  padding: 20px;
   overflow: hidden;
   position: relative;
 }
 
+/*
+ * De foto zelf krijgt haar ademruimte via position:absolute + expliciete afmetingen i.p.v. via
+ * padding op .option-image + width/height:100% op de foto in de normale flow — die laatste
+ * combinatie (een vervangen element met percentage-afmetingen, binnen een ouder wiens eigen
+ * hoogte via aspect-ratio van diezelfde flow afhangt) bleek op iOS Safari de foto niet verticaal
+ * te centreren (wél links/rechts, niet boven/onder — de foto zakte naar de onderrand). Door de
+ * foto uit de normale flow te halen (position:absolute) hangt de afmeting van .option-image niet
+ * meer af van de foto, wat die knoop doorhakt.
+ */
 .option-image img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: calc(100% - 40px);
+  height: calc(100% - 40px);
   object-fit: contain;
   display: block;
   transition: transform 0.4s ease;
