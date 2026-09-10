@@ -529,7 +529,7 @@ a.btn-primary:hover {
   background: #fffaf5;
   border: 1px solid #dfd0c0;
   border-radius: 14px;
-  padding: 20px;
+  padding: 0;
   cursor: pointer;
   display: grid;
   text-align: left;
@@ -537,6 +537,7 @@ a.btn-primary:hover {
   font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.25s ease;
   position: relative;
+  overflow: hidden;
 }
 
 .option-card:hover {
@@ -564,7 +565,9 @@ a.btn-primary:hover {
   /* Zelfde rustige kaartkleur als .option-card, zodat elke tegel — ook rond een foto die
      object-fit:contain niet helemaal vult — dezelfde achtergrond toont. */
   background: #fffaf5;
-  border-radius: 10px;
+  /* Ademruimte tussen de foto zelf en de rand van dit vlak (i.p.v. tussen het vlak en de
+     kaartrand) — de foto vult dus niet meer tot in de hoeken. */
+  padding: 20px;
   overflow: hidden;
   position: relative;
 }
@@ -615,8 +618,10 @@ a.btn-primary:hover {
 
 .option-check {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  /* 16px vanaf de fóto-hoek (dus + de padding van .option-image) — anders zou het vinkje los in
+     de nieuwe witruimte rond de foto komen te hangen. */
+  top: 36px;
+  right: 36px;
   width: 26px;
   height: 26px;
   border-radius: 50%;
