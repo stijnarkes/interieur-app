@@ -1,4 +1,3 @@
-import { QUESTIONS } from "../data.js";
 import { createCheckIcon } from "./checkIcon.js";
 
 const EXPECT_ITEMS = [
@@ -7,58 +6,22 @@ const EXPECT_ITEMS = [
   "Een persoonlijk moodboard en interieuradvies",
 ];
 
-/** De productfoto's die de gebruiker koos (voor de moodboard-sectie in de PDF/e-mail). */
-function buildMoodboardPayload(answers) {
-  return QUESTIONS
-    .flatMap((question) => {
-      const optionIds = answers[question.id] ?? [];
-      return optionIds.map((optionId) => {
-        const option = question.options.find((candidate) => candidate.id === optionId);
-        return option ? { title: option.title, image: option.image } : null;
-      });
-    })
-    .filter(Boolean);
-}
-
-/**
- * "Jouw kleurenpalet" in de PDF/e-mail toont voortaan gewoon het vaste palet van de winnende
- * woonstijl (styleProfiles.js) — geen apart samengesteld persoonlijk palet meer, sinds de
- * kleurvoorkeur-vraag is verwijderd (bezoekers vonden het lastig om daar zelf uit te kiezen).
- */
-function buildColorExplanation(primaryStyle) {
-  return primaryStyle
-    ? `Dit kleurenpalet is opgebouwd rond de tinten die passen bij jouw ${primaryStyle.label}-stijl.`
-    : "";
-}
-
-/** Alleen de velden die de PDF/e-mail nodig hebben — geen key/slug/productTags. */
-function buildPrimaryStylePayload(primaryStyle) {
-  if (!primaryStyle) return null;
-  const { label, subtitle, longDescription, traitsIntro, traits, heroImage, colorTip, materials, materialsTip, furnitureAdvice, recipe, avoid } = primaryStyle;
-  return { label, subtitle, longDescription, traitsIntro, traits, heroImage, colorTip, materials, materialsTip, furnitureAdvice, recipe, avoid };
-}
-
-function renderLeadForm(container, { result, answers }) {
-  /** Gedeeld met de "Opnieuw versturen"-knop in de successtatus — één plek voor het verzoek. */
+function renderLeadForm(container, { result }) {
+  /**
+   * Gedeeld met de "Opnieuw versturen"-knop in de successtatus. Stuurt alleen de verwijzing naar
+   * het al server-side berekende resultaat (resultUuid) mee — de PDF-inhoud zelf bouwt
+   * QuizLeadController op uit QuizResult/StyleProfile, niet meer uit client-aangeleverde velden.
+   */
   async function submitLead({ name, email, marketingOptIn }) {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
     const response = await fetch("/api/quiz-lead", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
       body: JSON.stringify({
+        resultUuid: result.resultUuid,
         name,
         email,
         marketingOptIn,
-        resultName: result.resultName,
-        description: result.description,
-        topStyles: result.topStyles,
-        traits: result.traits,
-        primaryStyle: buildPrimaryStylePayload(result.primaryStyle),
-        secondaryStyleLabel: result.secondaryStyle?.label ?? null,
-        personalPalette: result.primaryStyle?.colors ?? [],
-        colorExplanation: buildColorExplanation(result.primaryStyle),
-        moodboard: buildMoodboardPayload(answers),
-        answers,
       }),
     });
 

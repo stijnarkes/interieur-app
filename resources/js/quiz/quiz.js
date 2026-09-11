@@ -1,5 +1,5 @@
 import { QUESTIONS, SECTIONS } from "./data.js";
-import { composeResult } from "./scoring.js";
+import { fetchQuizResult } from "./resultApi.js";
 import { createQuizState } from "./state.js";
 import { createSectionStepper } from "./components/sectionStepper.js";
 import { createQuizProgress } from "./components/quizProgress.js";
@@ -162,18 +162,50 @@ function initQuiz(root) {
     showScreen("start");
   }
 
-  function renderResult() {
-    const { answers } = state.get();
-    const result = composeResult(answers);
-    renderStyleResult(els.styleResultMount, result);
-    renderReportTeaser(els.reportTeaserMount, { result, answers });
-    renderLeadForm(els.leadMount, { result, answers });
-    // stepperSections.length (i.p.v. SECTIONS.length) ligt voorbij alle echte indexen, dus ook
-    // "Jouw woonstijl" zelf krijgt hierdoor is-done (groen) in plaats van is-active (bruin) — de
-    // hele test is immers afgerond, er is geen "huidige stap" meer.
+  /**
+   * Toont eerst een laadstatus in het heldenblok, haalt dan het servergeberekende resultaat op
+   * (zie resultApi.js) en rendert pas daarna de rest van de resultatenpagina. Lukt het ophalen
+   * niet, dan krijgt de bezoeker een foutmelding met een "opnieuw proberen"-knop i.p.v. een lege
+   * of kapotte pagina — zelfde aanpak als app.js hanteert voor het laden van /api/quiz-config.
+   */
+  async function renderResult() {
     stepper.update(stepperSections.length, QUESTIONS.length);
     state.complete();
     showScreen("result");
+
+    els.styleResultMount.innerHTML = "";
+    els.reportTeaserMount.innerHTML = "";
+    els.leadMount.innerHTML = "";
+
+    const loading = document.createElement("p");
+    loading.className = "section-intro";
+    loading.textContent = "Even geduld, we stellen je persoonlijke resultaat samen...";
+    els.styleResultMount.appendChild(loading);
+
+    const { answers } = state.get();
+
+    let result;
+    try {
+      result = await fetchQuizResult(answers);
+    } catch (error) {
+      els.styleResultMount.innerHTML = "";
+      const errorMessage = document.createElement("p");
+      errorMessage.className = "section-intro";
+      errorMessage.textContent = "Je resultaat kon niet worden opgehaald. Probeer het opnieuw.";
+      els.styleResultMount.appendChild(errorMessage);
+
+      const retryBtn = document.createElement("button");
+      retryBtn.type = "button";
+      retryBtn.className = "btn btn-primary";
+      retryBtn.textContent = "Opnieuw proberen";
+      retryBtn.addEventListener("click", renderResult);
+      els.styleResultMount.appendChild(retryBtn);
+      return;
+    }
+
+    renderStyleResult(els.styleResultMount, result);
+    renderReportTeaser(els.reportTeaserMount, { result });
+    renderLeadForm(els.leadMount, { result });
   }
 
   els.startBtn.addEventListener("click", () => {

@@ -123,6 +123,14 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        /** AI-fouten/validatiefouten uit de quiz-adviesgeneratie (zie App\Services\AI\QuizAdviceGenerator) — apart kanaal zodat dit niet verdrinkt in de algemene logs. */
+        'quiz_ai' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/quiz-ai.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],

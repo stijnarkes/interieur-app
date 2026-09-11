@@ -10,6 +10,11 @@ class QuizOptionStyle extends Model
     protected $fillable = [
         'option_id',
         'style_key',
+        'points',
+    ];
+
+    protected $casts = [
+        'points' => 'integer',
     ];
 
     public function option()

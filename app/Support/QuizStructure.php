@@ -19,6 +19,13 @@ class QuizStructure
         'objects' => ['id' => 'objects', 'title' => 'Wonen & inrichting'],
     ];
 
+    /** @var array<string, string> ruimte-key => label, voor Filament Select-opties op een vraag */
+    public const ROOMS = [
+        'woonkamer' => 'Woonkamer',
+        'eethoek' => 'Eethoek',
+        'keuken' => 'Keuken',
+    ];
+
     /** camelCase key => {label, slug} — zelfde 8 stijlen als STYLE_PROFILES in styleProfiles.js. */
     private const STYLES = [
         'hotelLuxe' => ['label' => 'Hotel luxe', 'slug' => 'hotel-luxe'],
@@ -36,7 +43,7 @@ class QuizStructure
      * binnen die sectie. `sort_order` is bewust alleen lokaal (per sectie) betekenisvol —
      * verplaatsen van een vraag raakt daardoor nooit de andere sectie.
      *
-     * @return array<string, array{section: string, sectionTitle: string, title: string, folder: ?string, order: int, maxSelections: int, imageDisplayMode: string}>
+     * @return array<string, array{section: string, sectionTitle: string, room: ?string, title: string, folder: ?string, order: int, maxSelections: int, imageDisplayMode: string}>
      */
     public static function questions(): array
     {
@@ -49,6 +56,7 @@ class QuizStructure
                 $question->question_key => [
                     'section' => $question->section,
                     'sectionTitle' => self::SECTIONS[$question->section]['title'] ?? $question->section,
+                    'room' => $question->room,
                     'title' => $question->title,
                     'folder' => $question->folder,
                     'order' => $question->sort_order,
@@ -66,6 +74,18 @@ class QuizStructure
             'contain' => 'Passend (met rand, niets bijgesneden)',
             'cover' => 'Vullend (tegel vullen, randen bijsnijden)',
         ];
+    }
+
+    /** @return array<string, string> ruimte-key => label, voor Filament Select-opties */
+    public static function roomOptions(): array
+    {
+        return self::ROOMS;
+    }
+
+    /** @return array<int, string> alle 8 vaste stijl-keys, o.a. voor het seeden van style_profiles */
+    public static function styleKeys(): array
+    {
+        return array_keys(self::STYLES);
     }
 
     public static function question(string $questionId): ?array

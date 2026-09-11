@@ -237,6 +237,27 @@ body {
     color: #4a3526;
 }
 
+.page-break {
+    page-break-before: always;
+}
+
+.room-advice-item {
+    margin-bottom: 14px;
+}
+
+.room-advice-title {
+    font-weight: bold;
+    color: #9f6239;
+    font-size: 9.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+}
+
+.room-advice-text {
+    color: #4a3526;
+}
+
 .footer {
     padding: 20px 44px 0;
     color: #7a5c45;
@@ -359,7 +380,7 @@ body {
 @endif
 
 @if (!empty($primaryStyle['furnitureAdvice']['items']))
-<div class="section">
+<div class="section page-break">
     <div class="section-title">Kies meubels met deze uitstraling</div>
     @if (!empty($primaryStyle['furnitureAdvice']['intro']))
     <div class="section-intro">{{ $primaryStyle['furnitureAdvice']['intro'] }}</div>
@@ -402,6 +423,23 @@ body {
         </tr>
         @endforeach
     </table>
+</div>
+@endif
+
+@php
+    $roomLabels = ['woonkamer' => 'Woonkamer', 'eethoek' => 'Eethoek', 'keuken' => 'Keuken'];
+    $roomAdvice = array_filter($result['roomAdvice'] ?? [], fn ($text) => ! empty($text));
+@endphp
+
+@if (!empty($roomAdvice))
+<div class="section">
+    <div class="section-title">Zo komt jouw stijl terug in huis</div>
+    @foreach ($roomAdvice as $roomKey => $text)
+    <div class="room-advice-item">
+        <div class="room-advice-title">{{ $roomLabels[$roomKey] ?? $roomKey }}</div>
+        <div class="room-advice-text">{{ $text }}</div>
+    </div>
+    @endforeach
 </div>
 @endif
 

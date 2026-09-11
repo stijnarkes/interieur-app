@@ -3,93 +3,44 @@
 namespace App\Http\Controllers;
 
 use App\Mail\QuizResultMail;
+use App\Models\QuizOption;
+use App\Models\QuizResult;
+use App\Models\StyleProfile;
 use App\Models\Submission;
+use App\Services\AI\QuizAdviceGenerator;
 use App\Services\QuizResultPdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
+/**
+ * Verwerkt het leadformulier. Bouwt de PDF-/e-mailinhoud voortaan zelf op uit het al server-side
+ * berekende QuizResult (zie QuizResultController/QuizScoringService) + StyleProfile, i.p.v. een
+ * kant-en-klare resultaat-JSON van de client te vertrouwen — dat laatste liet een bezoeker in
+ * theorie zelf bepalen welke stijl/inhoud in z'n eigen PDF terechtkwam.
+ */
 class QuizLeadController extends Controller
 {
-    public function handle(Request $request): JsonResponse
+    public function handle(Request $request, QuizAdviceGenerator $generator): JsonResponse
     {
-        // Afbeeldingspaden/-URL's mogen alleen naar de eigen interieur-fotomap wijzen — dit
-        // voorkomt dat iemand hier een willekeurig bestandspad (bv. met "../") in stopt, dat later
-        // door de PDF-generator gelezen zou worden (padtraversal). Twee vormen zijn toegestaan:
-        // het oude root-relatieve pad (bestaande inzendingen, en lokaal zolang QUIZ_IMAGES_DISK op
-        // de standaard lokale disk staat) en een volledige URL (zodra afbeeldingen op S3/een CDN
-        // staan, zie QuizConfigController). Een afwijkende host in die URL levert geen extra risico
-        // op: QuizImageManifest::contentsFor() leest hoe dan ook alleen van de eigen, geconfigureerde
-        // disk, dus een gemanipuleerde host resulteert simpelweg in "niet gevonden".
-        $imagePathRule = 'regex:/^(\/images\/interior\/[a-zA-Z0-9\/_-]+\.(webp|jpe?g|png)|https?:\/\/[a-zA-Z0-9.-]+(:\d+)?\/[a-zA-Z0-9\/_-]*images\/interior\/[a-zA-Z0-9\/_-]+\.(webp|jpe?g|png)(\?[a-zA-Z0-9=&._~-]*)?)$/';
-
         $data = $request->validate([
+            'resultUuid' => 'required|uuid|exists:quiz_results,uuid',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'marketingOptIn' => 'nullable|boolean',
-            'resultName' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'topStyles' => 'nullable|array',
-            'traits' => 'nullable|array',
-            // Elk subveld van primaryStyle heeft hier een eigen regel nodig — Laravel's
-            // validate() laat anders alléén de expliciet genoemde sleutels door en gooit de
-            // rest van de array stilzwijgend weg (dit was de oorzaak van een bug waarbij de
-            // PDF/e-mail alleen "materials" ontving en al het andere kwijtraakte).
-            'primaryStyle' => 'nullable|array',
-            'primaryStyle.label' => 'nullable|string|max:255',
-            'primaryStyle.subtitle' => 'nullable|string|max:255',
-            'primaryStyle.longDescription' => 'nullable|string',
-            'primaryStyle.traitsIntro' => 'nullable|string',
-            'primaryStyle.traits' => 'nullable|array',
-            'primaryStyle.traits.*' => 'nullable|string|max:255',
-            'primaryStyle.heroImage' => ['nullable', 'string', $imagePathRule],
-            'primaryStyle.colorTip' => 'nullable|string',
-            'primaryStyle.materials' => 'nullable|array',
-            'primaryStyle.materials.*.name' => 'nullable|string|max:255',
-            'primaryStyle.materials.*.image' => ['nullable', 'string', $imagePathRule],
-            'primaryStyle.materialsTip' => 'nullable|string',
-            'primaryStyle.furnitureAdvice' => 'nullable|array',
-            'primaryStyle.furnitureAdvice.intro' => 'nullable|string',
-            'primaryStyle.furnitureAdvice.items' => 'nullable|array',
-            'primaryStyle.furnitureAdvice.items.*' => 'nullable|string|max:255',
-            'primaryStyle.recipe' => 'nullable|array',
-            'primaryStyle.recipe.*.label' => 'nullable|string|max:255',
-            'primaryStyle.recipe.*.value' => 'nullable|string|max:500',
-            'primaryStyle.avoid' => 'nullable|string',
-            'secondaryStyleLabel' => 'nullable|string|max:255',
-            'colorExplanation' => 'nullable|string|max:1000',
-            'personalPalette' => 'nullable|array',
-            'personalPalette.*.name' => 'nullable|string|max:255',
-            'personalPalette.*.hex' => 'nullable|string|regex:/^#[0-9a-fA-F]{3,8}$/',
-            'moodboard' => 'nullable|array',
-            'moodboard.*.title' => 'nullable|string|max:255',
-            'moodboard.*.image' => ['nullable', 'string', $imagePathRule],
-            'answers' => 'nullable|array',
         ]);
 
-        $topStyleLabel = $data['topStyles'][0]['label'] ?? $data['resultName'];
+        $quizResult = QuizResult::where('uuid', $data['resultUuid'])->firstOrFail();
 
         $submission = Submission::create([
-            'style' => $topStyleLabel,
-            'quiz_answers' => $data['answers'] ?? [],
-            'quiz_result' => [
-                'resultName' => $data['resultName'],
-                'description' => $data['description'] ?? '',
-                'topStyles' => $data['topStyles'] ?? [],
-                'traits' => $data['traits'] ?? [],
-                // Rijke inhoud voor de PDF/e-mail, zodat die exact aansluit bij de
-                // resultatenpagina — zie QuizResultPdfService/pdf/quiz-result.blade.php.
-                'primaryStyle' => $data['primaryStyle'] ?? null,
-                'secondaryStyleLabel' => $data['secondaryStyleLabel'] ?? null,
-                'colorExplanation' => $data['colorExplanation'] ?? null,
-                'personalPalette' => $data['personalPalette'] ?? [],
-                'moodboard' => $data['moodboard'] ?? [],
-            ],
+            'quiz_result_id' => $quizResult->id,
+            'style' => StyleProfile::forStyle($quizResult->primary_style)?->label ?? $quizResult->primary_style,
+            'quiz_answers' => $quizResult->answers,
+            'quiz_result' => $this->buildPdfContent($quizResult, $generator),
             'name' => $data['name'] ?? null,
             'email' => $data['email'],
             'email_opt_in' => $request->boolean('marketingOptIn', false),
-            'result_id' => (string) Str::uuid(),
+            'result_id' => $quizResult->uuid,
             'result_generated' => true,
         ]);
 
@@ -109,5 +60,84 @@ class QuizLeadController extends Controller
         }
 
         return response()->json(['message' => 'Je advies is verstuurd naar je e-mailadres.']);
+    }
+
+    /**
+     * Bouwt exact de vorm die resources/views/pdf/quiz-result.blade.php verwacht, maar dan
+     * volledig uit server-side data (QuizResult/StyleProfile/QuizOption) i.p.v. client-JSON.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildPdfContent(QuizResult $quizResult, QuizAdviceGenerator $generator): array
+    {
+        $primary = $quizResult->primary_style ? StyleProfile::forStyle($quizResult->primary_style) : null;
+        $secondary = $quizResult->secondary_style ? StyleProfile::forStyle($quizResult->secondary_style) : null;
+
+        $advice = $generator->generate($quizResult, 'pdf_full');
+
+        return [
+            'resultName' => $advice['comboName'],
+            'description' => $advice['intro'],
+            // roomAdvice wordt hier al meegegeven zodat een toekomstige PDF-vernieuwing (het
+            // "Zo komt jouw stijl terug in huis"-blok) ook voor nu al verstuurde inzendingen
+            // beschikbaar is, zonder dat oude Submissions opnieuw gegenereerd hoeven te worden.
+            'roomAdvice' => $advice['roomAdvice'] ?? null,
+            'primaryStyle' => $primary ? [
+                'label' => $primary->label,
+                'subtitle' => $primary->subtitle,
+                'longDescription' => $primary->long_description,
+                'traitsIntro' => $primary->traits_intro,
+                'traits' => $primary->core_traits,
+                'heroImage' => $primary->hero_image,
+                'colorTip' => $primary->color_tip,
+                'materials' => $primary->materials,
+                'materialsTip' => $primary->materials_tip,
+                'furnitureAdvice' => $primary->furniture_shapes,
+                'recipe' => $primary->recipe,
+                'avoid' => implode(' ', $primary->wat_past_minder_goed ?? []),
+            ] : null,
+            'secondaryStyleLabel' => $secondary?->label,
+            'personalPalette' => $primary?->base_colors ?? [],
+            'colorExplanation' => $primary
+                ? "Dit kleurenpalet is opgebouwd rond de tinten die passen bij jouw {$primary->label}-stijl."
+                : '',
+            'moodboard' => $this->moodboardFor($quizResult),
+        ];
+    }
+
+    /**
+     * Toont bewust alleen daadwerkelijk gekozen producten (nooit verzonnen/generieke beelden) —
+     * geordend op relevantie: foto's die aan de primaire stijl bijdragen eerst, dan secundair, dan
+     * tertiair, dan de rest. Zo krijgt de basis-stijl de meeste visuele nadruk in het moodboard
+     * zonder dat er favoritisme in de puntentelling zelf zit.
+     *
+     * @return array<int, array{title: string, image: string}>
+     */
+    private function moodboardFor(QuizResult $quizResult): array
+    {
+        $optionSlugs = collect($quizResult->answers)->flatten()->unique()->values()->all();
+        $priority = array_values(array_filter([$quizResult->primary_style, $quizResult->secondary_style, $quizResult->tertiary_style]));
+
+        return QuizOption::query()
+            ->whereIn('option_slug', $optionSlugs)
+            ->with('styleLinks')
+            ->get()
+            ->sortBy(function (QuizOption $option) use ($priority): int {
+                $optionStyles = $option->styleKeys();
+
+                foreach ($priority as $rank => $styleKey) {
+                    if (in_array($styleKey, $optionStyles, true)) {
+                        return $rank;
+                    }
+                }
+
+                return count($priority);
+            })
+            ->map(fn (QuizOption $option): array => [
+                'title' => $option->title,
+                'image' => $option->publicImageUrl(),
+            ])
+            ->values()
+            ->all();
     }
 }

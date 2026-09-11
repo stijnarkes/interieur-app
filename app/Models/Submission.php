@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Submission extends Model
 {
     protected $fillable = [
+        'quiz_result_id',
         'style',
         'quiz_answers',
         'quiz_result',
@@ -20,6 +21,11 @@ class Submission extends Model
         'email_sent_at',
         'email_error',
     ];
+
+    public function quizResult()
+    {
+        return $this->belongsTo(QuizResult::class);
+    }
 
     protected function casts(): array
     {

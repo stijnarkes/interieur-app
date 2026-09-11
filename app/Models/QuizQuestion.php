@@ -9,6 +9,7 @@ class QuizQuestion extends Model
     protected $fillable = [
         'question_key',
         'section',
+        'room',
         'title',
         'folder',
         'sort_order',

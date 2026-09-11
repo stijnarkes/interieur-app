@@ -38,26 +38,50 @@ class QuizOption extends Model
         return $this->hasMany(QuizOptionStyle::class, 'option_id');
     }
 
-    /** @return array<int, string> stijl-keys waar deze optie punten aan geeft (zie scoring.js). */
+    public function traitLinks()
+    {
+        return $this->hasMany(QuizOptionTrait::class, 'option_id');
+    }
+
+    /** @return array<int, string> stijl-keys waar deze optie punten aan geeft (zie QuizScoringService). */
     public function styleKeys(): array
     {
         return $this->styleLinks->pluck('style_key')->all();
     }
 
-    /**
-     * Vervangt de gekoppelde stijlen door precies `$styleKeys` — gebruikt door
-     * QuizOptionsPage's multi-select in plaats van het oude, enkelvoudige `primary_style`.
-     *
-     * @param  array<int, string>  $styleKeys
-     */
-    public function syncStyles(array $styleKeys): void
+    /** @return array<string, int> stijl-key => punten, zie QuizScoringService::compute(). */
+    public function stylePoints(): array
     {
-        $styleKeys = array_values(array_unique($styleKeys));
+        return $this->styleLinks->pluck('points', 'style_key')->all();
+    }
 
-        $this->styleLinks()->whereNotIn('style_key', $styleKeys)->delete();
+    /**
+     * @param  array<string, int>  $stylePoints  stijl-key => punten (bv. ['japandi' => 3, 'natuurlijk' => 1])
+     */
+    public function syncStylesWithPoints(array $stylePoints): void
+    {
+        $this->styleLinks()->whereNotIn('style_key', array_keys($stylePoints))->delete();
 
-        foreach ($styleKeys as $styleKey) {
-            $this->styleLinks()->firstOrCreate(['style_key' => $styleKey]);
+        foreach ($stylePoints as $styleKey => $points) {
+            $this->styleLinks()->updateOrCreate(['style_key' => $styleKey], ['points' => $points]);
+        }
+    }
+
+    /** @return array<string, int> trait-key => gewicht. */
+    public function traitWeights(): array
+    {
+        return $this->traitLinks->pluck('weight', 'trait_id')->all();
+    }
+
+    /**
+     * @param  array<int, int>  $traitWeights  trait_id => gewicht
+     */
+    public function syncTraits(array $traitWeights): void
+    {
+        $this->traitLinks()->whereNotIn('trait_id', array_keys($traitWeights))->delete();
+
+        foreach ($traitWeights as $traitId => $weight) {
+            $this->traitLinks()->updateOrCreate(['trait_id' => $traitId], ['weight' => $weight]);
         }
     }
 

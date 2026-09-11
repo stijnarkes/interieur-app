@@ -1,12 +1,13 @@
 import { QUESTIONS, SECTIONS } from "./data.js";
-import { STYLE_PROFILES } from "./styleProfiles.js";
 
 /**
- * Haalt de admin-bewerkbare inhoud (vragen/opties/materialen) op bij /api/quiz-config en muteert
- * de bestaande QUESTIONS/STYLE_PROFILES in place — nooit de exports zelf herschrijven.
- * ES-module-bindings zijn gedeelde objectreferenties, dus elke consument (scoring.js,
- * questionStep.js, optionCard.js, materialsSection.js) leest deze wijziging automatisch mee,
- * zonder zelf aangepast te hoeven worden.
+ * Haalt de admin-bewerkbare inhoud (vragen/opties) op bij /api/quiz-config en muteert de
+ * bestaande QUESTIONS in place — nooit de export zelf herschrijven. ES-module-bindings zijn
+ * gedeelde objectreferenties, dus elke consument (questionStep.js, optionCard.js) leest deze
+ * wijziging automatisch mee, zonder zelf aangepast te hoeven worden. Stijlinhoud (materialen,
+ * sfeerfoto's, adviesteksten) komt sinds de servergestuurde resultaatberekening niet meer via
+ * deze route de klant-quiz binnen — zie QuizResultController/QuizScoringService, die dat direct
+ * uit de database (style_profiles) leest.
  *
  * Bij een falende fetch (ook na de automatische retry hieronder, met een ruimer tweede
  * tijdslimiet voor het geval de server net wakker moest worden na een stille periode) valt de
@@ -50,8 +51,6 @@ async function loadRemoteQuizConfig() {
   // applyOptions() vult die vervolgens.
   applyQuestions(config.questions);
   applyOptions(config.options);
-  applyMaterials(config.materials);
-  applyAtmosphere(config.atmosphere);
   applyTransitionPhotos(config.transitionPhotos);
 
   return true;
@@ -104,40 +103,6 @@ function applyOptions(remoteOptions) {
     if (!byQuestion.has(question.id)) return;
 
     question.options = byQuestion.get(question.id);
-  });
-}
-
-/**
- * Vervangt `materials` per stijl (zie "Materialen die bij jou passen" op de resultatenpagina)
- * door wat de admin daar per stijl voor heeft staan — zie ImageManagerPage. Een stijl zonder
- * eigen tegenhanger in de respons (bv. de fetch bevat toevallig geen rijen voor die stijl)
- * behoudt gewoon de statische materialen uit styleProfiles.js.
- */
-function applyMaterials(remoteMaterialsByStyle) {
-  if (!remoteMaterialsByStyle || typeof remoteMaterialsByStyle !== "object") return;
-
-  STYLE_PROFILES.forEach((style) => {
-    const materials = remoteMaterialsByStyle[style.key];
-    if (Array.isArray(materials) && materials.length > 0) {
-      style.materials = materials;
-    }
-  });
-}
-
-/**
- * Vervangt de sfeerfoto (hero op de resultatenpagina) per stijl door de echte, disk-onafhankelijke
- * URL uit de API — zonder dit zou styleProfiles.js's hardcoded `/images/interior/atmosphere/...`-pad
- * ervan uitgaan dat die foto's altijd onder public/ van deze site staan, wat niet meer klopt zodra
- * de opslag naar S3 verhuist (zie QuizImageManifest).
- */
-function applyAtmosphere(remoteAtmosphereByStyle) {
-  if (!remoteAtmosphereByStyle || typeof remoteAtmosphereByStyle !== "object") return;
-
-  STYLE_PROFILES.forEach((style) => {
-    const heroImage = remoteAtmosphereByStyle[style.key];
-    if (heroImage) {
-      style.heroImage = heroImage;
-    }
   });
 }
 

@@ -1,7 +1,11 @@
 import { createImageTile } from "./imageTile.js";
 
-/** Hero bovenaan de resultatenpagina: de belangrijkste uitslag, direct zichtbaar boven de fold. */
-function renderResultHero(container, { primaryStyle, secondaryStyle }) {
+/**
+ * Hero bovenaan de resultatenpagina — toont voortaan de dynamische stijlcombinatie (bv. "Japandi
+ * met een Scandinavisch-invloed") i.p.v. alleen de naam van de winnende stijl, plus de kernwoorden
+ * (dominante eigenschappen) als chips en de drie lagen basis/invloed/accent zichtbaar naast elkaar.
+ */
+function renderResultHero(container, { comboName, intro, primaryStyle, secondaryStyle, tertiaryStyle, keywordChips }) {
   const hero = document.createElement("section");
   hero.className = "result-card result-hero";
 
@@ -10,33 +14,48 @@ function renderResultHero(container, { primaryStyle, secondaryStyle }) {
 
   const eyebrow = document.createElement("p");
   eyebrow.className = "result-hero-eyebrow";
-  eyebrow.textContent = "Jouw woonstijl is";
+  eyebrow.textContent = "Jouw persoonlijke woonstijl";
   copy.appendChild(eyebrow);
 
   const heading = document.createElement("h1");
   heading.className = "quiz-result-name";
-  heading.textContent = primaryStyle?.label ?? "Jouw persoonlijke woonstijl";
+  heading.textContent = comboName ?? primaryStyle?.label ?? "Jouw persoonlijke woonstijl";
   copy.appendChild(heading);
 
   const description = document.createElement("p");
   description.className = "section-intro";
-  description.textContent = primaryStyle?.longDescription ?? "";
+  description.textContent = intro ?? "";
   copy.appendChild(description);
+
+  if (keywordChips?.length) {
+    const chips = document.createElement("div");
+    chips.className = "result-hero-chips";
+    keywordChips.forEach((label) => {
+      const chip = document.createElement("span");
+      chip.className = "result-hero-chip";
+      chip.textContent = label;
+      chips.appendChild(chip);
+    });
+    copy.appendChild(chips);
+  }
 
   const matches = document.createElement("div");
   matches.className = "result-hero-matches";
 
-  const primaryMatch = document.createElement("div");
-  primaryMatch.className = "result-match result-match--primary";
-  primaryMatch.innerHTML = `<span class="result-match-label">Beste match</span><span class="result-match-value">${primaryStyle?.label ?? "-"}</span>`;
-  matches.appendChild(primaryMatch);
+  const layers = [
+    { style: primaryStyle, label: "Basis", className: "result-match--primary" },
+    { style: secondaryStyle, label: "Invloed", className: "result-match--secondary" },
+    { style: tertiaryStyle, label: "Accent", className: "result-match--tertiary" },
+  ];
 
-  if (secondaryStyle) {
-    const secondaryMatch = document.createElement("div");
-    secondaryMatch.className = "result-match result-match--secondary";
-    secondaryMatch.innerHTML = `<span class="result-match-label">Past ook goed bij jou</span><span class="result-match-value">${secondaryStyle.label}</span>`;
-    matches.appendChild(secondaryMatch);
-  }
+  layers
+    .filter((layer) => layer.style)
+    .forEach(({ style, label, className }) => {
+      const match = document.createElement("div");
+      match.className = `result-match ${className}`;
+      match.innerHTML = `<span class="result-match-label">${label}</span><span class="result-match-value">${style.label}</span>`;
+      matches.appendChild(match);
+    });
 
   copy.appendChild(matches);
   hero.appendChild(copy);
