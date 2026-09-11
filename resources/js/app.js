@@ -4,20 +4,34 @@ import { loadRemoteQuizConfig } from "./quiz/remoteConfig.js";
 
 const root = document.getElementById("quizRoot");
 if (root) {
-  // initQuiz() bouwt de pagina meteen op met de statische ingebouwde inhoud, zodat er niets
-  // "flitst" zodra de live inhoud straks binnenkomt. De startknop blijft echter uit tot die live
-  // inhoud (of het definitieve falen ervan) binnen is — zonder die wachtstap zou een bezoeker die
-  // direct op "Start" klikt de verouderde meegebundelde vragenlijst (data.js) kunnen krijgen in
-  // plaats van wat een admin er intussen van gemaakt heeft (zie remoteConfig.js).
+  // De vragen/opties zijn volledig admin-beheerd (zie data.js) — er is geen zinvolle statische
+  // inhoud om de quiz vast mee te starten, dus initQuiz() draait pas zodra /api/quiz-config
+  // daadwerkelijk is opgehaald. Lukt dat niet, dan wordt de startknop hergebruikt als
+  // "Opnieuw proberen" i.p.v. de bezoeker een gok-vragenlijst voor te schotelen.
   const startBtn = root.querySelector("#startQuizBtn");
+  const loadError = root.querySelector("#quizLoadError");
   const startBtnDefaultLabel = startBtn.textContent;
-  startBtn.disabled = true;
-  startBtn.textContent = "Bezig met laden...";
 
-  initQuiz(root);
+  async function boot() {
+    startBtn.onclick = null;
+    startBtn.disabled = true;
+    startBtn.textContent = "Bezig met laden...";
+    loadError.hidden = true;
 
-  loadRemoteQuizConfig().finally(() => {
+    const loaded = await loadRemoteQuizConfig();
+
+    if (!loaded) {
+      startBtn.disabled = false;
+      startBtn.textContent = "Opnieuw proberen";
+      startBtn.onclick = boot;
+      loadError.hidden = false;
+      return;
+    }
+
     startBtn.disabled = false;
     startBtn.textContent = startBtnDefaultLabel;
-  });
+    initQuiz(root);
+  }
+
+  boot();
 }

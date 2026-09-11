@@ -20,8 +20,13 @@
         <p>Kies jouw favorieten en ontdek in een paar minuten welke stijl, kleuren en meubels bij jou passen.</p>
 
         <div class="actions">
-            <button type="button" class="btn btn-primary" id="startQuizBtn">Start de stijlanalyse</button>
+            {{-- Staat bij het laden van de pagina uit; app.js zet 'm pas aan zodra de actuele
+                 vragenlijst is opgehaald (of hergebruikt de knop als "Opnieuw proberen" als dat
+                 na meerdere pogingen niet lukt) — zie resources/js/app.js. --}}
+            <button type="button" class="btn btn-primary" id="startQuizBtn" disabled>Start de stijlanalyse</button>
         </div>
+
+        <p class="error" id="quizLoadError" hidden>Kon de vragenlijst niet laden. Controleer je internetverbinding.</p>
 
         <div class="quiz-start-facts">
             <span class="quiz-start-fact">
