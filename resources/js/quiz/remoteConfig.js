@@ -8,10 +8,14 @@ import { STYLE_PROFILES } from "./styleProfiles.js";
  * questionStep.js, optionCard.js, materialsSection.js) leest deze wijziging automatisch mee,
  * zonder zelf aangepast te hoeven worden.
  *
- * Bij een falende of trage fetch (ook na de automatische retry hieronder) valt de quiz terug op
- * de statische data.js-inhoud die al in de bundel zit. Dat betekent dan wel dat
- * admin-wijzigingen (extra/gedeactiveerde opties, herordende vragen, etc.) niet doorkomen, dus
- * die terugval wordt met een console.warn zichtbaar gemaakt in plaats van stil te gebeuren.
+ * Bij een falende fetch (ook na de automatische retry hieronder, met een ruimer tweede
+ * tijdslimiet voor het geval de server net wakker moest worden na een stille periode) valt de
+ * quiz terug op de statische data.js-inhoud die al in de bundel zit. Die inhoud loopt inmiddels
+ * qua vragen/opties uit de pas met wat een admin er intussen van gemaakt heeft (vragen
+ * verwijderd/toegevoegd), dus app.js wacht bewust op het resultaat hiervan (of het lukt of niet)
+ * voordat de bezoeker de test kan starten — anders zou een bezoeker die net iets te snel op
+ * "Start" klikt, of een langzame/falende fetch treft, een deels verouderde vragenlijst kunnen
+ * krijgen. Retourneert of het live ophalen is gelukt, zodat app.js dat kan tonen.
  */
 async function fetchQuizConfig(timeoutMs) {
   const response = await fetch("/api/quiz-config", {
@@ -23,19 +27,22 @@ async function fetchQuizConfig(timeoutMs) {
   return response.json();
 }
 
+/** @returns {Promise<boolean>} of het live ophalen gelukt is (false = teruggevallen op de statische bundel) */
 async function loadRemoteQuizConfig() {
   let config;
   try {
-    config = await fetchQuizConfig(8000);
+    config = await fetchQuizConfig(6000);
   } catch (firstError) {
     try {
-      config = await fetchQuizConfig(8000);
+      // Tweede poging krijgt een ruimer tijdslimiet — een net "opgestart" serverinstantie
+      // (na een stille periode) heeft soms wat langer nodig voor de allereerste aanvraag.
+      config = await fetchQuizConfig(15000);
     } catch (secondError) {
       console.warn(
         "Kon /api/quiz-config niet ophalen, quiz valt terug op de meegebundelde standaardinhoud (admin-wijzigingen zijn nu niet zichtbaar).",
         secondError,
       );
-      return;
+      return false;
     }
   }
 
@@ -46,6 +53,8 @@ async function loadRemoteQuizConfig() {
   applyMaterials(config.materials);
   applyAtmosphere(config.atmosphere);
   applyTransitionPhotos(config.transitionPhotos);
+
+  return true;
 }
 
 /**

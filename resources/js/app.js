@@ -4,10 +4,20 @@ import { loadRemoteQuizConfig } from "./quiz/remoteConfig.js";
 
 const root = document.getElementById("quizRoot");
 if (root) {
-  // initQuiz() start meteen, met de statische ingebouwde inhoud — knoppen moeten direct werken.
-  // De admin-aangepaste inhoud van /api/quiz-config wordt op de achtergrond ingeladen en muteert
-  // de gedeelde QUESTIONS/PALETTE_OPTIONS/STYLE_PROFILES in place zodra hij binnenkomt (zie
-  // remoteConfig.js); een trage of falende fetch mag de quiz dus nooit laten wachten.
+  // initQuiz() bouwt de pagina meteen op met de statische ingebouwde inhoud, zodat er niets
+  // "flitst" zodra de live inhoud straks binnenkomt. De startknop blijft echter uit tot die live
+  // inhoud (of het definitieve falen ervan) binnen is — zonder die wachtstap zou een bezoeker die
+  // direct op "Start" klikt de verouderde meegebundelde vragenlijst (data.js) kunnen krijgen in
+  // plaats van wat een admin er intussen van gemaakt heeft (zie remoteConfig.js).
+  const startBtn = root.querySelector("#startQuizBtn");
+  const startBtnDefaultLabel = startBtn.textContent;
+  startBtn.disabled = true;
+  startBtn.textContent = "Bezig met laden...";
+
   initQuiz(root);
-  loadRemoteQuizConfig();
+
+  loadRemoteQuizConfig().finally(() => {
+    startBtn.disabled = false;
+    startBtn.textContent = startBtnDefaultLabel;
+  });
 }
