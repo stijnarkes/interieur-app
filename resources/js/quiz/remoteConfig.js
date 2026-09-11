@@ -69,6 +69,7 @@ function applyQuestions(remoteQuestions) {
     section: question.section,
     title: question.title,
     maxSelections: question.maxSelections ?? 1,
+    imageDisplayMode: question.imageDisplayMode ?? "contain",
     options: [],
   }));
 

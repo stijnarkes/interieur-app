@@ -7,7 +7,7 @@
  * zien rond een foto die niet exact de tegelverhouding heeft — dat oogt rustiger dan wisselende
  * kleuren per stijl, en sluit aan bij de vaste kaartkleur van de sfeerpaletten-vraag.
  */
-function createOptionCard(option, { questionTitle, selected, disabled = false, onSelect }) {
+function createOptionCard(option, { questionTitle, selected, disabled = false, imageDisplayMode = "contain", onSelect }) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "option-card";
@@ -17,6 +17,7 @@ function createOptionCard(option, { questionTitle, selected, disabled = false, o
 
   const imageWrap = document.createElement("span");
   imageWrap.className = "option-image";
+  imageWrap.classList.toggle("is-cover", imageDisplayMode === "cover");
 
   const img = document.createElement("img");
   img.src = option.image;

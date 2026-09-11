@@ -36,7 +36,7 @@ class QuizStructure
      * binnen die sectie. `sort_order` is bewust alleen lokaal (per sectie) betekenisvol —
      * verplaatsen van een vraag raakt daardoor nooit de andere sectie.
      *
-     * @return array<string, array{section: string, sectionTitle: string, title: string, folder: ?string, order: int, maxSelections: int}>
+     * @return array<string, array{section: string, sectionTitle: string, title: string, folder: ?string, order: int, maxSelections: int, imageDisplayMode: string}>
      */
     public static function questions(): array
     {
@@ -53,9 +53,19 @@ class QuizStructure
                     'folder' => $question->folder,
                     'order' => $question->sort_order,
                     'maxSelections' => $question->max_selections,
+                    'imageDisplayMode' => $question->image_display_mode,
                 ],
             ])
             ->all();
+    }
+
+    /** @return array<string, string> mode-waarde => label, voor Filament Select-opties */
+    public static function imageDisplayModeOptions(): array
+    {
+        return [
+            'contain' => 'Passend (met rand, niets bijgesneden)',
+            'cover' => 'Vullend (tegel vullen, randen bijsnijden)',
+        ];
     }
 
     public static function question(string $questionId): ?array

@@ -34,6 +34,7 @@ class QuizConfigController extends Controller
                 'section' => $question['section'],
                 'title' => $question['title'],
                 'maxSelections' => $question['maxSelections'],
+                'imageDisplayMode' => $question['imageDisplayMode'],
             ])
             ->values();
 

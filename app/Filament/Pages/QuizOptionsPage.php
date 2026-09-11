@@ -288,6 +288,12 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->maxValue(10)
                     ->default(1)
                     ->required(),
+
+                Select::make('image_display_mode')
+                    ->label('Weergave foto\'s')
+                    ->options(QuizStructure::imageDisplayModeOptions())
+                    ->default('contain')
+                    ->required(),
             ])
             ->action(function (array $data): void {
                 $nextOrder = (QuizQuestion::where('section', $data['section'])->max('sort_order') ?? 0) + 10;
@@ -299,6 +305,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     'folder' => null,
                     'sort_order' => $nextOrder,
                     'max_selections' => $data['max_selections'],
+                    'image_display_mode' => $data['image_display_mode'],
                 ]);
 
                 Notification::make()
@@ -314,7 +321,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         return Action::make('editQuestion')
             ->label('Vraag bewerken')
             ->modalHeading('Vraag bewerken')
-            ->fillForm(fn (array $arguments): array => QuizQuestion::findOrFail($arguments['questionId'])->only(['title', 'section', 'max_selections']))
+            ->fillForm(fn (array $arguments): array => QuizQuestion::findOrFail($arguments['questionId'])->only(['title', 'section', 'max_selections', 'image_display_mode']))
             ->form([
                 TextInput::make('title')
                     ->label('Vraagtekst')
@@ -333,6 +340,11 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->numeric()
                     ->minValue(1)
                     ->maxValue(10)
+                    ->required(),
+
+                Select::make('image_display_mode')
+                    ->label('Weergave foto\'s')
+                    ->options(QuizStructure::imageDisplayModeOptions())
                     ->required(),
             ])
             ->action(function (array $arguments, array $data): void {

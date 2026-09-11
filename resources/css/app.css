@@ -593,6 +593,16 @@ a.btn-primary:hover {
   transform: scale(1.06);
 }
 
+/* Vullend i.p.v. passend: foto neemt de hele tegel in, zonder ademruimte rondom, en wordt
+   bijgesneden waar nodig — zie QuizStructure::imageDisplayModeOptions(). */
+.option-image.is-cover img {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .option-image.is-placeholder {
   display: flex;
   align-items: center;

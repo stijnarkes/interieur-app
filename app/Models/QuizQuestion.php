@@ -13,6 +13,7 @@ class QuizQuestion extends Model
         'folder',
         'sort_order',
         'max_selections',
+        'image_display_mode',
     ];
 
     protected $casts = [

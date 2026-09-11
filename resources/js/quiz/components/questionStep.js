@@ -26,6 +26,7 @@ function renderQuestionStep(container, question, selectedOptionIds, onSelect) {
       questionTitle: question.title,
       selected,
       disabled: !selected && maxSelections > 1 && selectedOptionIds.length >= maxSelections,
+      imageDisplayMode: question.imageDisplayMode,
       onSelect,
     });
     grid.appendChild(card);
