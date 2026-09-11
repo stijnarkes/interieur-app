@@ -24,10 +24,10 @@ const SECTIONS = [
   },
   {
     id: "objects",
-    title: "Meubels & accessoires",
-    tagline: "Welke meubels en vormen passen het beste bij jouw ideale interieur?",
+    title: "Wonen & inrichting",
+    tagline: "Ontdek welke meubels, keuken en woonaccessoires het beste bij jouw ideale interieur passen.",
     wrapUp: "Mooi! We weten nu welke materialen en kleuren je aanspreken.",
-    cta: "Verder naar meubels",
+    cta: "Verder naar wonen & inrichting",
     image: "/images/interior/transitions/objects.webp",
   },
 ];

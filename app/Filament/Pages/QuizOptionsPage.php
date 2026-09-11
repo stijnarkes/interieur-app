@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
  * Vervangt de vroegere QuizOptionResource (platte, gegroepeerde tabel) door een pagina met één
  * inklapbare sectie per quizvraag — elk met een eigen "Optie toevoegen"-knop in de kop, en
  * knoppen om de vraag zelf te herordenen/bewerken/verwijderen. De twee secties (Kleur &
- * materiaal / Meubels & accessoires) liggen vast; de vragen zelf staan in `quiz_questions` en
+ * materiaal / Wonen & inrichting) liggen vast; de vragen zelf staan in `quiz_questions` en
  * zijn hier volledig admin-beheerbaar. Zelfde aanpak als ImageManagerPage.
  */
 class QuizOptionsPage extends Page implements HasActions, HasForms

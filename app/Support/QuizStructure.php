@@ -7,7 +7,7 @@ use App\Models\QuizQuestion;
 /**
  * Kleine PHP-mirror van de sectie-/stijlstructuur uit resources/js/quiz/data.js en
  * styleProfiles.js — zelfde aanpak als de al bestaande mirrors QuizAnswerFormatter en
- * QuizImageManifest. De twee secties (Kleur & materiaal / Meubels & accessoires) liggen vast;
+ * QuizImageManifest. De twee secties (Kleur & materiaal / Wonen & inrichting) liggen vast;
  * de vragen zelf staan sinds de invoering van vraagbeheer (zie QuizOptionsPage) in de
  * `quiz_questions`-tabel, niet meer hier.
  */
@@ -16,7 +16,7 @@ class QuizStructure
     /** @var array<string, array{id: string, title: string}> sectie-id => weergavenaam, in vaste volgorde */
     public const SECTIONS = [
         'materials-colors' => ['id' => 'materials-colors', 'title' => 'Kleur & materiaal'],
-        'objects' => ['id' => 'objects', 'title' => 'Meubels & accessoires'],
+        'objects' => ['id' => 'objects', 'title' => 'Wonen & inrichting'],
     ];
 
     /** camelCase key => {label, slug} — zelfde 8 stijlen als STYLE_PROFILES in styleProfiles.js. */
