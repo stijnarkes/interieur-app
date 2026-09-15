@@ -370,7 +370,7 @@ body {
     @if (!empty($primaryStyle['materials']))
     <div class="pill-row">
         @foreach ($primaryStyle['materials'] as $materialName)
-        <span class="pill">{{ $materialName }}</span>
+        <span class="pill">{{ is_array($materialName) ? ($materialName['name'] ?? '') : $materialName }}</span>
         @endforeach
     </div>
     @endif
