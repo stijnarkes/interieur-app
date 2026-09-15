@@ -68,6 +68,7 @@ class QuizLeadControllerTest extends TestCase
         $response = $this->postLead($quizResult->uuid);
 
         $response->assertOk();
+        $response->assertJsonFragment(['status' => 'sent']);
         Mail::assertSent(QuizResultMail::class, 1);
         $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
         $this->assertSame('sent', Submission::first()->email_status);
@@ -118,9 +119,34 @@ class QuizLeadControllerTest extends TestCase
         $response = $this->postLead($quizResult->uuid);
 
         $response->assertOk();
-        $response->assertJsonFragment(['message' => 'Je gegevens zijn opgeslagen, maar het versturen van de e-mail is niet gelukt.']);
+        $response->assertJsonFragment([
+            'status' => 'failed',
+            'message' => 'Je gegevens zijn opgeslagen, maar het versturen van de e-mail is niet gelukt.',
+        ]);
         Mail::assertNotSent(QuizResultMail::class);
         $this->assertSame('failed', Submission::first()->email_status);
+    }
+
+    #[Test]
+    public function een_mislukte_inzending_kan_opnieuw_geprobeerd_worden_en_verstuurt_dan_alsnog_een_mail(): void
+    {
+        Mail::fake();
+        $this->mock(QuizResultPdfService::class, function ($mock) {
+            $mock->shouldReceive('generate')->once()->andThrow(new \RuntimeException('PDF-generatie mislukt in de test.'));
+            $mock->shouldReceive('generate')->once()->andReturn('submissions/1/quiz-result.pdf');
+        });
+
+        $quizResult = $this->makeQuizResult();
+
+        $first = $this->postLead($quizResult->uuid);
+        $first->assertJsonFragment(['status' => 'failed']);
+
+        $second = $this->postLead($quizResult->uuid);
+        $second->assertJsonFragment(['status' => 'sent']);
+
+        Mail::assertSent(QuizResultMail::class, 1);
+        $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
+        $this->assertSame('sent', Submission::first()->email_status);
     }
 
     #[Test]

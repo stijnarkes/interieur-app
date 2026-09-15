@@ -18,10 +18,13 @@ use Illuminate\Support\Facades\Mail;
  * berekende QuizResult (zie QuizResultController/QuizScoringService) + StyleProfile, i.p.v. een
  * kant-en-klare resultaat-JSON van de client te vertrouwen.
  *
- * Idempotent per quiz_result_id: een herhaalde inzending voor hetzelfde resultaat (dubbelklik, of
- * een retry na een onterechte "verzenden mislukt"-melding — zie resources/js/quiz/components/
- * lead.js) genereert nooit een tweede PDF of e-mail, maar geeft gewoon de eerder bepaalde
- * uitkomst opnieuw terug.
+ * Idempotent per quiz_result_id, maar alleen zolang een eerdere poging daadwerkelijk slaagde: een
+ * herhaalde inzending voor hetzelfde resultaat (dubbelklik, of een bevestigde "opnieuw
+ * proberen"-klik na een echte mislukking — zie resources/js/quiz/components/lead.js) genereert
+ * nooit een tweede PDF of e-mail zodra `email_status` al 'sent' is. Was de vorige poging
+ * `'failed'` (of bestaat er nog geen rij), dan wordt er juist wél een nieuwe PDF-/mailpoging
+ * gedaan — op dezelfde Submission-rij (nooit een tweede), zodat "opnieuw proberen" ook echt iets
+ * doet i.p.v. voor altijd dezelfde gecachte mislukking terug te geven.
  */
 class QuizLeadController extends Controller
 {
@@ -37,21 +40,23 @@ class QuizLeadController extends Controller
         $quizResult = QuizResult::where('uuid', $data['resultUuid'])->firstOrFail();
 
         $existing = Submission::where('quiz_result_id', $quizResult->id)->first();
-        if ($existing) {
+        if ($existing && $existing->email_status === 'sent') {
             return $this->responseFor($existing);
         }
 
-        $submission = Submission::create([
-            'quiz_result_id' => $quizResult->id,
-            'style' => StyleProfile::forStyle($quizResult->primary_style)?->label ?? $quizResult->primary_style,
-            'quiz_answers' => $quizResult->answers,
-            'quiz_result' => $this->buildPdfContent($quizResult, $textComposer),
-            'name' => $data['name'] ?? null,
-            'email' => $data['email'],
-            'email_opt_in' => $request->boolean('marketingOptIn', false),
-            'result_id' => $quizResult->uuid,
-            'result_generated' => true,
-        ]);
+        $submission = Submission::updateOrCreate(
+            ['quiz_result_id' => $quizResult->id],
+            [
+                'style' => StyleProfile::forStyle($quizResult->primary_style)?->label ?? $quizResult->primary_style,
+                'quiz_answers' => $quizResult->answers,
+                'quiz_result' => $this->buildPdfContent($quizResult, $textComposer),
+                'name' => $data['name'] ?? null,
+                'email' => $data['email'],
+                'email_opt_in' => $request->boolean('marketingOptIn', false),
+                'result_id' => $quizResult->uuid,
+                'result_generated' => true,
+            ]
+        );
 
         try {
             $pdfPath = $pdfService->generate($submission);
@@ -59,7 +64,7 @@ class QuizLeadController extends Controller
 
             Mail::to($submission->email)->send(new QuizResultMail($submission, $pdfPath));
 
-            $submission->update(['email_status' => 'sent', 'email_sent_at' => now()]);
+            $submission->update(['email_status' => 'sent', 'email_sent_at' => now(), 'email_error' => null]);
         } catch (\Throwable $e) {
             $submission->update(['email_status' => 'failed', 'email_error' => $e->getMessage()]);
         }
@@ -67,15 +72,24 @@ class QuizLeadController extends Controller
         return $this->responseFor($submission->fresh());
     }
 
+    /**
+     * `status` (naast de mensleesbare `message`) laat de frontend betrouwbaar vertakken op de
+     * werkelijke uitkomst i.p.v. op de HTTP-statuscode, die bewust ook 200 is bij een mislukte
+     * verzending — de gegevens van de bezoeker zijn dan namelijk wél degelijk opgeslagen.
+     */
     private function responseFor(Submission $submission): JsonResponse
     {
         if ($submission->email_status === 'failed') {
             return response()->json([
+                'status' => 'failed',
                 'message' => 'Je gegevens zijn opgeslagen, maar het versturen van de e-mail is niet gelukt.',
             ], 200);
         }
 
-        return response()->json(['message' => 'Je advies is verstuurd naar je e-mailadres.']);
+        return response()->json([
+            'status' => 'sent',
+            'message' => 'Je advies is verstuurd naar je e-mailadres.',
+        ]);
     }
 
     /**

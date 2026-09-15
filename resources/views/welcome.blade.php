@@ -40,6 +40,13 @@
         </div>
     </section>
 
+    {{-- Rustpunt-animatie tussen het klikken op "Start" en het tonen van de eerste vraag — zie
+         loadingScene.js/quiz.js. Blijft leeg totdat de startknop 'm daadwerkelijk vult; nooit
+         automatisch zichtbaar bij het openen van de pagina. --}}
+    <section class="card quiz-loading" id="quizLoading" hidden>
+        <div id="quizLoadingMount"></div>
+    </section>
+
     {{-- Hoofdvoortgang: alleen zichtbaar op de overgangsschermen tussen onderdelen en op de
          resultaatpagina (waar "Jouw woonstijl" als bereikte derde stap oplicht) — tijdens het
          beantwoorden van losse vragen blijft 'ie verborgen, dat toont de kaart zelf al

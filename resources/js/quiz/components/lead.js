@@ -1,4 +1,5 @@
 import { createCheckIcon } from "./checkIcon.js";
+import { createLoadingScene } from "./loadingScene.js";
 
 const EXPECT_ITEMS = [
   "Jouw persoonlijke woonstijl",
@@ -6,14 +7,33 @@ const EXPECT_ITEMS = [
   "Een persoonlijk moodboard en interieuradvies",
 ];
 
+/** Voorkomt HTML-injectie wanneer een eerder ingevulde naam/e-mailadres via innerHTML wordt teruggezet. */
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char]);
+}
+
 function renderLeadForm(container, { result }) {
   /**
    * Gedeeld met de "Opnieuw versturen"-knop in de successtatus. Stuurt alleen de verwijzing naar
    * het al server-side berekende resultaat (resultUuid) mee — de PDF-inhoud zelf bouwt
    * QuizLeadController op uit QuizResult/StyleProfile, niet meer uit client-aangeleverde velden.
-   * Idempotent aan de serverkant (zelfde resultUuid = geen dubbele mail), dus een timeout hier mag
-   * gerust een nieuwe poging suggereren i.p.v. een definitieve foutmelding: in het ergste geval
-   * had de eerste poging toch al succes, en de tweede verandert daar dan niets meer aan.
+   * Idempotent aan de serverkant (zelfde resultUuid + al verstuurd = geen dubbele mail, maar een
+   * eerder mislukte poging wordt bij een retry wél opnieuw geprobeerd — zie QuizLeadController),
+   * dus een timeout hier mag gerust een nieuwe poging suggereren i.p.v. een definitieve
+   * foutmelding: in het ergste geval had de eerste poging toch al succes, en de tweede verandert
+   * daar dan niets meer aan. Ruime timeout (45s): de server genereert de PDF en verstuurt de mail
+   * synchroon, en de UI is bewust ontworpen om dat geduldig af te wachten (zie de laadscene
+   * hieronder) i.p.v. een verzending af te breken die anders wél was gelukt.
+   *
+   * Geeft altijd het geparste antwoord terug (incl. een `status`-veld, 'sent' of 'failed') zodat
+   * de aanroeper nooit alleen op de HTTP-status hoeft te vertrouwen — die is bewust ook 200 bij
+   * een mislukte verzending, want de gegevens van de bezoeker zijn dan wél degelijk opgeslagen.
    */
   async function submitLead({ name, email, marketingOptIn }) {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
@@ -29,7 +49,7 @@ function renderLeadForm(container, { result }) {
           email,
           marketingOptIn,
         }),
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(45000),
       });
     } catch {
       throw new Error("We konden niet bevestigen of het verzenden is gelukt. Probeer het nog eens.");
@@ -46,7 +66,12 @@ function renderLeadForm(container, { result }) {
     return json;
   }
 
-  function renderForm() {
+  /**
+   * @param {{name?: string, email?: string, marketingOptIn?: boolean, statusMessage?: string}} prefill
+   *   Gebruikt om na een mislukte aanvraag of een netwerkfout het formulier opnieuw te tonen met
+   *   de al ingevulde gegevens (nooit de bezoeker laten overtypen) en een uitleg wat er misging.
+   */
+  function renderForm({ name = "", email = "", marketingOptIn = false, statusMessage = "" } = {}) {
     container.innerHTML = "";
 
     const heading = document.createElement("h3");
@@ -66,7 +91,7 @@ function renderLeadForm(container, { result }) {
     nameField.className = "field";
     nameField.innerHTML = `
       <label for="leadName">Voornaam</label>
-      <input id="leadName" name="leadName" type="text" autocomplete="given-name" required />
+      <input id="leadName" name="leadName" type="text" autocomplete="given-name" required value="${escapeHtml(name)}" />
       <p class="error" id="leadNameError" aria-live="polite"></p>
     `;
 
@@ -74,14 +99,14 @@ function renderLeadForm(container, { result }) {
     emailField.className = "field";
     emailField.innerHTML = `
       <label for="leadEmail">E-mailadres</label>
-      <input id="leadEmail" name="leadEmail" type="email" autocomplete="email" required />
+      <input id="leadEmail" name="leadEmail" type="email" autocomplete="email" required value="${escapeHtml(email)}" />
       <p class="error" id="leadEmailError" aria-live="polite"></p>
     `;
 
     const optInField = document.createElement("div");
     optInField.className = "field checkbox-row";
     optInField.innerHTML = `
-      <input id="leadOptIn" name="leadOptIn" type="checkbox" />
+      <input id="leadOptIn" name="leadOptIn" type="checkbox" ${marketingOptIn ? "checked" : ""} />
       <label for="leadOptIn">Ik ontvang graag af en toe wooninspiratie, tips en acties van Boer Staphorst.</label>
     `;
 
@@ -97,8 +122,9 @@ function renderLeadForm(container, { result }) {
     actions.appendChild(submitBtn);
 
     const status = document.createElement("p");
-    status.className = "hint";
+    status.className = statusMessage ? "error" : "hint";
     status.setAttribute("aria-live", "polite");
+    status.textContent = statusMessage;
 
     const reassurance = document.createElement("p");
     reassurance.className = "lead-form-reassurance";
@@ -138,15 +164,28 @@ function renderLeadForm(container, { result }) {
 
       const marketingOptIn = form.querySelector("#leadOptIn").checked;
 
-      submitBtn.disabled = true;
-      status.textContent = "Bezig met versturen...";
+      // Vervangt het hele formulier door de laadscene — dat sluit vanzelf een dubbele aanvraag
+      // uit zolang de aanvraag loopt (de verzendknop bestaat dan even niet meer in de DOM).
+      container.innerHTML = "";
+      const scene = createLoadingScene({
+        heading: "We maken jouw woonstijlrapport klaar",
+        subtext: "Een momentje, we bereiden je persoonlijke PDF voor en sturen deze naar je e-mailadres.",
+      });
+      container.appendChild(scene.element);
+      scene.start();
 
       try {
-        await submitLead({ name, email, marketingOptIn });
-        renderSuccess({ name, email, marketingOptIn });
+        const response = await submitLead({ name, email, marketingOptIn });
+        if (response.status === "sent") {
+          renderSuccess({ name, email, marketingOptIn });
+        } else {
+          // De server bevestigt hier expliciet geen geslaagde verzending (bv. email_status
+          // 'failed') — nooit een succesmelding tonen die de app niet kan waarmaken. Gegevens
+          // blijven behouden: het formulier verschijnt opnieuw, voorgevuld, met de reden erbij.
+          renderForm({ name, email, marketingOptIn, statusMessage: response.message });
+        }
       } catch (error) {
-        status.textContent = error.message;
-        submitBtn.disabled = false;
+        renderForm({ name, email, marketingOptIn, statusMessage: error.message });
       }
     });
   }
@@ -211,8 +250,10 @@ function renderLeadForm(container, { result }) {
       resendStatus.textContent = "Bezig met opnieuw versturen...";
 
       try {
-        await submitLead({ name, email, marketingOptIn });
-        resendStatus.textContent = "Opnieuw verstuurd!";
+        const response = await submitLead({ name, email, marketingOptIn });
+        resendStatus.textContent = response.status === "sent"
+          ? "Opnieuw verstuurd!"
+          : response.message;
       } catch (error) {
         resendStatus.textContent = error.message;
       } finally {
