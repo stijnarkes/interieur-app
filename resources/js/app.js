@@ -13,9 +13,11 @@ if (root) {
   const startBtnDefaultLabel = startBtn.textContent;
 
   async function boot() {
+    // Geen "Bezig met laden..."-tekst meer op de knop: de nieuwe opbouw-animatie na de klik (zie
+    // loadingScene.js/quiz.js) is nu het moment waarop "laden" zichtbaar wordt — hier blijft de
+    // knop gewoon zijn normale tekst tonen, alleen uitgeschakeld totdat de vragenlijst klaarstaat.
     startBtn.onclick = null;
     startBtn.disabled = true;
-    startBtn.textContent = "Bezig met laden...";
     loadError.hidden = true;
 
     const loaded = await loadRemoteQuizConfig();
