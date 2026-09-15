@@ -10,12 +10,11 @@ use RuntimeException;
  * Beheert de vaste-slot-afbeeldingen die geen eigen database-rij nodig hebben: de
  * startscherm-foto (1 slot) en de overgangsschermfoto's (1 slot per sectie uit
  * QuizStructure::SECTIONS) — samen `pageSections()`, beheerd op SitePhotosPage — en de
- * sfeerfoto's (6 vaste slots, één per woonstijl) — `atmosphereSections()`, beheerd op
- * ImageManagerPage samen met de materialen. De mapnamen/bestandsnamen van de sfeerfoto's
- * mirroren resources/js/quiz/styleProfiles.js. Materialen per stijl staan sinds de invoering
- * van materiaalbeheer (zie ImageManagerPage) in de `quiz_materials`-tabel, niet meer hier — die
- * zijn, anders dan de sfeerfoto's, geen vaste 1-op-1 set meer maar per stijl uitbreidbaar. De 66
- * stap-foto's per antwoordoptie staan ook niet hier: die worden per rij beheerd via de database
+ * sfeerfoto's (6 vaste slots, één per woonstijl) — `atmosphereSections()`, gebruikt door
+ * MigrateQuizImages. Het admin-beheer van de sfeerfoto's zelf loopt sinds de invoering van
+ * StyleProfilesPage via het `hero_image`-uploadveld daar (per stijl, samen met de rest van de
+ * stijlinhoud) — er is geen los beheerscherm meer voor. De 66 stap-foto's per antwoordoptie
+ * staan ook niet hier: die worden per rij beheerd via de database
  * (QuizOption, zie QuizOptionsPage) omdat een admin ze inhoudelijk moet kunnen bewerken
  * (titel/stijl/actief), niet alleen de afbeelding kunnen vervangen.
  *
@@ -34,7 +33,10 @@ class QuizImageManifest
         return [self::heroSection(), self::transitionsSection()];
     }
 
-    /** Sfeerfoto's op de resultaatpagina — beheerd op ImageManagerPage, samen met materialen. */
+    /**
+     * Sfeerfoto's op de resultaatpagina — admin-beheer loopt via StyleProfilesPage
+     * (`hero_image`-uploadveld per stijl); deze methode voedt alleen nog MigrateQuizImages.
+     */
     public static function atmosphereSections(): array
     {
         return [self::atmosphereSection()];

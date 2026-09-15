@@ -9,9 +9,8 @@ use Filament\Notifications\Notification;
 use Throwable;
 
 /**
- * Gedeelde upload/verwijder-acties voor vaste-slot-afbeeldingen (zie QuizImageManifest) —
- * hergebruikt door zowel SitePhotosPage (startscherm/overgangen) als ImageManagerPage
- * (sfeerfoto's), zodat beide pagina's dezelfde upload/GD-webp-conversie/verwijderlogica delen.
+ * Gedeelde upload/verwijder-acties voor vaste-slot-afbeeldingen (zie QuizImageManifest),
+ * gebruikt door SitePhotosPage (startscherm/overgangen).
  */
 trait ManagesImageSlots
 {
