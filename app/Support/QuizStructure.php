@@ -6,8 +6,8 @@ use App\Models\QuizQuestion;
 
 /**
  * Kleine PHP-mirror van de sectie-/stijlstructuur uit resources/js/quiz/data.js en
- * styleProfiles.js — zelfde aanpak als de al bestaande mirrors QuizAnswerFormatter en
- * QuizImageManifest. De twee secties (Kleur & materiaal / Wonen & inrichting) liggen vast;
+ * styleProfiles.js — zelfde aanpak als de al bestaande mirror QuizImageManifest. De twee
+ * secties (Kleur & materiaal / Wonen & inrichting) liggen vast;
  * de vragen zelf staan sinds de invoering van vraagbeheer (zie QuizOptionsPage) in de
  * `quiz_questions`-tabel, niet meer hier.
  */

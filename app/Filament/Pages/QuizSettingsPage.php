@@ -14,10 +14,9 @@ use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Beheert de drie procentpunt-marges die QuizScoringService::determineRanking() gebruikt om een
- * duidelijke winnaar / twee bijna-gelijke stijlen / drie bijna-gelijke stijlen / een tegenstrijdige
- * verdeling te onderscheiden — zie het implementatieplan: "exacte drempelwaarden moeten in
- * configuratie worden gezet, zodat deze later zonder codewijziging zijn bij te stellen."
+ * Beheert de drempel die QuizScoringService::determineResult() gebruikt om te bepalen of een
+ * tweede stijl als "invloed" getoond wordt — zie de opdracht "vereenvoudiging woonstijltest":
+ * "Maak deze grens eenvoudig aanpasbaar/configureerbaar."
  */
 class QuizSettingsPage extends Page implements HasActions, HasForms
 {
@@ -48,32 +47,26 @@ class QuizSettingsPage extends Page implements HasActions, HasForms
         return QuizSetting::current();
     }
 
-    public function editThresholdsAction(): Action
+    public function editThresholdAction(): Action
     {
-        return Action::make('editThresholds')
-            ->label('Drempelwaarden bewerken')
-            ->modalHeading('Drempelwaarden voor de uitslag')
-            ->fillForm(fn (): array => $this->getSettings()->only(['primary_dominant_margin', 'close_pair_margin', 'close_triple_margin']))
+        return Action::make('editThreshold')
+            ->label('Drempel bewerken')
+            ->modalHeading('Drempel voor de tweede invloed')
+            ->fillForm(fn (): array => $this->getSettings()->only(['secondary_influence_ratio']))
             ->form([
-                TextInput::make('primary_dominant_margin')
-                    ->label('Marge voor een duidelijke winnaar')
-                    ->helperText('Percentagepunt-verschil met de nummer 2 waarboven de primaire stijl als sterk dominant geldt. Standaard 15.')
-                    ->numeric()->minValue(1)->maxValue(100)->required(),
-
-                TextInput::make('close_pair_margin')
-                    ->label('Marge voor "twee bijna-gelijke stijlen"')
-                    ->helperText('Als het verschil tussen nummer 1 en 2 kleiner is dan dit, en het verschil met nummer 3 juist groter, wordt het een gemengd profiel van twee stijlen. Standaard 8.')
-                    ->numeric()->minValue(1)->maxValue(100)->required(),
-
-                TextInput::make('close_triple_margin')
-                    ->label('Marge voor "drie bijna-gelijke stijlen"')
-                    ->helperText('Als de verschillen tussen nummer 1, 2 én 3 allemaal kleiner zijn dan dit, wordt het een drieweg-mix. Standaard 5.')
-                    ->numeric()->minValue(1)->maxValue(100)->required(),
+                TextInput::make('secondary_influence_ratio')
+                    ->label('Minimaal percentage van de basisscore')
+                    ->helperText('De op-één-na-hoogste stijl wordt alleen als "invloed" getoond als haar score minstens dit percentage van de basisstijl haalt, én in minstens 2 verschillende vragen punten kreeg. Standaard 70.')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(100)
+                    ->suffix('%')
+                    ->required(),
             ])
             ->action(function (array $data): void {
                 $this->getSettings()->update($data);
 
-                Notification::make()->title('Instellingen opgeslagen')->success()->send();
+                Notification::make()->title('Instelling opgeslagen')->success()->send();
             });
     }
 }

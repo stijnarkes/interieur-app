@@ -6,8 +6,7 @@ use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\StyleProfile;
 use App\Repositories\QuizResultRepository;
-use App\Services\AI\QuizAdviceFallback;
-use App\Services\AI\QuizAdviceGenerator;
+use App\Services\QuizResultTextComposer;
 use App\Services\QuizScoringService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,8 +14,8 @@ use Illuminate\Http\Request;
 /**
  * Berekent en bewaart het quizresultaat server-side, direct na het afronden van de test — dus
  * vóór het leadformulier. Dit sluit het gat waarbij de client eerder alles zelf berekende en de
- * server dat blind vertrouwde (zie QuizLeadController). Geeft bewust nooit ruwe percentages of
- * puntentotalen terug; alleen de labels/tekst die de resultatenpagina nodig heeft.
+ * server dat blind vertrouwde (zie QuizLeadController). Geeft bewust nooit ruwe punten/scores
+ * terug; alleen de labels/tekst die de resultatenpagina nodig heeft.
  */
 class QuizResultController extends Controller
 {
@@ -24,8 +23,7 @@ class QuizResultController extends Controller
         Request $request,
         QuizScoringService $scoring,
         QuizResultRepository $repository,
-        QuizAdviceFallback $fallback,
-        QuizAdviceGenerator $generator,
+        QuizResultTextComposer $textComposer,
     ): JsonResponse {
         $data = $request->validate([
             'answers' => 'required|array',
@@ -38,7 +36,7 @@ class QuizResultController extends Controller
         $computed = $scoring->compute($answers);
         $result = $repository->store($answers, $computed);
 
-        $advice = $generator->generate($result, 'short_result');
+        $advice = $textComposer->build($result);
 
         $styleLabel = function (?string $key) {
             if (! $key) {
@@ -62,9 +60,6 @@ class QuizResultController extends Controller
             'intro' => $advice['intro'],
             'primaryStyle' => $styleLabel($result->primary_style),
             'secondaryStyle' => $styleLabel($result->secondary_style),
-            'tertiaryStyle' => $styleLabel($result->tertiary_style),
-            'keywordChips' => $fallback->keywordChips($result),
-            'case' => $result->case,
         ]);
     }
 

@@ -1,11 +1,8 @@
-import { createImageTile } from "./imageTile.js";
-
 /**
- * Hero bovenaan de resultatenpagina — toont voortaan de dynamische stijlcombinatie (bv. "Japandi
- * met een Scandinavisch-invloed") i.p.v. alleen de naam van de winnende stijl, plus de kernwoorden
- * (dominante eigenschappen) als chips en de drie lagen basis/invloed/accent zichtbaar naast elkaar.
+ * Hero bovenaan de resultatenpagina: de basisstijl, en alleen waar van toepassing één label voor
+ * de tweede invloed — nooit een derde stijl (zie de opdracht "vereenvoudiging woonstijltest").
  */
-function renderResultHero(container, { comboName, intro, primaryStyle, secondaryStyle, tertiaryStyle, keywordChips }) {
+function renderResultHero(container, { comboName, intro, primaryStyle, secondaryStyle }) {
   const hero = document.createElement("section");
   hero.className = "result-card result-hero";
 
@@ -27,25 +24,18 @@ function renderResultHero(container, { comboName, intro, primaryStyle, secondary
   description.textContent = intro ?? "";
   copy.appendChild(description);
 
-  if (keywordChips?.length) {
-    const chips = document.createElement("div");
-    chips.className = "result-hero-chips";
-    keywordChips.forEach((label) => {
-      const chip = document.createElement("span");
-      chip.className = "result-hero-chip";
-      chip.textContent = label;
-      chips.appendChild(chip);
-    });
-    copy.appendChild(chips);
-  }
+  const expectation = document.createElement("p");
+  expectation.className = "result-hero-expectation";
+  expectation.textContent =
+    "Dit is een eerste richting op basis van wat jij mooi vindt. Onze interieurstylistes helpen je graag om deze stijl te vertalen naar jouw eigen woning.";
+  copy.appendChild(expectation);
 
   const matches = document.createElement("div");
   matches.className = "result-hero-matches";
 
   const layers = [
-    { style: primaryStyle, label: "Basis", className: "result-match--primary" },
+    { style: primaryStyle, label: "Basisstijl", className: "result-match--primary" },
     { style: secondaryStyle, label: "Invloed", className: "result-match--secondary" },
-    { style: tertiaryStyle, label: "Accent", className: "result-match--tertiary" },
   ];
 
   layers
@@ -61,13 +51,20 @@ function renderResultHero(container, { comboName, intro, primaryStyle, secondary
   hero.appendChild(copy);
 
   if (primaryStyle?.heroImage) {
-    const image = createImageTile({
-      src: primaryStyle.heroImage,
-      alt: `Sfeerbeeld van de ${primaryStyle.label}-stijl`,
-      label: primaryStyle.label,
-      tintKey: primaryStyle.key,
-      className: "result-hero-image",
-    });
+    // Bewust geen createImageTile()/placeholder-tint hier: die liet dit blok leeg/kapot ogen
+    // zodra de sfeerfoto ontbrak. In plaats daarvan tonen we een echte foto, of anders helemaal
+    // niets — zelfde patroon als sectionTransition.js's overgangsfoto's.
+    const image = document.createElement("span");
+    image.className = "img-tile result-hero-image";
+
+    const img = document.createElement("img");
+    img.src = primaryStyle.heroImage;
+    img.alt = `Sfeerbeeld van de ${primaryStyle.label}-stijl`;
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.addEventListener("error", () => image.remove(), { once: true });
+
+    image.appendChild(img);
     hero.appendChild(image);
   }
 

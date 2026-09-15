@@ -77,11 +77,20 @@
                                             />
 
                                             <div class="flex shrink-0 flex-wrap gap-1">
-                                                @foreach ($option->styleKeys() as $styleKey)
+                                                @if ($option->primary_style)
                                                     <x-filament::badge color="primary">
-                                                        {{ \App\Support\QuizStructure::styleLabel($styleKey) }}
+                                                        {{ \App\Support\QuizStructure::styleLabel($option->primary_style) }}
                                                     </x-filament::badge>
-                                                @endforeach
+                                                    @if ($option->secondary_style)
+                                                        <x-filament::badge color="gray">
+                                                            {{ \App\Support\QuizStructure::styleLabel($option->secondary_style) }}
+                                                        </x-filament::badge>
+                                                    @endif
+                                                @else
+                                                    <x-filament::badge color="danger">
+                                                        Onvolledig — geen hoofdstijl
+                                                    </x-filament::badge>
+                                                @endif
                                             </div>
 
                                             <span class="flex-1 truncate text-sm font-medium text-gray-950 dark:text-white">

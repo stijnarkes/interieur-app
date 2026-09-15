@@ -23,9 +23,8 @@ use Illuminate\Support\Facades\Auth;
 /**
  * Beheert de rijke, per-stijl inhoud (kernomschrijving, kleuren, materialen, meubeladvies,
  * interieurrecept, "wat past minder goed") die vroeger hardcoded in resources/js/quiz/
- * styleProfiles.js stond — zie het implementatieplan "persoonlijke digitale interieuradviseur".
- * Precies 8 vaste rijen (QuizStructure::STYLES): geen create/delete, alleen bewerken. De
- * AI-tekstlaag (QuizAdviceGenerator) mag alleen uit deze inhoud putten.
+ * styleProfiles.js stond. Precies 8 vaste rijen (QuizStructure::STYLES): geen create/delete,
+ * alleen bewerken. Dit is de enige bron waar QuizResultTextComposer en de PDF uit putten.
  */
 class StyleProfilesPage extends Page implements HasActions, HasForms
 {

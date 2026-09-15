@@ -4,13 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SubmissionResource\Pages;
 use App\Models\Submission;
-use App\Support\QuizAnswerFormatter;
 use App\Support\QuizStructure;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Actions;
 use Filament\Infolists\Components\Actions\Action as InfolistAction;
 use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
@@ -199,34 +197,19 @@ class SubmissionResource extends Resource
                             ->placeholder('—')
                             ->columnSpanFull(),
 
-                        TextEntry::make('primary_style_display')
-                            ->label('Primaire stijl')
+                        TextEntry::make('quiz_result.primaryStyle.label')
+                            ->label('Basisstijl')
                             ->badge()
                             ->color('success')
-                            ->placeholder('—')
-                            ->getStateUsing(fn (Submission $record): ?string => self::formatTopStyle($record, 0)),
+                            ->placeholder('—'),
 
-                        TextEntry::make('secondary_style_display')
-                            ->label('Secundaire stijl')
+                        TextEntry::make('quiz_result.secondaryStyleLabel')
+                            ->label('Invloed')
                             ->badge()
                             ->color('gray')
-                            ->placeholder('—')
-                            ->getStateUsing(fn (Submission $record): ?string => self::formatTopStyle($record, 1)),
-
-                        TextEntry::make('tertiary_style_display')
-                            ->label('Tertiaire stijl')
-                            ->badge()
-                            ->color('gray')
-                            ->placeholder('—')
-                            ->getStateUsing(fn (Submission $record): ?string => self::formatTopStyle($record, 2)),
-
-                        TextEntry::make('traits')
-                            ->label('Kenmerken')
-                            ->getStateUsing(fn (Submission $record): string => collect($record->quiz_result['traits'] ?? [])->implode(' • ') ?: '—'
-                            )
-                            ->columnSpanFull(),
+                            ->placeholder('—'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
 
                 Section::make('Kleurresultaat')
                     ->visible(fn (Submission $record): bool => ! empty($record->quiz_result['personalPalette']))
@@ -248,11 +231,9 @@ class SubmissionResource extends Resource
 
                 Section::make('Gekozen antwoorden')
                     ->schema([
-                        KeyValueEntry::make('quiz_answers')
+                        ViewEntry::make('quiz_answers')
                             ->label('')
-                            ->keyLabel('Stap')
-                            ->valueLabel('Gekozen stijl')
-                            ->getStateUsing(fn (Submission $record): array => QuizAnswerFormatter::format($record->quiz_answers))
+                            ->view('filament.infolists.quiz-answers-entry')
                             ->columnSpanFull(),
                     ]),
 
@@ -283,17 +264,6 @@ class SubmissionResource extends Resource
                     ])
                     ->columns(2),
             ]);
-    }
-
-    private static function formatTopStyle(Submission $record, int $index): ?string
-    {
-        $style = ($record->quiz_result['topStyles'] ?? [])[$index] ?? null;
-
-        if (! $style) {
-            return null;
-        }
-
-        return "{$style['label']} ({$style['percentage']}%)";
     }
 
     public static function getRelations(): array

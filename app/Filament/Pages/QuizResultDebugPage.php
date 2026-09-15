@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\QuizResult;
+use App\Services\QuizScoringService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -12,10 +13,9 @@ use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Read-only inzage in recente, server-berekende quizresultaten — inclusief de ruwe
- * scores/percentages/traits/ruimteprofielen en de bijbehorende AI-gegenereerde (of
- * teruggevallen) adviesteksten. Bedoeld om te debuggen waarom iemand een bepaalde uitslag kreeg,
- * zie het implementatieplan-vereiste "testresultaat inclusief berekening kunnen bekijken".
+ * Read-only inzage in recente, server-berekende quizresultaten — de ruwe punten per stijl en of
+ * de tweede stijl wel/niet aan de invloed-eis voldeed. Bedoeld om te debuggen waarom iemand een
+ * bepaalde uitslag kreeg, zonder de bezoeker zelf ooit puntentabellen te tonen.
  */
 class QuizResultDebugPage extends Page implements HasActions, HasForms
 {
@@ -44,7 +44,7 @@ class QuizResultDebugPage extends Page implements HasActions, HasForms
     /** @return \Illuminate\Support\Collection<int, QuizResult> de 50 meest recente resultaten */
     public function getResults()
     {
-        return QuizResult::query()->with('generatedReports')->latest()->limit(50)->get();
+        return QuizResult::query()->latest()->limit(50)->get();
     }
 
     public function viewResultAction(): Action
@@ -55,8 +55,13 @@ class QuizResultDebugPage extends Page implements HasActions, HasForms
             ->modalWidth('3xl')
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Sluiten')
-            ->modalContent(fn (array $arguments) => view('filament.pages.partials.quiz-result-debug-detail', [
-                'result' => QuizResult::with('generatedReports')->findOrFail($arguments['resultId']),
-            ]));
+            ->modalContent(function (array $arguments) {
+                $result = QuizResult::findOrFail($arguments['resultId']);
+
+                return view('filament.pages.partials.quiz-result-debug-detail', [
+                    'result' => $result,
+                    'explanation' => app(QuizScoringService::class)->explain($result->answers),
+                ]);
+            });
     }
 }

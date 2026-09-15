@@ -8,179 +8,162 @@ use App\Models\QuizSetting;
 use App\Support\QuizStructure;
 
 /**
- * Servergestuurde, autoritatieve berekening van een quizresultaat — vervangt resources/js/quiz/
- * scoring.js's client-side, ongewogen berekening. Telt gewogen stijlpunten (QuizOptionStyle::points)
- * en traits (QuizOptionTrait::weight) op over de gekozen opties, per ruimte én in totaal, en bepaalt
- * daarna primaire/secundaire/tertiaire stijl inclusief "sterkte" via configureerbare drempels
- * (QuizSetting). Bevat zelf geen AI-tekst — dat is een aparte laag die alleen deze uitkomst als
- * grondstof krijgt (zie het implementatieplan "persoonlijke digitale interieuradviseur").
+ * Servergestuurde, autoritatieve berekening van een quizresultaat. Transparante, simpele regels
+ * (zie de opdracht "vereenvoudiging woonstijltest"):
+ *
+ * 1. Elke vraag heeft een totaal te verdelen gewicht (QuizQuestion::weight).
+ * 2. Bij één gekozen optie krijgt die optie het volledige vraaggewicht; bij meerdere gekozen
+ *    opties (max_selections > 1) deelt elke gekozen optie dat gewicht gelijk — twee keuzes maken
+ *    een vraag dus nooit zwaarder dan één keuze.
+ * 3. Elke aan een optie gekoppelde stijl (hoofdstijl, en evt. de tweede stijl) krijgt vervolgens
+ *    de VOLLEDIGE punten van die optie — geen verdere deling over de 1-2 gekoppelde stijlen.
+ * 4. De stijl met de hoogste totaalscore is de basisstijl. Een tweede stijl wordt alleen als
+ *    "invloed" getoond als ze minstens een instelbaar percentage van de basisscore haalt (zie
+ *    QuizSetting::secondary_influence_ratio) én in minstens 2 verschillende vragen punten kreeg.
+ *    Nooit een derde stijl.
+ *
+ * Een optie zonder gekoppelde stijl (onvolledig, zie QuizOption::linkedStyleKeys()) draagt bewust
+ * 0 punten bij aan geen enkele stijl — er wordt nooit een stijl verzonnen.
  */
 class QuizScoringService
 {
     /**
      * @param  array<string, array<int, string>>  $answers  questionId => geselecteerde option_slugs
      * @return array{
-     *     style_scores: array<string, int>,
-     *     style_percentages: array<string, int>,
-     *     room_profiles: array<string, array<string, int>>,
-     *     dominant_traits: array<int, array{key: string, label: string, weight: int}>,
-     *     ranking: array{
-     *         primary_style: ?string, secondary_style: ?string, tertiary_style: ?string,
-     *         primary_strength: ?string, secondary_strength: ?string, tertiary_strength: ?string,
-     *         case: string,
-     *     },
+     *     style_scores: array<string, float>,
+     *     primary_style: ?string,
+     *     secondary_style: ?string,
      * }
      */
     public function compute(array $answers): array
     {
-        $optionSlugs = collect($answers)->flatten()->filter()->unique()->values()->all();
+        $explanation = $this->explain($answers);
 
+        return [
+            'style_scores' => $explanation['style_scores'],
+            'primary_style' => $explanation['primary_style'],
+            'secondary_style' => $explanation['secondary_style'],
+        ];
+    }
+
+    /**
+     * Zoals compute(), maar geeft ook de tussenstappen terug (per stijl: uit hoeveel vragen ze
+     * punten kreeg, en of ze aan de invloed-eis voldeed) — gebruikt door het admin-debugscherm om
+     * te laten zien wáárom een resultaat zo uitpakte, zonder dat daarvoor iets extra's op
+     * QuizResult opgeslagen hoeft te worden (alles is hier deterministisch te herleiden uit de
+     * al opgeslagen ruwe antwoorden).
+     *
+     * @param  array<string, array<int, string>>  $answers  questionId => geselecteerde option_slugs
+     * @return array{
+     *     style_scores: array<string, float>,
+     *     style_question_counts: array<string, int>,
+     *     secondary_influence_ratio: int,
+     *     primary_style: ?string,
+     *     secondary_style: ?string,
+     * }
+     */
+    public function explain(array $answers): array
+    {
         $options = QuizOption::query()
-            ->whereIn('option_slug', $optionSlugs)
-            ->with(['styleLinks', 'traitLinks.traitRecord'])
+            ->whereIn('option_slug', collect($answers)->flatten()->filter()->unique()->values()->all())
             ->get()
             ->keyBy('option_slug');
 
         $questions = QuizQuestion::query()->get()->keyBy('question_key');
 
-        $styleScores = array_fill_keys(QuizStructure::styleKeys(), 0);
-        $roomScores = [];
-        $traitWeights = [];
+        $styleScores = array_fill_keys(QuizStructure::styleKeys(), 0.0);
+        $styleQuestionCounts = array_fill_keys(QuizStructure::styleKeys(), 0);
 
         foreach ($answers as $questionId => $optionIds) {
-            $room = $questions->get($questionId)?->room;
+            $question = $questions->get($questionId);
+            if (! $question) {
+                continue;
+            }
 
-            foreach ((array) $optionIds as $optionId) {
-                $option = $options->get($optionId);
-                if (! $option) {
-                    continue;
+            $chosenOptions = collect($optionIds)
+                ->map(fn (string $optionId) => $options->get($optionId))
+                ->filter();
+
+            if ($chosenOptions->isEmpty()) {
+                continue;
+            }
+
+            // Regel 2: het vraaggewicht wordt gelijk verdeeld over de gekozen opties binnen déze
+            // vraag — dus nooit hoger totaal dan het vraaggewicht, ongeacht hoeveel er gekozen zijn.
+            $pointsPerOption = $question->weight / $chosenOptions->count();
+
+            $stylesToppedUpThisQuestion = [];
+
+            foreach ($chosenOptions as $option) {
+                // Regel 3: elke gekoppelde stijl krijgt de volledige punten van de optie, niet
+                // verder verdeeld over de 1-2 gekoppelde stijlen.
+                foreach ($option->linkedStyleKeys() as $styleKey) {
+                    $styleScores[$styleKey] = ($styleScores[$styleKey] ?? 0) + $pointsPerOption;
+                    $stylesToppedUpThisQuestion[$styleKey] = true;
                 }
+            }
 
-                foreach ($option->styleLinks as $link) {
-                    $styleScores[$link->style_key] = ($styleScores[$link->style_key] ?? 0) + $link->points;
-
-                    if ($room) {
-                        $roomScores[$room][$link->style_key] = ($roomScores[$room][$link->style_key] ?? 0) + $link->points;
-                    }
-                }
-
-                foreach ($option->traitLinks as $traitLink) {
-                    $trait = $traitLink->traitRecord;
-                    if (! $trait) {
-                        continue;
-                    }
-
-                    $traitWeights[$trait->key] ??= ['label' => $trait->label, 'weight' => 0];
-                    $traitWeights[$trait->key]['weight'] += $traitLink->weight;
-                }
+            foreach (array_keys($stylesToppedUpThisQuestion) as $styleKey) {
+                $styleQuestionCounts[$styleKey]++;
             }
         }
 
-        $percentages = $this->percentagesFor($styleScores);
-
-        $roomProfiles = [];
-        foreach ($roomScores as $room => $scores) {
-            $roomProfiles[$room] = $this->percentagesFor($scores);
-        }
-
-        $dominantTraits = collect($traitWeights)
-            ->map(fn (array $data, string $key): array => ['key' => $key, 'label' => $data['label'], 'weight' => $data['weight']])
-            ->values()
-            ->sortByDesc('weight')
-            ->take(6)
-            ->values()
-            ->all();
-
-        $settings = QuizSetting::current();
-        $ranking = $this->determineRanking(
-            $percentages,
-            $settings->primary_dominant_margin,
-            $settings->close_pair_margin,
-            $settings->close_triple_margin,
-        );
+        $secondaryInfluenceRatio = QuizSetting::current()->secondary_influence_ratio;
+        $result = $this->determineResult($styleScores, $styleQuestionCounts, $secondaryInfluenceRatio);
 
         return [
             'style_scores' => $styleScores,
-            'style_percentages' => $percentages,
-            'room_profiles' => $roomProfiles,
-            'dominant_traits' => $dominantTraits,
-            'ranking' => $ranking,
+            'style_question_counts' => $styleQuestionCounts,
+            'secondary_influence_ratio' => $secondaryInfluenceRatio,
+            'primary_style' => $result['primary'],
+            'secondary_style' => $result['secondary'],
         ];
     }
 
     /**
-     * @param  array<string, int>  $styleScores
-     * @return array<string, int>
-     */
-    private function percentagesFor(array $styleScores): array
-    {
-        $sum = array_sum($styleScores);
-
-        if ($sum <= 0) {
-            return array_fill_keys(array_keys($styleScores), 0);
-        }
-
-        return array_map(fn (int $score): int => (int) round($score / $sum * 100), $styleScores);
-    }
-
-    /**
-     * Bepaalt primair/secundair/tertiair + "sterkte" uit een percentageverdeling. Pure functie
-     * (geen DB-calls, marges als parameters) zodat dit met handmatige percentage-arrays
-     * unit-getest kan worden voor elk van de 4 gevallen.
+     * Pure functie (geen DB-calls) zodat dit met handmatige score-arrays unit-getest kan worden.
      *
-     * @param  array<string, int>  $percentages  style_key => percentage, hoeft niet gesorteerd te zijn
+     * @param  array<string, float>  $styleScores  style_key => opgeteld aantal punten
+     * @param  array<string, int>  $styleQuestionCounts  style_key => aantal verschillende vragen dat punten gaf
+     * @return array{primary: ?string, secondary: ?string}
      */
-    public function determineRanking(
-        array $percentages,
-        int $primaryDominantMargin,
-        int $closePairMargin,
-        int $closeTripleMargin,
-    ): array {
-        arsort($percentages);
-        $ranked = array_keys($percentages);
-        $values = array_values($percentages);
+    public function determineResult(array $styleScores, array $styleQuestionCounts, int $secondaryInfluenceRatio): array
+    {
+        // Gelijke stand: het eerst-gedeclareerde style-key in QuizStructure::STYLES wint — vast,
+        // voorspelbaar gedrag (zie test "gelijke scores / deterministische uitslag"). arsort()
+        // sorteert in PHP 8+ stabiel, en $styleScores staat al in QuizStructure-volgorde
+        // (opgebouwd via array_fill_keys(QuizStructure::styleKeys(), ...)), dus die volgorde
+        // blijft bij gelijke scores behouden.
+        $ordered = $styleScores;
+        arsort($ordered);
 
-        $top1 = $values[0] ?? 0;
+        $styleKeysByScore = array_keys($ordered);
+        $primary = $styleKeysByScore[0] ?? null;
 
-        if ($top1 <= 0) {
-            return [
-                'primary_style' => null,
-                'secondary_style' => null,
-                'tertiary_style' => null,
-                'primary_strength' => null,
-                'secondary_strength' => null,
-                'tertiary_strength' => null,
-                'case' => 'clear_winner',
-            ];
+        if ($primary === null || $ordered[$primary] <= 0) {
+            return ['primary' => null, 'secondary' => null];
         }
 
-        $top2 = $values[1] ?? 0;
-        $top3 = $values[2] ?? 0;
-        $gap1 = $top1 - $top2;
-        $gap2 = $top2 - $top3;
+        $primaryScore = $ordered[$primary];
+        $secondary = null;
 
-        if ($gap1 >= $primaryDominantMargin) {
-            $case = 'clear_winner';
-            $strengths = ['strong', 'moderate', 'subtle'];
-        } elseif ($gap1 < $closePairMargin && $gap2 >= $closePairMargin) {
-            $case = 'close_pair';
-            $strengths = ['strong', 'strong', 'subtle'];
-        } elseif ($gap1 < $closeTripleMargin && $gap2 < $closeTripleMargin) {
-            $case = 'close_triple';
-            $strengths = ['moderate', 'moderate', 'moderate'];
-        } else {
-            $case = 'contradictory';
-            $strengths = ['strong', 'moderate', 'subtle'];
+        foreach (array_slice($styleKeysByScore, 1) as $candidate) {
+            $candidateScore = $ordered[$candidate];
+
+            if ($candidateScore <= 0) {
+                break;
+            }
+
+            $meetsRatio = $candidateScore >= ($primaryScore * $secondaryInfluenceRatio / 100);
+            $meetsSpread = ($styleQuestionCounts[$candidate] ?? 0) >= 2;
+
+            if ($meetsRatio && $meetsSpread) {
+                $secondary = $candidate;
+            }
+
+            break; // nooit verder dan de op-één-na-hoogste stijl bekijken — nooit een derde stijl.
         }
 
-        return [
-            'primary_style' => $ranked[0] ?? null,
-            'secondary_style' => $top2 > 0 ? ($ranked[1] ?? null) : null,
-            'tertiary_style' => $top3 > 0 ? ($ranked[2] ?? null) : null,
-            'primary_strength' => $strengths[0],
-            'secondary_strength' => $top2 > 0 ? $strengths[1] : null,
-            'tertiary_strength' => $top3 > 0 ? $strengths[2] : null,
-            'case' => $case,
-        ];
+        return ['primary' => $primary, 'secondary' => $secondary];
     }
 }

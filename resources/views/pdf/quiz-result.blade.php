@@ -241,21 +241,21 @@ body {
     page-break-before: always;
 }
 
-.room-advice-item {
-    margin-bottom: 14px;
+.answer-item {
+    margin-bottom: 10px;
 }
 
-.room-advice-title {
+.answer-question {
     font-weight: bold;
     color: #9f6239;
-    font-size: 9.5pt;
+    font-size: 8.5pt;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
-.room-advice-text {
-    color: #4a3526;
+.answer-choice {
+    color: #2d2620;
 }
 
 .footer {
@@ -339,7 +339,7 @@ body {
 
 @if (!empty($result['personalPalette']))
 <div class="section">
-    <div class="section-title">Jouw kleurenpalet</div>
+    <div class="section-title">Kleuren ter inspiratie</div>
     @if (!empty($result['colorExplanation']))
     <div class="section-intro">{{ $result['colorExplanation'] }}</div>
     @endif
@@ -426,18 +426,14 @@ body {
 </div>
 @endif
 
-@php
-    $roomLabels = ['woonkamer' => 'Woonkamer', 'eethoek' => 'Eethoek', 'keuken' => 'Keuken'];
-    $roomAdvice = array_filter($result['roomAdvice'] ?? [], fn ($text) => ! empty($text));
-@endphp
-
-@if (!empty($roomAdvice))
+@if (!empty($result['answerBreakdown']))
 <div class="section">
-    <div class="section-title">Zo komt jouw stijl terug in huis</div>
-    @foreach ($roomAdvice as $roomKey => $text)
-    <div class="room-advice-item">
-        <div class="room-advice-title">{{ $roomLabels[$roomKey] ?? $roomKey }}</div>
-        <div class="room-advice-text">{{ $text }}</div>
+    <div class="section-title">Jouw keuzes</div>
+    <div class="section-intro">Dit zijn de antwoorden waarop jouw resultaat is gebaseerd.</div>
+    @foreach ($result['answerBreakdown'] as $item)
+    <div class="answer-item">
+        <div class="answer-question">{{ $item['question'] }}</div>
+        <div class="answer-choice">{{ collect($item['options'])->pluck('title')->implode(', ') }}</div>
     </div>
     @endforeach
 </div>
@@ -445,7 +441,7 @@ body {
 
 @if (!empty($primaryStyle['avoid']))
 <div class="section">
-    <div class="section-title">Dit past iets minder goed bij jouw stijl</div>
+    <div class="section-title">Zo kun je met deze stijl verder</div>
     <div class="avoid-box">{{ $primaryStyle['avoid'] }}</div>
 </div>
 @endif

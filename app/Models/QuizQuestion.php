@@ -14,12 +14,14 @@ class QuizQuestion extends Model
         'folder',
         'sort_order',
         'max_selections',
+        'weight',
         'image_display_mode',
     ];
 
     protected $casts = [
         'sort_order' => 'integer',
         'max_selections' => 'integer',
+        'weight' => 'integer',
     ];
 
     public function options()

@@ -49,7 +49,10 @@ class QuizConfigController extends Controller
 
         $options = QuizOption::query()
             ->where('is_active', true)
-            ->with('styleLinks')
+            // Een optie zonder hoofdstijl is onvolledig (zie QuizOptionsPage) en mag nooit in de
+            // klant-quiz verschijnen, ook niet als hij per ongeluk op actief staat — er wordt
+            // nooit een stijl verzonnen voor een optie zonder koppeling.
+            ->whereNotNull('primary_style')
             ->get()
             ->map(fn (QuizOption $option): array => [
                 'id' => $option->option_slug,
@@ -57,7 +60,7 @@ class QuizConfigController extends Controller
                 'title' => $option->title,
                 'image' => $option->publicImageUrl(),
                 'primaryStyle' => $option->primary_style,
-                'styles' => $option->styleKeys(),
+                'styles' => $option->linkedStyleKeys(),
                 'colorHex' => $option->color_hex,
                 'colorFamily' => $option->color_family,
                 'colorTemperature' => $option->color_temperature,

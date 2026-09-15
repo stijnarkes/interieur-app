@@ -930,25 +930,10 @@ a.btn-primary:hover {
   opacity: 0.9;
 }
 
-.result-match--tertiary {
-  opacity: 0.75;
-}
-
-.result-hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.result-hero-chip {
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--bg-soft);
-  border: 1px solid var(--line);
-  font-size: 0.82rem;
-  font-weight: 600;
+.result-hero-expectation {
+  font-size: 0.92rem;
   color: var(--muted);
+  margin-bottom: 18px;
 }
 
 .result-hero-image {

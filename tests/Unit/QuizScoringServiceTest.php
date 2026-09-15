@@ -7,9 +7,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Test determineRanking() in isolatie (geen DB nodig — pure functie): dekt de 4 gevallen uit het
- * implementatieplan (duidelijke winnaar / twee bijna-gelijk / drie bijna-gelijk / tegenstrijdig)
- * met dezelfde marges als de quiz_settings-defaults (15 / 8 / 5).
+ * Test determineResult() in isolatie (geen DB nodig — pure functie). De DB-afhankelijke regels
+ * (gewogen scoring per vraag/optie) staan in tests/Feature/QuizScoringIntegrationTest.php.
  */
 class QuizScoringServiceTest extends TestCase
 {
@@ -22,81 +21,87 @@ class QuizScoringServiceTest extends TestCase
     }
 
     #[Test]
-    public function een_duidelijke_winnaar_wordt_herkend(): void
+    public function een_duidelijke_winnaar_krijgt_geen_invloed(): void
     {
-        $result = $this->service->determineRanking(
-            ['japandi' => 60, 'modern' => 20, 'natuurlijk' => 20],
-            primaryDominantMargin: 15,
-            closePairMargin: 8,
-            closeTripleMargin: 5,
+        // 20 vs 5 haalt de 70%-drempel bij lange na niet, dus geen invloed — ook al kreeg
+        // scandinavisch in 2 vragen punten.
+        $result = $this->service->determineResult(
+            ['japandi' => 20.0, 'scandinavisch' => 5.0],
+            ['japandi' => 3, 'scandinavisch' => 2],
+            secondaryInfluenceRatio: 70,
         );
 
-        $this->assertSame('clear_winner', $result['case']);
-        $this->assertSame('japandi', $result['primary_style']);
-        $this->assertSame('strong', $result['primary_strength']);
-        $this->assertSame('modern', $result['secondary_style']);
+        $this->assertSame('japandi', $result['primary']);
+        $this->assertNull($result['secondary']);
     }
 
     #[Test]
-    public function twee_bijna_gelijke_stijlen_worden_als_gemengd_profiel_herkend(): void
+    public function een_sterke_tweede_stijl_uit_twee_vragen_wordt_als_invloed_getoond(): void
     {
-        $result = $this->service->determineRanking(
-            ['japandi' => 42, 'scandinavisch' => 38, 'modern' => 20],
-            primaryDominantMargin: 15,
-            closePairMargin: 8,
-            closeTripleMargin: 5,
+        $result = $this->service->determineResult(
+            ['japandi' => 10.0, 'scandinavisch' => 8.0],
+            ['japandi' => 3, 'scandinavisch' => 2],
+            secondaryInfluenceRatio: 70,
         );
 
-        $this->assertSame('close_pair', $result['case']);
-        $this->assertSame('japandi', $result['primary_style']);
-        $this->assertSame('scandinavisch', $result['secondary_style']);
-        $this->assertSame('strong', $result['primary_strength']);
-        $this->assertSame('strong', $result['secondary_strength']);
+        $this->assertSame('japandi', $result['primary']);
+        $this->assertSame('scandinavisch', $result['secondary']);
     }
 
     #[Test]
-    public function drie_bijna_gelijke_stijlen_worden_als_drieweg_mix_herkend(): void
+    public function een_sterke_tweede_stijl_uit_slechts_een_vraag_krijgt_geen_invloed(): void
     {
-        $result = $this->service->determineRanking(
-            ['japandi' => 36, 'scandinavisch' => 33, 'natuurlijk' => 31],
-            primaryDominantMargin: 15,
-            closePairMargin: 8,
-            closeTripleMargin: 5,
+        // Score-ratio is ruim voldoende (8/10 = 80% >= 70%), maar de stijl kwam maar uit 1 vraag.
+        $result = $this->service->determineResult(
+            ['japandi' => 10.0, 'scandinavisch' => 8.0],
+            ['japandi' => 3, 'scandinavisch' => 1],
+            secondaryInfluenceRatio: 70,
         );
 
-        $this->assertSame('close_triple', $result['case']);
-        $this->assertSame('moderate', $result['primary_strength']);
-        $this->assertSame('moderate', $result['secondary_strength']);
-        $this->assertSame('moderate', $result['tertiary_strength']);
+        $this->assertSame('japandi', $result['primary']);
+        $this->assertNull($result['secondary']);
     }
 
     #[Test]
-    public function een_onduidelijke_tussenvorm_wordt_als_tegenstrijdig_gemarkeerd(): void
+    public function nooit_een_derde_stijl(): void
     {
-        // gap1 (10) zit tussen close_pair_margin (8) en primary_dominant_margin (15) in — te
-        // groot voor "twee bijna-gelijk", te klein voor "duidelijke winnaar".
-        $result = $this->service->determineRanking(
-            ['japandi' => 50, 'scandinavisch' => 40, 'modern' => 10],
-            primaryDominantMargin: 15,
-            closePairMargin: 8,
-            closeTripleMargin: 5,
+        $result = $this->service->determineResult(
+            ['japandi' => 10.0, 'scandinavisch' => 9.0, 'natuurlijk' => 9.0],
+            ['japandi' => 3, 'scandinavisch' => 2, 'natuurlijk' => 2],
+            secondaryInfluenceRatio: 70,
         );
 
-        $this->assertSame('contradictory', $result['case']);
-        $this->assertSame('japandi', $result['primary_style']);
+        $this->assertSame('japandi', $result['primary']);
+        // Slechts één invloed mag getoond worden, ook al zou natuurlijk óók kwalificeren.
+        $this->assertContains($result['secondary'], ['scandinavisch', null]);
+        $this->assertNotSame('natuurlijk', $result['secondary']);
+    }
+
+    #[Test]
+    public function bij_gelijke_scores_wint_de_stijl_die_eerst_in_de_array_staat(): void
+    {
+        // determineResult() is een pure functie: de tie-break is "eerst in de meegegeven array
+        // wint" — QuizScoringService::compute() geeft die array altijd door in
+        // QuizStructure::styleKeys()-volgorde, dus in de praktijk is dát de vaste volgorde.
+        $result = $this->service->determineResult(
+            ['scandinavisch' => 10.0, 'japandi' => 10.0],
+            ['scandinavisch' => 2, 'japandi' => 2],
+            secondaryInfluenceRatio: 70,
+        );
+
+        $this->assertSame('scandinavisch', $result['primary']);
     }
 
     #[Test]
     public function geen_enkele_score_levert_geen_stijlen_op(): void
     {
-        $result = $this->service->determineRanking(
+        $result = $this->service->determineResult(
+            ['japandi' => 0.0, 'modern' => 0.0],
             ['japandi' => 0, 'modern' => 0],
-            primaryDominantMargin: 15,
-            closePairMargin: 8,
-            closeTripleMargin: 5,
+            secondaryInfluenceRatio: 70,
         );
 
-        $this->assertNull($result['primary_style']);
-        $this->assertNull($result['secondary_style']);
+        $this->assertNull($result['primary']);
+        $this->assertNull($result['secondary']);
     }
 }

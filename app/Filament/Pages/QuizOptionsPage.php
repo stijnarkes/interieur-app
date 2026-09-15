@@ -4,16 +4,15 @@ namespace App\Filament\Pages;
 
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
-use App\Models\QuizTrait;
 use App\Support\QuizStructure;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section as FormSection;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -82,63 +81,34 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         ];
     }
 
-    /** Repeater voor gewogen stijlkoppelingen — vervangt het vroegere gelijk-gewogen multi-select. */
-    private function stylePointsField(): Repeater
+    /**
+     * Hoofdstijl (verplicht voor publicatie) + optionele tweede stijl — een optie mag bij
+     * maximaal 2 woonstijlen passen, en beide tellen bij de scoring volledig mee (zie
+     * QuizScoringService). Vervangt de vroegere, complexere punten-/traits-repeaters.
+     *
+     * @return array<int, mixed>
+     */
+    private function styleFields(): array
     {
-        return Repeater::make('stylePoints')
-            ->label('Woonstijlen & punten')
-            ->helperText('Aan welke woonstijl(en) geeft deze keuze punten, en hoe zwaar telt elke stijl mee? Een optie die duidelijk Japandi is met een vleugje Natuurlijk kan bijvoorbeeld Japandi 3 punten en Natuurlijk 1 punt geven.')
-            ->schema([
-                Select::make('style_key')
-                    ->label('Woonstijl')
-                    ->options(QuizStructure::styleOptions())
-                    ->required(),
-                TextInput::make('points')
-                    ->label('Punten')
-                    ->numeric()
-                    ->default(1)
-                    ->minValue(1)
-                    ->maxValue(10)
-                    ->required(),
-            ])
-            ->columns(2)
-            ->minItems(1)
-            ->required()
-            ->addActionLabel('Woonstijl toevoegen');
-    }
+        return [
+            Select::make('primary_style')
+                ->label('Hoofdstijl')
+                ->helperText('Verplicht — een optie zonder hoofdstijl verschijnt niet in de klant-quiz.')
+                ->options(QuizStructure::styleOptions())
+                ->required(),
 
-    /** Repeater voor gewogen traits (kleur/materiaal/vorm/sfeer) — optioneel, voor de AI-adviestekst. */
-    private function traitWeightsField(): Repeater
-    {
-        return Repeater::make('traitWeights')
-            ->label('Eigenschappen')
-            ->helperText('Welke eigenschappen (kleur, materiaal, vorm, sfeer) horen bij deze keuze? Gebruikt door de AI-tekstlaag om een rode draad te herkennen — optioneel.')
-            ->schema([
-                Select::make('trait_id')
-                    ->label('Eigenschap')
-                    ->options(fn () => QuizTrait::query()->where('is_active', true)->pluck('label', 'id'))
-                    ->searchable()
-                    ->required()
-                    ->createOptionForm([
-                        TextInput::make('key')->label('Sleutel')->required()->maxLength(255)
-                            ->helperText('Intern, bv. "warm_hout" — kleine letters, underscores.'),
-                        TextInput::make('label')->label('Label')->required()->maxLength(255),
-                        Select::make('category')
-                            ->label('Categorie')
-                            ->options(['color' => 'Kleur', 'material' => 'Materiaal', 'shape' => 'Vorm', 'atmosphere' => 'Sfeer'])
-                            ->nullable(),
-                    ])
-                    ->createOptionUsing(fn (array $data): int => QuizTrait::create($data)->id),
-                TextInput::make('weight')
-                    ->label('Gewicht')
-                    ->numeric()
-                    ->default(1)
-                    ->minValue(1)
-                    ->maxValue(10)
-                    ->required(),
-            ])
-            ->columns(2)
-            ->addActionLabel('Eigenschap toevoegen');
+            Select::make('secondary_style')
+                ->label('Tweede stijl (optioneel)')
+                ->helperText('Alleen invullen als deze keuze duidelijk ook bij een tweede woonstijl past. Beide stijlen tellen volledig mee, er wordt niets verdeeld.')
+                ->options(QuizStructure::styleOptions())
+                ->rules(['different:primary_style'])
+                ->nullable(),
+
+            Textarea::make('internal_note')
+                ->label('Interne notitie voor de styliste')
+                ->helperText('Alleen zichtbaar in het interne overzicht, nooit voor de bezoeker.')
+                ->rows(2),
+        ];
     }
 
     /** @return array<int, mixed> */
@@ -166,9 +136,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->required()
                     ->maxLength(255),
 
-                $this->stylePointsField(),
-
-                $this->traitWeightsField(),
+                ...$this->styleFields(),
 
                 FileUpload::make('image')
                     ->label('Afbeelding')
@@ -198,23 +166,14 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                 $uploadedImage = $data['image'];
                 unset($data['image']);
 
-                $stylePoints = collect($data['stylePoints'])->pluck('points', 'style_key')->all();
-                $traitWeights = collect($data['traitWeights'] ?? [])->pluck('weight', 'trait_id')->all();
-                unset($data['stylePoints'], $data['traitWeights']);
-
-                $firstStyle = array_key_first($stylePoints);
-
                 $option = QuizOption::create([
                     ...$data,
                     'question_id' => $questionId,
-                    'primary_style' => $firstStyle,
-                    'style_key' => $firstStyle,
+                    'style_key' => $data['primary_style'],
                     'option_slug' => $slug,
                     'image_path' => "/images/interior/extra/{$slug}.webp",
                 ]);
 
-                $option->syncStylesWithPoints($stylePoints);
-                $option->syncTraits($traitWeights);
                 $option->storeImage($uploadedImage);
 
                 Notification::make()->title('Antwoordoptie toegevoegd')->success()->send();
@@ -226,25 +185,14 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         return Action::make('editOption')
             ->label('Bewerken')
             ->modalHeading('Antwoordoptie bewerken')
-            ->fillForm(function (array $arguments): array {
-                $option = QuizOption::with(['styleLinks', 'traitLinks'])->findOrFail($arguments['optionId']);
-
-                return [
-                    ...$option->toArray(),
-                    'stylePoints' => $option->styleLinks->map(fn ($link): array => ['style_key' => $link->style_key, 'points' => $link->points])->all(),
-                    'traitWeights' => $option->traitLinks->map(fn ($link): array => ['trait_id' => $link->trait_id, 'weight' => $link->weight])->all(),
-                ];
-            })
+            ->fillForm(fn (array $arguments): array => QuizOption::findOrFail($arguments['optionId'])->toArray())
             ->form([
                 TextInput::make('title')
                     ->label('Titel')
                     ->required()
                     ->maxLength(255),
 
-                $this->stylePointsField()
-                    ->helperText('Bepaalt aan welke woonstijl(en) deze keuze punten geeft en hoe zwaar. De afbeelding blijft gekoppeld aan de oorspronkelijke stijl-slot.'),
-
-                $this->traitWeightsField(),
+                ...$this->styleFields(),
 
                 Toggle::make('is_active')
                     ->label('Actief')
@@ -276,13 +224,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                 }
                 unset($data['image']);
 
-                $stylePoints = collect($data['stylePoints'])->pluck('points', 'style_key')->all();
-                $traitWeights = collect($data['traitWeights'] ?? [])->pluck('weight', 'trait_id')->all();
-                unset($data['stylePoints'], $data['traitWeights']);
-
-                $record->update([...$data, 'primary_style' => array_key_first($stylePoints)]);
-                $record->syncStylesWithPoints($stylePoints);
-                $record->syncTraits($traitWeights);
+                $record->update($data);
 
                 Notification::make()->title('Antwoordoptie bijgewerkt')->success()->send();
             });
@@ -355,6 +297,15 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->default(1)
                     ->required(),
 
+                TextInput::make('weight')
+                    ->label('Gewicht')
+                    ->helperText('Hoeveel punten heeft deze vraag in totaal te verdelen over de gekozen optie(s)? Standaard 1. Een zwaardere vraag (bv. 2) telt harder mee in de uitslag.')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(10)
+                    ->default(1)
+                    ->required(),
+
                 Select::make('image_display_mode')
                     ->label('Weergave foto\'s')
                     ->options(QuizStructure::imageDisplayModeOptions())
@@ -394,7 +345,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         return Action::make('editQuestion')
             ->label('Vraag bewerken')
             ->modalHeading('Vraag bewerken')
-            ->fillForm(fn (array $arguments): array => QuizQuestion::findOrFail($arguments['questionId'])->only(['title', 'section', 'max_selections', 'image_display_mode', 'room']))
+            ->fillForm(fn (array $arguments): array => QuizQuestion::findOrFail($arguments['questionId'])->only(['title', 'section', 'max_selections', 'weight', 'image_display_mode', 'room']))
             ->form([
                 TextInput::make('title')
                     ->label('Vraagtekst')
@@ -410,6 +361,14 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                 TextInput::make('max_selections')
                     ->label('Maximum aantal keuzes')
                     ->helperText('Hoeveel opties mag een bezoeker bij deze vraag tegelijk kiezen? Standaard 1 (één keuze).')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(10)
+                    ->required(),
+
+                TextInput::make('weight')
+                    ->label('Gewicht')
+                    ->helperText('Hoeveel punten heeft deze vraag in totaal te verdelen over de gekozen optie(s)? Standaard 1. Een zwaardere vraag (bv. 2) telt harder mee in de uitslag.')
                     ->numeric()
                     ->minValue(1)
                     ->maxValue(10)

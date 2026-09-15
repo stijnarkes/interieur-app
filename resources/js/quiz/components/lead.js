@@ -11,22 +11,38 @@ function renderLeadForm(container, { result }) {
    * Gedeeld met de "Opnieuw versturen"-knop in de successtatus. Stuurt alleen de verwijzing naar
    * het al server-side berekende resultaat (resultUuid) mee — de PDF-inhoud zelf bouwt
    * QuizLeadController op uit QuizResult/StyleProfile, niet meer uit client-aangeleverde velden.
+   * Idempotent aan de serverkant (zelfde resultUuid = geen dubbele mail), dus een timeout hier mag
+   * gerust een nieuwe poging suggereren i.p.v. een definitieve foutmelding: in het ergste geval
+   * had de eerste poging toch al succes, en de tweede verandert daar dan niets meer aan.
    */
   async function submitLead({ name, email, marketingOptIn }) {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
-    const response = await fetch("/api/quiz-lead", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
-      body: JSON.stringify({
-        resultUuid: result.resultUuid,
-        name,
-        email,
-        marketingOptIn,
-      }),
-    });
 
-    const json = await response.json();
-    if (!response.ok) throw new Error(json.error || "Verzenden mislukt.");
+    let response;
+    try {
+      response = await fetch("/api/quiz-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
+        body: JSON.stringify({
+          resultUuid: result.resultUuid,
+          name,
+          email,
+          marketingOptIn,
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+    } catch {
+      throw new Error("We konden niet bevestigen of het verzenden is gelukt. Probeer het nog eens.");
+    }
+
+    let json = {};
+    try {
+      json = await response.json();
+    } catch {
+      // Geen geldige JSON-body — val terug op de statuscode hieronder.
+    }
+
+    if (!response.ok) throw new Error(json.message || "Verzenden mislukt. Probeer het nog eens.");
     return json;
   }
 

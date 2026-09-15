@@ -9,9 +9,9 @@ import { renderResultHero } from "./resultHero.js";
 function renderStyleResult(container, result) {
   container.innerHTML = "";
 
-  const { comboName, intro, primaryStyle, secondaryStyle, tertiaryStyle, keywordChips } = result;
+  const { comboName, intro, primaryStyle, secondaryStyle } = result;
 
-  renderResultHero(container, { comboName, intro, primaryStyle, secondaryStyle, tertiaryStyle, keywordChips });
+  renderResultHero(container, { comboName, intro, primaryStyle, secondaryStyle });
 }
 
 export { renderStyleResult };

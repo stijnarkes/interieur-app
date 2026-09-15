@@ -13,7 +13,7 @@ function renderQuestionStep(container, question, selectedOptionIds, onSelect) {
   if (maxSelections > 1) {
     const hint = document.createElement("p");
     hint.className = "quiz-question-hint";
-    hint.textContent = `Kies er maximaal ${maxSelections}.`;
+    hint.textContent = `Kies maximaal ${maxSelections}.`;
     container.appendChild(hint);
   }
 

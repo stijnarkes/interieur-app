@@ -13,6 +13,8 @@ class QuizOption extends Model
         'style_key',
         'option_slug',
         'primary_style',
+        'secondary_style',
+        'internal_note',
         'title',
         'image_path',
         'color_hex',
@@ -33,29 +35,42 @@ class QuizOption extends Model
         'price' => 'decimal:2',
     ];
 
+    /**
+     * @return array<int, string> de 1 of 2 gekoppelde stijl-keys (hoofdstijl + evt. tweede stijl),
+     * zie QuizScoringService::compute(). Leeg als er nog geen hoofdstijl is gekoppeld (onvolledige
+     * optie — mag dan niet in de klant-quiz verschijnen, zie QuizConfigController).
+     */
+    public function linkedStyleKeys(): array
+    {
+        return array_values(array_filter([$this->primary_style, $this->secondary_style]));
+    }
+
+    /** @deprecated Vervangen door primary_style/secondary_style — zie linkedStyleKeys(). Blijft staan als historisch archief van de vorige, complexere stijlkoppeling. */
     public function styleLinks()
     {
         return $this->hasMany(QuizOptionStyle::class, 'option_id');
     }
 
+    /** @deprecated Traits/kenmerken-scores zijn buiten scope — zie het implementatieplan "vereenvoudiging woonstijltest". Blijft staan als historisch archief. */
     public function traitLinks()
     {
         return $this->hasMany(QuizOptionTrait::class, 'option_id');
     }
 
-    /** @return array<int, string> stijl-keys waar deze optie punten aan geeft (zie QuizScoringService). */
+    /** @deprecated Gebruik linkedStyleKeys(). */
     public function styleKeys(): array
     {
         return $this->styleLinks->pluck('style_key')->all();
     }
 
-    /** @return array<string, int> stijl-key => punten, zie QuizScoringService::compute(). */
+    /** @deprecated Gewogen punten per stijl bestaan niet meer — elke gekoppelde stijl telt altijd volledig mee. */
     public function stylePoints(): array
     {
         return $this->styleLinks->pluck('points', 'style_key')->all();
     }
 
     /**
+     * @deprecated Gebruik het primary_style/secondary_style-paar rechtstreeks.
      * @param  array<string, int>  $stylePoints  stijl-key => punten (bv. ['japandi' => 3, 'natuurlijk' => 1])
      */
     public function syncStylesWithPoints(array $stylePoints): void
@@ -67,13 +82,14 @@ class QuizOption extends Model
         }
     }
 
-    /** @return array<string, int> trait-key => gewicht. */
+    /** @deprecated Traits/kenmerken-scores zijn buiten scope. */
     public function traitWeights(): array
     {
         return $this->traitLinks->pluck('weight', 'trait_id')->all();
     }
 
     /**
+     * @deprecated Traits/kenmerken-scores zijn buiten scope.
      * @param  array<int, int>  $traitWeights  trait_id => gewicht
      */
     public function syncTraits(array $traitWeights): void
