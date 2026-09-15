@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\QuizMaterial;
 use App\Models\QuizOption;
+use App\Models\QuizTransitionSection;
+use App\Models\SiteContent;
 use App\Support\QuizImageManifest;
 use App\Support\QuizStructure;
 use Illuminate\Http\JsonResponse;
@@ -79,11 +81,11 @@ class QuizConfigController extends Controller
         // staan met een vast pad in de JS-bundel (styleProfiles.js/sectionTransition.js) — die
         // paden kloppen alleen zolang bestanden onder public/ staan. Hier krijgt de frontend de
         // echte, disk-onafhankelijke URL mee zodat remoteConfig.js die kan overschrijven (zie
-        // applyAtmosphere()/applyTransitionPhotos()), ook wanneer de opslag naar S3 verhuist.
-        // publicUrlForPath() controleert hier per pad live of het bestand bestaat (er is geen
-        // has_image-achtige kolom voor deze vaste-slot-foto's) — op S3 is dat een netwerkverzoek
-        // per pad, dus 5 minuten cachen om dat niet op elke paginabezoeker te laten drukken. Deze
-        // foto's veranderen toch zelden; een admin ziet een update dan met een kleine vertraging.
+        // applyTransitionPhotos()), ook wanneer de opslag naar S3 verhuist. publicUrlForPath()
+        // controleert hier per pad live of het bestand bestaat (er is geen has_image-achtige
+        // kolom voor deze vaste-slot-foto's) — op S3 is dat een netwerkverzoek per pad, dus 5
+        // minuten cachen om dat niet op elke paginabezoeker te laten drukken. Deze foto's
+        // veranderen toch zelden; een admin ziet een update dan met een kleine vertraging.
         $atmosphere = Cache::remember('quiz-config:atmosphere-urls', 300, fn () => collect(QuizStructure::styleOptions())
             ->mapWithKeys(fn (string $label, string $key): array => [
                 $key => QuizImageManifest::publicUrlForPath('images/interior/atmosphere/'.QuizStructure::styleSlug($key).'.webp'),
@@ -94,12 +96,59 @@ class QuizConfigController extends Controller
                 $sectionId => QuizImageManifest::publicUrlForPath("images/interior/transitions/{$sectionId}.webp"),
             ]));
 
+        // De teksten van de overgangsschermen (title/tagline/wrapUp/cta) — admin-beheerbaar via
+        // TekstenPage, zie QuizTransitionSection. Geen cache nodig: platte DB-read, geen
+        // disk-bestaanscontroles zoals hierboven.
+        $sections = QuizTransitionSection::query()->get()->keyBy('section_id')
+            ->map(fn (QuizTransitionSection $section): array => [
+                'title' => $section->title,
+                'tagline' => $section->tagline,
+                'wrapUp' => $section->wrap_up,
+                'cta' => $section->cta,
+            ]);
+
+        // De stijl-onafhankelijke resultatenpagina-teksten (heldenblok/rapport-teaser/
+        // aanvraagformulier/bevestiging) — admin-beheerbaar via TekstenPage, zie SiteContent.
+        // Overschrijft de fallback-teksten in resources/js/quiz/copy.js (zie remoteConfig.js's
+        // applyCopy()), zelfde techniek als hierboven voor foto's.
+        $siteContent = SiteContent::current();
+        $copy = [
+            'resultHero' => [
+                'eyebrow' => $siteContent->hero_eyebrow,
+                'expectation' => $siteContent->hero_expectation,
+                'primaryLabel' => $siteContent->hero_primary_label,
+                'secondaryLabel' => $siteContent->hero_secondary_label,
+            ],
+            'reportTeaser' => [
+                'title' => $siteContent->teaser_title,
+                'intro' => $siteContent->teaser_intro,
+                'listIntro' => $siteContent->teaser_list_intro,
+                'checklistItems' => $siteContent->teaser_checklist_items,
+                'mockLabel' => $siteContent->teaser_mock_label,
+            ],
+            'leadForm' => [
+                'heading' => $siteContent->lead_heading,
+                'intro' => $siteContent->lead_intro,
+                'optInLabel' => $siteContent->lead_optin_label,
+                'submitLabel' => $siteContent->lead_submit_label,
+                'reassurance' => $siteContent->lead_reassurance,
+                'successTitle' => $siteContent->lead_success_title,
+                'successBody' => $siteContent->lead_success_body,
+                'spamHint' => $siteContent->lead_spam_hint,
+                'expectTitle' => $siteContent->lead_expect_title,
+                'expectItems' => $siteContent->lead_expect_items,
+                'resendLabel' => $siteContent->lead_resend_label,
+            ],
+        ];
+
         return response()->json([
             'questions' => $questions,
             'options' => $options,
             'materials' => $materials,
             'atmosphere' => $atmosphere,
             'transitionPhotos' => $transitionPhotos,
+            'sections' => $sections,
+            'copy' => $copy,
         ]);
     }
 }

@@ -1,11 +1,6 @@
 import { createCheckIcon } from "./checkIcon.js";
 import { createLoadingScene } from "./loadingScene.js";
-
-const EXPECT_ITEMS = [
-  "Jouw persoonlijke woonstijl",
-  "Kleuren, materialen en vormen die bij je passen",
-  "Een persoonlijk moodboard en interieuradvies",
-];
+import { LEAD_FORM_COPY } from "../copy.js";
 
 /** Voorkomt HTML-injectie wanneer een eerder ingevulde naam/e-mailadres via innerHTML wordt teruggezet. */
 function escapeHtml(value) {
@@ -75,12 +70,12 @@ function renderLeadForm(container, { result }) {
     container.innerHTML = "";
 
     const heading = document.createElement("h3");
-    heading.textContent = "Ontvang jouw persoonlijke woonstijlrapport";
+    heading.textContent = LEAD_FORM_COPY.heading;
     container.appendChild(heading);
 
     const intro = document.createElement("p");
     intro.className = "section-intro";
-    intro.textContent = "Vul hieronder je gegevens in en ontvang jouw complete persoonlijke interieuradvies als PDF in je mailbox.";
+    intro.textContent = LEAD_FORM_COPY.intro;
     container.appendChild(intro);
 
     const form = document.createElement("form");
@@ -107,7 +102,7 @@ function renderLeadForm(container, { result }) {
     optInField.className = "field checkbox-row";
     optInField.innerHTML = `
       <input id="leadOptIn" name="leadOptIn" type="checkbox" ${marketingOptIn ? "checked" : ""} />
-      <label for="leadOptIn">Ik ontvang graag af en toe wooninspiratie, tips en acties van Boer Staphorst.</label>
+      <label for="leadOptIn">${LEAD_FORM_COPY.optInLabel}</label>
     `;
 
     const actions = document.createElement("div");
@@ -116,7 +111,7 @@ function renderLeadForm(container, { result }) {
     submitBtn.type = "submit";
     submitBtn.className = "btn btn-primary";
     submitBtn.innerHTML = `
-      Stuur mijn woonstijlrapport
+      ${LEAD_FORM_COPY.submitLabel}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     `;
     actions.appendChild(submitBtn);
@@ -128,7 +123,7 @@ function renderLeadForm(container, { result }) {
 
     const reassurance = document.createElement("p");
     reassurance.className = "lead-form-reassurance";
-    reassurance.textContent = "Je ontvangt jouw rapport direct per e-mail. Geen verplichtingen.";
+    reassurance.textContent = LEAD_FORM_COPY.reassurance;
 
     form.appendChild(nameField);
     form.appendChild(emailField);
@@ -201,27 +196,27 @@ function renderLeadForm(container, { result }) {
 
     const title = document.createElement("p");
     title.className = "lead-form-success-title";
-    title.textContent = "Je woonstijlrapport is verzonden";
+    title.textContent = LEAD_FORM_COPY.successTitle;
     success.appendChild(title);
 
     const body = document.createElement("p");
     body.className = "section-intro";
-    body.textContent = `Bedankt, ${name}. We hebben jouw persoonlijke woonstijlrapport verstuurd naar ${email}.`;
+    body.textContent = LEAD_FORM_COPY.successBody.replace("{name}", name).replace("{email}", email);
     success.appendChild(body);
 
     const spamHint = document.createElement("p");
     spamHint.className = "hint";
-    spamHint.textContent = "Nog geen e-mail? Kijk voor de zekerheid even in je spam.";
+    spamHint.textContent = LEAD_FORM_COPY.spamHint;
     success.appendChild(spamHint);
 
     const expectTitle = document.createElement("p");
     expectTitle.className = "report-checklist-intro";
-    expectTitle.textContent = "Wat kun je verwachten?";
+    expectTitle.textContent = LEAD_FORM_COPY.expectTitle;
     success.appendChild(expectTitle);
 
     const expectList = document.createElement("ul");
     expectList.className = "report-checklist";
-    EXPECT_ITEMS.forEach((item) => {
+    LEAD_FORM_COPY.expectItems.forEach((item) => {
       const li = document.createElement("li");
       li.appendChild(createCheckIcon());
       const text = document.createElement("span");
@@ -237,7 +232,7 @@ function renderLeadForm(container, { result }) {
     const resendBtn = document.createElement("button");
     resendBtn.type = "button";
     resendBtn.className = "btn btn-secondary";
-    resendBtn.textContent = "Opnieuw versturen";
+    resendBtn.textContent = LEAD_FORM_COPY.resendLabel;
     followUp.appendChild(resendBtn);
 
     const resendStatus = document.createElement("p");

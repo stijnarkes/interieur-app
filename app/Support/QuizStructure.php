@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\QuizQuestion;
+use App\Models\QuizTransitionSection;
 
 /**
  * Kleine PHP-mirror van de sectie-/stijlstructuur uit resources/js/quiz/data.js en
@@ -59,7 +60,7 @@ class QuizStructure
             ->mapWithKeys(fn (QuizQuestion $question): array => [
                 $question->question_key => [
                     'section' => $question->section,
-                    'sectionTitle' => self::SECTIONS[$question->section]['title'] ?? $question->section,
+                    'sectionTitle' => self::sectionLabel($question->section),
                     'room' => $question->room,
                     'title' => $question->title,
                     'folder' => $question->folder,
@@ -112,7 +113,21 @@ class QuizStructure
     /** @return array<string, string> sectie-id => label, voor Filament Select-opties */
     public static function sectionOptions(): array
     {
-        return array_map(fn (array $section): string => $section['title'], self::SECTIONS);
+        return collect(self::SECTIONS)
+            ->mapWithKeys(fn (array $section, string $id): array => [$id => self::sectionLabel($id)])
+            ->all();
+    }
+
+    /**
+     * Leest de sectietitel bij voorkeur uit quiz_transition_sections (admin-bewerkbaar via
+     * TekstenPage) en valt terug op de hardcoded titel hierboven als er nog geen rij bestaat —
+     * zelfde niet-destructieve fallback-patroon als QuizOption::linkedStyleKeys().
+     */
+    public static function sectionLabel(string $sectionId): string
+    {
+        return QuizTransitionSection::forSection($sectionId)?->title
+            ?? self::SECTIONS[$sectionId]['title']
+            ?? $sectionId;
     }
 
     /** @return array<string, string> stijl-key => label, voor Filament Select-opties */

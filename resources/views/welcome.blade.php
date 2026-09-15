@@ -9,6 +9,7 @@
         @php
             $heroPhotoUrl = \App\Support\QuizImageManifest::url('hero', 'startscherm.webp');
             $totalQuestions = \App\Models\QuizQuestion::count();
+            $siteContent = \App\Models\SiteContent::current();
         @endphp
         @if ($heroPhotoUrl)
             <div class="quiz-start-photo">
@@ -16,14 +17,14 @@
             </div>
         @endif
 
-        <h1>Ontdek jouw woonstijl</h1>
-        <p>Kies jouw favorieten en ontdek in een paar minuten welke stijl, kleuren en meubels bij jou passen.</p>
+        <h1>{{ $siteContent->start_title }}</h1>
+        <p>{{ $siteContent->start_intro }}</p>
 
         <div class="actions">
             {{-- Staat bij het laden van de pagina uit; app.js zet 'm pas aan zodra de actuele
                  vragenlijst is opgehaald (of hergebruikt de knop als "Opnieuw proberen" als dat
                  na meerdere pogingen niet lukt) — zie resources/js/app.js. --}}
-            <button type="button" class="btn btn-primary" id="startQuizBtn" disabled>Start de stijlanalyse</button>
+            <button type="button" class="btn btn-primary" id="startQuizBtn" disabled>{{ $siteContent->start_button_label }}</button>
         </div>
 
         <p class="error" id="quizLoadError" hidden>Kon de vragenlijst niet laden. Controleer je internetverbinding.</p>
@@ -31,11 +32,11 @@
         <div class="quiz-start-facts">
             <span class="quiz-start-fact">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-                &plusmn; 3 minuten
+                {{ $siteContent->start_duration_fact }}
             </span>
             <span class="quiz-start-fact">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.75c0 1.75-2.4 2.25-2.4 2.25"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
-                {{ $totalQuestions }} vragen
+                {{ $totalQuestions }} {{ $siteContent->start_questions_suffix }}
             </span>
         </div>
     </section>
@@ -74,7 +75,7 @@
     {{-- Resultaat --}}
     <section class="card results report" id="quizResult" hidden>
         <div class="results-head">
-            <h2>Jouw persoonlijke woonstijl</h2>
+            <h2>{{ $siteContent->result_page_title }}</h2>
             <button type="button" class="btn btn-link" id="restartQuizBtn">Opnieuw beginnen</button>
         </div>
 

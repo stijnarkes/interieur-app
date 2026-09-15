@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\SiteContent;
 use App\Models\Submission;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -20,12 +21,12 @@ class QuizResultMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Jouw Woonstijl | Boer Staphorst');
+        return new Envelope(subject: SiteContent::current()->email_subject);
     }
 
     public function content(): Content
     {
-        return new Content(view: 'emails.quiz-result');
+        return new Content(view: 'emails.quiz-result', with: ['siteContent' => SiteContent::current()]);
     }
 
     public function attachments(): array

@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             QuizOptionSeeder::class,
             StyleProfileSeeder::class,
+            SiteContentSeeder::class,
+            QuizTransitionSectionSeeder::class,
         ]);
     }
 }

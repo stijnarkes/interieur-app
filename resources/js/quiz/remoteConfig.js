@@ -1,4 +1,5 @@
 import { QUESTIONS, SECTIONS } from "./data.js";
+import { RESULT_HERO_COPY, REPORT_TEASER_COPY, LEAD_FORM_COPY } from "./copy.js";
 
 /**
  * Haalt de admin-bewerkbare inhoud (vragen/opties) op bij /api/quiz-config en muteert de
@@ -52,6 +53,8 @@ async function loadRemoteQuizConfig() {
   applyQuestions(config.questions);
   applyOptions(config.options);
   applyTransitionPhotos(config.transitionPhotos);
+  applySections(config.sections);
+  applyCopy(config.copy);
 
   return true;
 }
@@ -120,6 +123,38 @@ function applyTransitionPhotos(remotePhotosBySection) {
       section.image = image;
     }
   });
+}
+
+/**
+ * Vervangt de titel/tagline/afsluitzin/knoptekst per overgangsscherm door de admin-beheerde
+ * inhoud (zie TekstenPage/QuizTransitionSection) — zelfde in-place-mutatietechniek als
+ * applyTransitionPhotos() hierboven, maar dan voor tekst i.p.v. de foto.
+ */
+function applySections(remoteSectionsById) {
+  if (!remoteSectionsById || typeof remoteSectionsById !== "object") return;
+
+  SECTIONS.forEach((section) => {
+    const remote = remoteSectionsById[section.id];
+    if (!remote) return;
+
+    if (remote.title) section.title = remote.title;
+    if (remote.tagline) section.tagline = remote.tagline;
+    if (remote.wrapUp) section.wrapUp = remote.wrapUp;
+    if (remote.cta) section.cta = remote.cta;
+  });
+}
+
+/**
+ * Vervangt de stijl-onafhankelijke resultatenpagina-teksten (zie copy.js) door de admin-beheerde
+ * inhoud (TekstenPage/SiteContent) — Object.assign muteert elk *_COPY-object in place, zodat
+ * resultHero.js/reportTeaser.js/lead.js niets zelf hoeven te doen om dit mee te krijgen.
+ */
+function applyCopy(remoteCopy) {
+  if (!remoteCopy || typeof remoteCopy !== "object") return;
+
+  if (remoteCopy.resultHero) Object.assign(RESULT_HERO_COPY, remoteCopy.resultHero);
+  if (remoteCopy.reportTeaser) Object.assign(REPORT_TEASER_COPY, remoteCopy.reportTeaser);
+  if (remoteCopy.leadForm) Object.assign(LEAD_FORM_COPY, remoteCopy.leadForm);
 }
 
 export { loadRemoteQuizConfig };

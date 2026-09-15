@@ -1,13 +1,5 @@
 import { createCheckIcon } from "./checkIcon.js";
-
-const CHECKLIST_ITEMS = [
-  "Jouw persoonlijke kleurenpalet",
-  "Materialen die goed bij jouw stijl passen",
-  "Advies voor meubels, vormen en stoffen",
-  "Jouw persoonlijke moodboard",
-  "Jouw interieurrecept",
-  "Tips over wat juist minder goed bij jouw stijl past",
-];
+import { REPORT_TEASER_COPY } from "../copy.js";
 
 function buildMockPage(className) {
   const page = document.createElement("div");
@@ -27,7 +19,7 @@ function buildReportMock(primaryStyle, palette) {
 
   const label = document.createElement("p");
   label.className = "report-mock-label";
-  label.textContent = "Jouw woonstijlrapport";
+  label.textContent = REPORT_TEASER_COPY.mockLabel;
   front.appendChild(label);
 
   const styleName = document.createElement("p");
@@ -80,22 +72,22 @@ function renderReportTeaser(container, { result }) {
   content.className = "report-teaser-content";
 
   const title = document.createElement("h3");
-  title.textContent = "Jouw persoonlijke interieuradvies staat klaar";
+  title.textContent = REPORT_TEASER_COPY.title;
   content.appendChild(title);
 
   const intro = document.createElement("p");
   intro.className = "section-intro";
-  intro.textContent = "Op basis van al jouw keuzes hebben we een persoonlijk woonstijlrapport voor je samengesteld.";
+  intro.textContent = REPORT_TEASER_COPY.intro;
   content.appendChild(intro);
 
   const listIntro = document.createElement("p");
   listIntro.className = "report-checklist-intro";
-  listIntro.textContent = "In jouw rapport vind je onder andere:";
+  listIntro.textContent = REPORT_TEASER_COPY.listIntro;
   content.appendChild(listIntro);
 
   const list = document.createElement("ul");
   list.className = "report-checklist";
-  CHECKLIST_ITEMS.forEach((item) => {
+  REPORT_TEASER_COPY.checklistItems.forEach((item) => {
     const li = document.createElement("li");
     li.appendChild(createCheckIcon());
     const text = document.createElement("span");

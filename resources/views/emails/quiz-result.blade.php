@@ -68,15 +68,15 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <h1>Jouw persoonlijke woonstijl</h1>
+            <h1>{{ $siteContent->email_header }}</h1>
         </div>
         <div class="body">
-            <p>Hoi{{ $submission->name ? ' ' . $submission->name : '' }},</p>
-            <p>Bedankt voor het doen van de interieurstijltest van Boer Staphorst. Jouw woonstijl:</p>
+            <p>{{ $siteContent->email_greeting }}{{ $submission->name ? ' ' . $submission->name : '' }},</p>
+            <p>{{ $siteContent->email_intro }}</p>
             <p class="style-pill">{{ $submission->quiz_result['resultName'] ?? '' }}</p>
             <p>{{ $submission->quiz_result['description'] ?? '' }}</p>
-            <p>De volledige uitslag met jouw moodboard vind je in de bijgevoegde PDF.</p>
-            <a class="cta" href="https://www.boer-staphorst.nl/wonen/interieuradvies" target="_blank" rel="noopener">Plan een interieuradvies</a>
+            <p>{{ $siteContent->email_outro }}</p>
+            <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener">{{ $siteContent->email_cta_label }}</a>
         </div>
     </div>
 </body>

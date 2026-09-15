@@ -1,3 +1,5 @@
+import { RESULT_HERO_COPY } from "../copy.js";
+
 /**
  * Hero bovenaan de resultatenpagina: de basisstijl, en alleen waar van toepassing één label voor
  * de tweede invloed — nooit een derde stijl (zie de opdracht "vereenvoudiging woonstijltest").
@@ -6,36 +8,35 @@ function renderResultHero(container, { comboName, intro, primaryStyle, secondary
   const hero = document.createElement("section");
   hero.className = "result-card result-hero";
 
-  const copy = document.createElement("div");
-  copy.className = "result-hero-copy";
+  const copyBlock = document.createElement("div");
+  copyBlock.className = "result-hero-copy";
 
   const eyebrow = document.createElement("p");
   eyebrow.className = "result-hero-eyebrow";
-  eyebrow.textContent = "Jouw persoonlijke woonstijl";
-  copy.appendChild(eyebrow);
+  eyebrow.textContent = RESULT_HERO_COPY.eyebrow;
+  copyBlock.appendChild(eyebrow);
 
   const heading = document.createElement("h1");
   heading.className = "quiz-result-name";
-  heading.textContent = comboName ?? primaryStyle?.label ?? "Jouw persoonlijke woonstijl";
-  copy.appendChild(heading);
+  heading.textContent = comboName ?? primaryStyle?.label ?? RESULT_HERO_COPY.eyebrow;
+  copyBlock.appendChild(heading);
 
   const description = document.createElement("p");
   description.className = "section-intro";
   description.textContent = intro ?? "";
-  copy.appendChild(description);
+  copyBlock.appendChild(description);
 
   const expectation = document.createElement("p");
   expectation.className = "result-hero-expectation";
-  expectation.textContent =
-    "Dit is een eerste richting op basis van wat jij mooi vindt. Onze interieurstylistes helpen je graag om deze stijl te vertalen naar jouw eigen woning.";
-  copy.appendChild(expectation);
+  expectation.textContent = RESULT_HERO_COPY.expectation;
+  copyBlock.appendChild(expectation);
 
   const matches = document.createElement("div");
   matches.className = "result-hero-matches";
 
   const layers = [
-    { style: primaryStyle, label: "Basisstijl", className: "result-match--primary" },
-    { style: secondaryStyle, label: "Invloed", className: "result-match--secondary" },
+    { style: primaryStyle, label: RESULT_HERO_COPY.primaryLabel, className: "result-match--primary" },
+    { style: secondaryStyle, label: RESULT_HERO_COPY.secondaryLabel, className: "result-match--secondary" },
   ];
 
   layers
@@ -47,8 +48,8 @@ function renderResultHero(container, { comboName, intro, primaryStyle, secondary
       matches.appendChild(match);
     });
 
-  copy.appendChild(matches);
-  hero.appendChild(copy);
+  copyBlock.appendChild(matches);
+  hero.appendChild(copyBlock);
 
   if (primaryStyle?.heroImage) {
     // Bewust geen createImageTile()/placeholder-tint hier: die liet dit blok leeg/kapot ogen
