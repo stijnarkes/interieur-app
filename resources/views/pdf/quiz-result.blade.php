@@ -172,11 +172,11 @@ body {
     color: #2d2620;
 }
 
-.material-grid, .photo-grid {
+.photo-grid {
     width: 100%;
 }
 
-.material-item, .photo-item {
+.photo-item {
     display: inline-block;
     width: 22%;
     margin: 0 3% 12px 0;
@@ -184,7 +184,7 @@ body {
     vertical-align: top;
 }
 
-.material-item img, .photo-item img {
+.photo-item img {
     width: 100%;
     height: 70px;
     object-fit: cover;
@@ -192,7 +192,7 @@ body {
     margin-bottom: 6px;
 }
 
-.material-item-placeholder, .photo-item-placeholder {
+.photo-item-placeholder {
     width: 100%;
     height: 70px;
     background: #f0e3d4;
@@ -200,10 +200,12 @@ body {
     margin-bottom: 6px;
 }
 
-.material-name {
-    font-size: 8.5pt;
-    font-weight: bold;
-    color: #2d2620;
+.materials-board-image {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 12px;
 }
 
 .recipe-table {
@@ -340,22 +342,20 @@ body {
 </div>
 @endif
 
-@if (!empty($primaryStyle['materials']))
+@if (!empty($primaryStyle['materials']) || !empty($primaryStyle['materialsImage']))
+@php $materialsImage = $resolveImage($primaryStyle['materialsImage'] ?? null); @endphp
 <div class="section">
     <div class="section-title">Materialen die bij jou passen</div>
-    <div class="material-grid">
-        @foreach ($primaryStyle['materials'] as $material)
-        @php $materialImage = $resolveImage($material['image'] ?? null); @endphp
-        <div class="material-item">
-            @if ($materialImage)
-                <img src="{{ $materialImage }}" alt="{{ $material['name'] ?? '' }}" />
-            @else
-                <div class="material-item-placeholder"></div>
-            @endif
-            <div class="material-name">{{ $material['name'] ?? '' }}</div>
-        </div>
+    @if ($materialsImage)
+    <img src="{{ $materialsImage }}" class="materials-board-image" alt="Materialen die bij jouw stijl passen" />
+    @endif
+    @if (!empty($primaryStyle['materials']))
+    <div class="pill-row">
+        @foreach ($primaryStyle['materials'] as $materialName)
+        <span class="pill">{{ $materialName }}</span>
         @endforeach
     </div>
+    @endif
     @if (!empty($primaryStyle['materialsTip']))
     <div class="tip-box">{{ $primaryStyle['materialsTip'] }}</div>
     @endif

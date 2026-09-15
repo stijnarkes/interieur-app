@@ -122,13 +122,17 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                 FormSection::make('Materialen')
                     ->collapsed()
                     ->schema([
-                        Repeater::make('materials')
-                            ->label('Materialen')
-                            ->schema([
-                                TextInput::make('name')->label('Naam')->required(),
-                                TextInput::make('image')->label('Afbeeldingspad')->helperText('Bv. /images/interior/materials/japandi-1.webp'),
-                            ])
-                            ->columns(2),
+                        FileUpload::make('materials_image_upload')
+                            ->label('Materialenfoto')
+                            ->helperText('Eén samengestelde foto met de materialen hieronder (bv. een moodboard-collage). Laat leeg om de huidige foto te behouden.')
+                            ->image()
+                            ->disk('public')
+                            ->directory('tmp-quiz-uploads')
+                            ->visibility('private')
+                            ->dehydrated(false),
+                        TagsInput::make('materials')
+                            ->label('Materialen op de foto')
+                            ->helperText('Namen van de materialen die op de foto hierboven te zien zijn — Enter om toe te voegen.'),
                         Textarea::make('materials_tip')->label('Materialen-tip')->rows(2),
                     ]),
 
@@ -170,9 +174,14 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                 $profile = StyleProfile::findOrFail($arguments['profileId']);
 
                 if (! empty($data['hero_image_upload'])) {
-                    $data['hero_image'] = $this->storeUploadedImage($data['hero_image_upload'], $profile->slug);
+                    $data['hero_image'] = $this->storeUploadedImage($data['hero_image_upload'], "atmosphere/{$profile->slug}");
                 }
                 unset($data['hero_image_upload']);
+
+                if (! empty($data['materials_image_upload'])) {
+                    $data['materials_image'] = $this->storeUploadedImage($data['materials_image_upload'], "materials-board/{$profile->slug}");
+                }
+                unset($data['materials_image_upload']);
 
                 $data['furniture_shapes'] = [
                     'intro' => $data['furniture_intro'] ?? null,
@@ -186,9 +195,9 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
             });
     }
 
-    private function storeUploadedImage(string $uploadedDiskPath, string $slug): string
+    private function storeUploadedImage(string $uploadedDiskPath, string $relativePath): string
     {
-        $path = "images/interior/atmosphere/{$slug}.webp";
+        $path = "images/interior/{$relativePath}.webp";
         QuizImageManifest::storeAtPath($path, $uploadedDiskPath, 1600);
 
         return "/{$path}";

@@ -103,6 +103,7 @@ class QuizLeadController extends Controller
                 'heroImage' => $primary->hero_image,
                 'colorTip' => $primary->color_tip,
                 'materials' => $primary->materials,
+                'materialsImage' => $primary->materials_image,
                 'materialsTip' => $primary->materials_tip,
                 'furnitureAdvice' => $primary->furniture_shapes,
                 'recipe' => $primary->recipe,

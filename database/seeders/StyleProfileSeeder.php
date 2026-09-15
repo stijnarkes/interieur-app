@@ -50,12 +50,8 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Diep groen', 'hex' => '#2e4034'],
                 ],
                 'color_tip' => 'Gebruik beige en taupe als warme basis en voeg diepere tinten toe voor extra sfeer. Champagnekleurige of donkere accenten geven het geheel een luxe uitstraling zonder dat het te zwaar wordt.',
-                'materials' => [
-                    ['name' => 'Fluweel', 'image' => '/images/interior/materials/hotel-luxe-1.webp'],
-                    ['name' => 'Donker hout', 'image' => '/images/interior/materials/hotel-luxe-2.webp'],
-                    ['name' => 'Marmer', 'image' => '/images/interior/materials/hotel-luxe-3.webp'],
-                    ['name' => 'Messing', 'image' => '/images/interior/materials/hotel-luxe-4.webp'],
-                ],
+                'materials' => ['Fluweel', 'Donker hout', 'Marmer', 'Messing'],
+                'materials_image' => null,
                 'materials_tip' => 'Combineer zachte stoffen met gladde en verfijnde materialen zoals marmer, glas en metaal. Juist het contrast tussen zacht en chic geeft jouw interieur de luxe hotelsfeer die bij je past.',
                 'furniture_shapes' => [
                     'intro' => 'Kies meubels die comfortabel aanvoelen, maar tegelijkertijd een elegante en verzorgde uitstraling hebben.',
@@ -96,12 +92,8 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Zacht olijfgroen', 'hex' => '#8d9873'],
                 ],
                 'color_tip' => 'Gebruik de lichte tinten als rustige basis en voeg hout, taupe en een zachte accentkleur toe voor warmte en contrast.',
-                'materials' => [
-                    ['name' => 'Naturel eiken', 'image' => '/images/interior/materials/japandi-1.webp'],
-                    ['name' => 'Linnen', 'image' => '/images/interior/materials/japandi-2.webp'],
-                    ['name' => 'Wol / bouclé', 'image' => '/images/interior/materials/japandi-3.webp'],
-                    ['name' => 'Keramiek', 'image' => '/images/interior/materials/japandi-4.webp'],
-                ],
+                'materials' => ['Naturel eiken', 'Linnen', 'Wol / bouclé', 'Keramiek'],
+                'materials_image' => null,
                 'materials_tip' => 'Combineer natuurlijke materialen met zachte stoffen. Hierdoor blijft je interieur rustig, maar voelt het tegelijkertijd warm en comfortabel.',
                 'furniture_shapes' => [
                     'intro' => 'Kies liever voor een paar rustige, sterke meubels dan voor veel verschillende vormen en details.',
@@ -141,12 +133,8 @@ class StyleProfileSeeder extends Seeder
                 ],
                 'accent_colors' => null,
                 'color_tip' => 'Kies één of twee kleuren als duidelijke hoofdtoon en laat andere kleuren terugkomen in kleinere accenten. Zo blijft je interieur levendig, maar ontstaat er toch samenhang.',
-                'materials' => [
-                    ['name' => 'Gekleurd glas', 'image' => '/images/interior/materials/kleur-explosie-1.webp'],
-                    ['name' => 'Velours', 'image' => '/images/interior/materials/kleur-explosie-2.webp'],
-                    ['name' => 'Gelakt hout', 'image' => '/images/interior/materials/kleur-explosie-3.webp'],
-                    ['name' => 'Keramiek', 'image' => '/images/interior/materials/kleur-explosie-4.webp'],
-                ],
+                'materials' => ['Gekleurd glas', 'Velours', 'Gelakt hout', 'Keramiek'],
+                'materials_image' => null,
                 'materials_tip' => 'Mix materialen met verschillende structuren en uitstralingen. Een zachte stof naast glanzend glas of kleurrijk keramiek maakt jouw interieur extra spannend en persoonlijk.',
                 'furniture_shapes' => [
                     'intro' => 'Meubels mogen bij jou gezien worden. Kies vormen, kleuren en details die een ruimte karakter geven.',
@@ -187,12 +175,8 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Vergrijsd groen', 'hex' => '#8a9483'],
                 ],
                 'color_tip' => 'Werk met warme, rustige basiskleuren en voeg bruin- en groentinten toe voor een natuurlijke sfeer. Door kleuren ton-sur-ton te combineren ontstaat een zachte en gezellige uitstraling.',
-                'materials' => [
-                    ['name' => 'Eikenhout', 'image' => '/images/interior/materials/landelijk-1.webp'],
-                    ['name' => 'Linnen', 'image' => '/images/interior/materials/landelijk-2.webp'],
-                    ['name' => 'Wol', 'image' => '/images/interior/materials/landelijk-3.webp'],
-                    ['name' => 'Natuursteen', 'image' => '/images/interior/materials/landelijk-4.webp'],
-                ],
+                'materials' => ['Eikenhout', 'Linnen', 'Wol', 'Natuursteen'],
+                'materials_image' => null,
                 'materials_tip' => 'Combineer robuust hout met zachte stoffen en natuurlijke structuren. Hierdoor krijgt je interieur karakter, terwijl het tegelijkertijd warm en toegankelijk blijft.',
                 'furniture_shapes' => [
                     'intro' => 'Comfort staat centraal. Kies meubels die royaal ogen en uitnodigen om lang te blijven zitten.',
@@ -233,12 +217,8 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Zwart', 'hex' => '#17181a'],
                 ],
                 'color_tip' => 'Gebruik lichte neutrale tinten als basis en creëer diepte met grijs, antraciet of zwart. Een warmere houttint kan voorkomen dat je interieur te koel aanvoelt.',
-                'materials' => [
-                    ['name' => 'Eikenhout', 'image' => '/images/interior/materials/modern-1.webp'],
-                    ['name' => 'Metaal', 'image' => '/images/interior/materials/modern-2.webp'],
-                    ['name' => 'Glas', 'image' => '/images/interior/materials/modern-3.webp'],
-                    ['name' => 'Keramiek', 'image' => '/images/interior/materials/modern-4.webp'],
-                ],
+                'materials' => ['Eikenhout', 'Metaal', 'Glas', 'Keramiek'],
+                'materials_image' => null,
                 'materials_tip' => 'Combineer gladde materialen met hout of textiel om warmte toe te voegen. Zo blijft de moderne uitstraling strak, maar voelt je interieur wel prettig en leefbaar aan.',
                 'furniture_shapes' => [
                     'intro' => 'Kies meubels met heldere vormen, een rustige uitstraling en voldoende comfort.',
@@ -279,12 +259,8 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Zwart', 'hex' => '#1a1a1a'],
                 ],
                 'color_tip' => 'Houd de basis rustig met warm wit, greige en taupe en voeg donkerdere accenten toe voor contrast. Luxe materialen en subtiele glans mogen vervolgens voor extra diepte zorgen.',
-                'materials' => [
-                    ['name' => 'Marmer', 'image' => '/images/interior/materials/modern-luxe-1.webp'],
-                    ['name' => 'Walnoothout', 'image' => '/images/interior/materials/modern-luxe-2.webp'],
-                    ['name' => 'Bouclé', 'image' => '/images/interior/materials/modern-luxe-3.webp'],
-                    ['name' => 'Brons', 'image' => '/images/interior/materials/modern-luxe-4.webp'],
-                ],
+                'materials' => ['Marmer', 'Walnoothout', 'Bouclé', 'Brons'],
+                'materials_image' => null,
                 'materials_tip' => 'Combineer strakke oppervlakken met rijke, zachte stoffen. Een mix van hout, steen en metaal zorgt voor een moderne uitstraling die toch warm en luxe blijft.',
                 'furniture_shapes' => [
                     'intro' => 'Ga voor meubels die rustig ogen, maar door vorm of materiaal toch bijzonder aanvoelen.',
@@ -325,12 +301,8 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Olijfgroen', 'hex' => '#6b7a4f'],
                 ],
                 'color_tip' => 'Laat zand- en crèmetinten de rustige basis vormen en voeg groen, bruin en kleitinten toe. Zo ontstaat een gelaagd kleurenpalet dat rechtstreeks uit de natuur lijkt te komen.',
-                'materials' => [
-                    ['name' => 'Massief hout', 'image' => '/images/interior/materials/natuurlijk-1.webp'],
-                    ['name' => 'Rotan', 'image' => '/images/interior/materials/natuurlijk-2.webp'],
-                    ['name' => 'Linnen', 'image' => '/images/interior/materials/natuurlijk-3.webp'],
-                    ['name' => 'Natuursteen', 'image' => '/images/interior/materials/natuurlijk-4.webp'],
-                ],
+                'materials' => ['Massief hout', 'Rotan', 'Linnen', 'Natuursteen'],
+                'materials_image' => null,
                 'materials_tip' => 'Combineer materialen die je ook echt kunt voelen, zoals grof linnen, hout en steen. Kleine verschillen in structuur en kleurnuance maken jouw interieur juist interessant.',
                 'furniture_shapes' => [
                     'intro' => 'Kies meubels met natuurlijke vormen en materialen die ontspannen en toegankelijk aanvoelen.',
@@ -371,12 +343,8 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Saliegroen', 'hex' => '#9caf88'],
                 ],
                 'color_tip' => 'Gebruik wit en lichte neutrale tinten om de ruimte fris te houden. Voeg zachte pastel- of natuurtinten toe voor warmte en een subtiel kleuraccent.',
-                'materials' => [
-                    ['name' => 'Licht eiken', 'image' => '/images/interior/materials/scandinavisch-1.webp'],
-                    ['name' => 'Wol', 'image' => '/images/interior/materials/scandinavisch-2.webp'],
-                    ['name' => 'Katoen', 'image' => '/images/interior/materials/scandinavisch-3.webp'],
-                    ['name' => 'Keramiek', 'image' => '/images/interior/materials/scandinavisch-4.webp'],
-                ],
+                'materials' => ['Licht eiken', 'Wol', 'Katoen', 'Keramiek'],
+                'materials_image' => null,
                 'materials_tip' => 'Combineer licht hout met zachte stoffen en eenvoudige keramische accessoires. Zo behoud je de frisse uitstraling, terwijl je interieur toch warm en gezellig blijft.',
                 'furniture_shapes' => [
                     'intro' => 'Ga voor praktische meubels met een lichte uitstraling en eenvoudige, vriendelijke vormen.',

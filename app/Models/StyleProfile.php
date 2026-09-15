@@ -20,6 +20,7 @@ class StyleProfile extends Model
         'accent_colors',
         'color_tip',
         'materials',
+        'materials_image',
         'materials_tip',
         'furniture_shapes',
         'lighting',
