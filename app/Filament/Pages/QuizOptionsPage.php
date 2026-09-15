@@ -8,6 +8,7 @@ use App\Support\QuizStructure;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section as FormSection;
@@ -82,27 +83,20 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
     }
 
     /**
-     * Hoofdstijl (verplicht voor publicatie) + optionele tweede stijl — een optie mag bij
-     * maximaal 2 woonstijlen passen, en beide tellen bij de scoring volledig mee (zie
-     * QuizScoringService). Vervangt de vroegere, complexere punten-/traits-repeaters.
+     * Vrije lijst van woonstijlen die bij deze optie passen — geen hoofd-/tweede-stijl-onderscheid
+     * meer, elke aangevinkte stijl telt bij de scoring volledig mee (zie QuizScoringService).
      *
      * @return array<int, mixed>
      */
     private function styleFields(): array
     {
         return [
-            Select::make('primary_style')
-                ->label('Hoofdstijl')
-                ->helperText('Verplicht — een optie zonder hoofdstijl verschijnt niet in de klant-quiz.')
+            CheckboxList::make('style_keys')
+                ->label('Woonstijlen')
+                ->helperText('Vink alle woonstijlen aan die bij deze optie passen — verplicht minstens 1. Elke aangevinkte stijl telt volledig mee, er wordt niets verdeeld.')
                 ->options(QuizStructure::styleOptions())
+                ->columns(2)
                 ->required(),
-
-            Select::make('secondary_style')
-                ->label('Tweede stijl (optioneel)')
-                ->helperText('Alleen invullen als deze keuze duidelijk ook bij een tweede woonstijl past. Beide stijlen tellen volledig mee, er wordt niets verdeeld.')
-                ->options(QuizStructure::styleOptions())
-                ->rules(['different:primary_style'])
-                ->nullable(),
 
             Textarea::make('internal_note')
                 ->label('Interne notitie voor de styliste')
@@ -169,7 +163,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                 $option = QuizOption::create([
                     ...$data,
                     'question_id' => $questionId,
-                    'style_key' => $data['primary_style'],
+                    'style_key' => $data['style_keys'][0],
                     'option_slug' => $slug,
                     'image_path' => "/images/interior/extra/{$slug}.webp",
                 ]);
@@ -185,7 +179,14 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         return Action::make('editOption')
             ->label('Bewerken')
             ->modalHeading('Antwoordoptie bewerken')
-            ->fillForm(fn (array $arguments): array => QuizOption::findOrFail($arguments['optionId'])->toArray())
+            ->fillForm(function (array $arguments): array {
+                $option = QuizOption::findOrFail($arguments['optionId']);
+
+                return [
+                    ...$option->toArray(),
+                    'style_keys' => $option->linkedStyleKeys(),
+                ];
+            })
             ->form([
                 TextInput::make('title')
                     ->label('Titel')

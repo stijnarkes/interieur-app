@@ -34,12 +34,16 @@ class QuizScoringIntegrationTest extends TestCase
 
     private function makeOption(string $questionKey, string $slug, ?string $primaryStyle, ?string $secondaryStyle = null): QuizOption
     {
+        return $this->makeOptionWithStyles($questionKey, $slug, array_values(array_filter([$primaryStyle, $secondaryStyle])));
+    }
+
+    private function makeOptionWithStyles(string $questionKey, string $slug, array $styleKeys): QuizOption
+    {
         return QuizOption::create([
             'question_id' => $questionKey,
-            'style_key' => $primaryStyle ?? 'japandi',
+            'style_key' => $styleKeys[0] ?? 'japandi',
             'option_slug' => $slug,
-            'primary_style' => $primaryStyle,
-            'secondary_style' => $secondaryStyle,
+            'style_keys' => $styleKeys,
             'title' => $slug,
             'is_active' => true,
         ]);
@@ -127,5 +131,18 @@ class QuizScoringIntegrationTest extends TestCase
 
         $this->assertSame('japandi', $computed['primary_style']);
         $this->assertSame('scandinavisch', $computed['secondary_style']);
+    }
+
+    #[Test]
+    public function een_optie_mag_bij_meer_dan_twee_stijlen_passen(): void
+    {
+        $this->makeQuestion('vloer', weight: 3);
+        $this->makeOptionWithStyles('vloer', 'allround', ['japandi', 'scandinavisch', 'natuurlijk']);
+
+        $computed = app(QuizScoringService::class)->compute(['vloer' => ['allround']]);
+
+        $this->assertSame(3.0, $computed['style_scores']['japandi']);
+        $this->assertSame(3.0, $computed['style_scores']['scandinavisch']);
+        $this->assertSame(3.0, $computed['style_scores']['natuurlijk']);
     }
 }

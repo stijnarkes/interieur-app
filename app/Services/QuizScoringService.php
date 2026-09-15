@@ -15,8 +15,9 @@ use App\Support\QuizStructure;
  * 2. Bij één gekozen optie krijgt die optie het volledige vraaggewicht; bij meerdere gekozen
  *    opties (max_selections > 1) deelt elke gekozen optie dat gewicht gelijk — twee keuzes maken
  *    een vraag dus nooit zwaarder dan één keuze.
- * 3. Elke aan een optie gekoppelde stijl (hoofdstijl, en evt. de tweede stijl) krijgt vervolgens
- *    de VOLLEDIGE punten van die optie — geen verdere deling over de 1-2 gekoppelde stijlen.
+ * 3. Elke aan een optie gekoppelde stijl (een optie mag bij meerdere stijlen passen, zie
+ *    QuizOption::linkedStyleKeys()) krijgt vervolgens de VOLLEDIGE punten van die optie — geen
+ *    verdere deling over de gekoppelde stijlen.
  * 4. De stijl met de hoogste totaalscore is de basisstijl. Een tweede stijl wordt alleen als
  *    "invloed" getoond als ze minstens een instelbaar percentage van de basisscore haalt (zie
  *    QuizSetting::secondary_influence_ratio) én in minstens 2 verschillende vragen punten kreeg.

@@ -76,21 +76,17 @@
                                                 onerror="this.style.visibility='hidden'"
                                             />
 
+                                            @php $linkedStyleKeys = $option->linkedStyleKeys(); @endphp
                                             <div class="flex shrink-0 flex-wrap gap-1">
-                                                @if ($option->primary_style)
+                                                @forelse ($linkedStyleKeys as $styleKey)
                                                     <x-filament::badge color="primary">
-                                                        {{ \App\Support\QuizStructure::styleLabel($option->primary_style) }}
+                                                        {{ \App\Support\QuizStructure::styleLabel($styleKey) }}
                                                     </x-filament::badge>
-                                                    @if ($option->secondary_style)
-                                                        <x-filament::badge color="gray">
-                                                            {{ \App\Support\QuizStructure::styleLabel($option->secondary_style) }}
-                                                        </x-filament::badge>
-                                                    @endif
-                                                @else
+                                                @empty
                                                     <x-filament::badge color="danger">
-                                                        Onvolledig — geen hoofdstijl
+                                                        Onvolledig — geen stijl gekoppeld
                                                     </x-filament::badge>
-                                                @endif
+                                                @endforelse
                                             </div>
 
                                             <span class="flex-1 truncate text-sm font-medium text-gray-950 dark:text-white">
@@ -126,14 +122,12 @@
                                                     />
                                                 @endif
 
-                                                @if ($option->image_path)
-                                                    <x-filament::icon-button
-                                                        icon="heroicon-o-x-circle"
-                                                        color="danger"
-                                                        label="Verwijderen"
-                                                        wire:click="mountAction('deleteOption', {{ \Illuminate\Support\Js::from(['optionId' => $option->id]) }})"
-                                                    />
-                                                @endif
+                                                <x-filament::icon-button
+                                                    icon="heroicon-o-x-circle"
+                                                    color="danger"
+                                                    label="Verwijderen"
+                                                    wire:click="mountAction('deleteOption', {{ \Illuminate\Support\Js::from(['optionId' => $option->id]) }})"
+                                                />
                                             </div>
                                         </div>
                                     @endforeach

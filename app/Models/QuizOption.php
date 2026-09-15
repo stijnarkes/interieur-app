@@ -14,6 +14,7 @@ class QuizOption extends Model
         'option_slug',
         'primary_style',
         'secondary_style',
+        'style_keys',
         'internal_note',
         'title',
         'image_path',
@@ -33,15 +34,23 @@ class QuizOption extends Model
         'is_active' => 'boolean',
         'showroom_product' => 'boolean',
         'price' => 'decimal:2',
+        'style_keys' => 'array',
     ];
 
     /**
-     * @return array<int, string> de 1 of 2 gekoppelde stijl-keys (hoofdstijl + evt. tweede stijl),
-     * zie QuizScoringService::compute(). Leeg als er nog geen hoofdstijl is gekoppeld (onvolledige
-     * optie — mag dan niet in de klant-quiz verschijnen, zie QuizConfigController).
+     * @return array<int, string> alle gekoppelde stijl-keys — een optie mag bij zoveel stijlen
+     * passen als aangevinkt (zie QuizOptionsPage), zonder limiet. Leeg als er nog geen stijl is
+     * gekoppeld (onvolledige optie — mag dan niet in de klant-quiz verschijnen, zie
+     * QuizConfigController). Valt terug op de oudere primary_style/secondary_style-kolommen voor
+     * opties die nog nooit via het nieuwe aanvink-formulier bewerkt zijn, zodat een ontbrekende
+     * herseed/migratie hierop nooit een lege stijlkoppeling kan veroorzaken.
      */
     public function linkedStyleKeys(): array
     {
+        if (! empty($this->style_keys)) {
+            return array_values(array_unique($this->style_keys));
+        }
+
         return array_values(array_filter([$this->primary_style, $this->secondary_style]));
     }
 
