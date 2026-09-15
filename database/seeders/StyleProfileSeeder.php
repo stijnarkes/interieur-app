@@ -90,6 +90,7 @@ class StyleProfileSeeder extends Seeder
                 'accent_colors' => [
                     ['name' => 'Taupe', 'hex' => '#a8967d'],
                     ['name' => 'Zacht olijfgroen', 'hex' => '#8d9873'],
+                    ['name' => 'Terracotta', 'hex' => '#c1694f'],
                 ],
                 'color_tip' => 'Gebruik de lichte tinten als rustige basis en voeg hout, taupe en een zachte accentkleur toe voor warmte en contrast.',
                 'materials' => ['Naturel eiken', 'Linnen', 'Wol / bouclé', 'Keramiek'],
@@ -125,13 +126,15 @@ class StyleProfileSeeder extends Seeder
                 'core_traits' => ['Opvallende kleuren', 'Speelse combinaties', 'Bijzondere vormen', 'Persoonlijke accessoires', 'Een energieke uitstraling'],
                 'hero_image' => '/images/interior/atmosphere/kleur-explosie.webp',
                 'base_colors' => [
+                    ['name' => 'Zacht wit', 'hex' => '#f7f4ef'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Kobaltblauw', 'hex' => '#1d4e89'],
                     ['name' => 'Okergeel', 'hex' => '#e0a730'],
                     ['name' => 'Koraalrood', 'hex' => '#e8583a'],
                     ['name' => 'Smaragdgroen', 'hex' => '#1e7a52'],
                     ['name' => 'Roze', 'hex' => '#d6467e'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Kies één of twee kleuren als duidelijke hoofdtoon en laat andere kleuren terugkomen in kleinere accenten. Zo blijft je interieur levendig, maar ontstaat er toch samenhang.',
                 'materials' => ['Gekleurd glas', 'Velours', 'Gelakt hout', 'Keramiek'],
                 'materials_image' => null,
@@ -173,6 +176,7 @@ class StyleProfileSeeder extends Seeder
                 'accent_colors' => [
                     ['name' => 'Warm bruin', 'hex' => '#7a5230'],
                     ['name' => 'Vergrijsd groen', 'hex' => '#8a9483'],
+                    ['name' => 'Mosterdgeel', 'hex' => '#c9971f'],
                 ],
                 'color_tip' => 'Werk met warme, rustige basiskleuren en voeg bruin- en groentinten toe voor een natuurlijke sfeer. Door kleuren ton-sur-ton te combineren ontstaat een zachte en gezellige uitstraling.',
                 'materials' => ['Eikenhout', 'Linnen', 'Wol', 'Natuursteen'],
@@ -215,6 +219,7 @@ class StyleProfileSeeder extends Seeder
                 'accent_colors' => [
                     ['name' => 'Antraciet', 'hex' => '#33363a'],
                     ['name' => 'Zwart', 'hex' => '#17181a'],
+                    ['name' => 'Petrolblauw', 'hex' => '#1f4e5f'],
                 ],
                 'color_tip' => 'Gebruik lichte neutrale tinten als basis en creëer diepte met grijs, antraciet of zwart. Een warmere houttint kan voorkomen dat je interieur te koel aanvoelt.',
                 'materials' => ['Eikenhout', 'Metaal', 'Glas', 'Keramiek'],
@@ -257,6 +262,7 @@ class StyleProfileSeeder extends Seeder
                 'accent_colors' => [
                     ['name' => 'Chocoladebruin', 'hex' => '#3e2a20'],
                     ['name' => 'Zwart', 'hex' => '#1a1a1a'],
+                    ['name' => 'Bordeaux', 'hex' => '#5c1f2e'],
                 ],
                 'color_tip' => 'Houd de basis rustig met warm wit, greige en taupe en voeg donkerdere accenten toe voor contrast. Luxe materialen en subtiele glans mogen vervolgens voor extra diepte zorgen.',
                 'materials' => ['Marmer', 'Walnoothout', 'Bouclé', 'Brons'],
@@ -299,6 +305,7 @@ class StyleProfileSeeder extends Seeder
                 'accent_colors' => [
                     ['name' => 'Klei', 'hex' => '#a8623f'],
                     ['name' => 'Olijfgroen', 'hex' => '#6b7a4f'],
+                    ['name' => 'Roestbruin', 'hex' => '#9c5233'],
                 ],
                 'color_tip' => 'Laat zand- en crèmetinten de rustige basis vormen en voeg groen, bruin en kleitinten toe. Zo ontstaat een gelaagd kleurenpalet dat rechtstreeks uit de natuur lijkt te komen.',
                 'materials' => ['Massief hout', 'Rotan', 'Linnen', 'Natuursteen'],
@@ -341,6 +348,7 @@ class StyleProfileSeeder extends Seeder
                 'accent_colors' => [
                     ['name' => 'Lichtblauw', 'hex' => '#a9c2d0'],
                     ['name' => 'Saliegroen', 'hex' => '#9caf88'],
+                    ['name' => 'Mosterdgeel', 'hex' => '#d2a441'],
                 ],
                 'color_tip' => 'Gebruik wit en lichte neutrale tinten om de ruimte fris te houden. Voeg zachte pastel- of natuurtinten toe voor warmte en een subtiel kleuraccent.',
                 'materials' => ['Licht eiken', 'Wol', 'Katoen', 'Keramiek'],

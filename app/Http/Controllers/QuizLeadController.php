@@ -111,6 +111,7 @@ class QuizLeadController extends Controller
             ] : null,
             'secondaryStyleLabel' => $secondary?->label,
             'personalPalette' => $primary?->base_colors ?? [],
+            'accentColors' => $primary?->accent_colors ?? [],
             'colorExplanation' => $primary
                 ? "Dit zijn de kleuren die passen bij de {$primary->label}-stijl."
                 : '',

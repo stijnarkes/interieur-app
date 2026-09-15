@@ -172,6 +172,12 @@ body {
     color: #2d2620;
 }
 
+.accent-colors-title {
+    font-size: 10.5pt;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
 .photo-grid {
     width: 100%;
 }
@@ -338,6 +344,18 @@ body {
     </div>
     @if (!empty($primaryStyle['colorTip']))
     <div class="tip-box">{{ $primaryStyle['colorTip'] }}</div>
+    @endif
+
+    @if (!empty($result['accentColors']))
+    <div class="section-title accent-colors-title">Kies zelf een accentkleur die bij je past</div>
+    <div class="swatch-grid">
+        @foreach ($result['accentColors'] as $color)
+        <div class="swatch">
+            <div class="swatch-color" style="background: {{ $color['hex'] ?? '#e7ddd1' }};"></div>
+            <div class="swatch-name">{{ $color['name'] ?? '' }}</div>
+        </div>
+        @endforeach
+    </div>
     @endif
 </div>
 @endif
