@@ -53,12 +53,12 @@ class QuizScoringIntegrationTest extends TestCase
     public function een_optie_met_twee_stijlen_geeft_beide_de_volledige_punten(): void
     {
         $this->makeQuestion('vloer', weight: 1);
-        $this->makeOption('vloer', 'eiken', 'japandi', 'natuurlijk');
+        $this->makeOption('vloer', 'eiken', 'japandi', 'landelijk');
 
         $computed = app(QuizScoringService::class)->compute(['vloer' => ['eiken']]);
 
         $this->assertSame(1.0, $computed['style_scores']['japandi']);
-        $this->assertSame(1.0, $computed['style_scores']['natuurlijk']);
+        $this->assertSame(1.0, $computed['style_scores']['landelijk']);
     }
 
     #[Test]
@@ -137,12 +137,26 @@ class QuizScoringIntegrationTest extends TestCase
     public function een_optie_mag_bij_meer_dan_twee_stijlen_passen(): void
     {
         $this->makeQuestion('vloer', weight: 3);
-        $this->makeOptionWithStyles('vloer', 'allround', ['japandi', 'scandinavisch', 'natuurlijk']);
+        $this->makeOptionWithStyles('vloer', 'allround', ['japandi', 'scandinavisch', 'landelijk']);
 
         $computed = app(QuizScoringService::class)->compute(['vloer' => ['allround']]);
 
         $this->assertSame(3.0, $computed['style_scores']['japandi']);
         $this->assertSame(3.0, $computed['style_scores']['scandinavisch']);
-        $this->assertSame(3.0, $computed['style_scores']['natuurlijk']);
+        $this->assertSame(3.0, $computed['style_scores']['landelijk']);
+    }
+
+    #[Test]
+    public function een_gekoppelde_maar_vervallen_stijl_telt_nergens_voor_mee(): void
+    {
+        $this->makeQuestion('vloer', weight: 1);
+        // 'natuurlijk' bestaat niet meer in QuizStructure::STYLES (was 8, nu 6 vaste stijlen).
+        $this->makeOptionWithStyles('vloer', 'oud-gekoppeld', ['natuurlijk']);
+
+        $computed = app(QuizScoringService::class)->compute(['vloer' => ['oud-gekoppeld']]);
+
+        $this->assertSame(0.0, array_sum($computed['style_scores']));
+        $this->assertNull($computed['primary_style']);
+        $this->assertArrayNotHasKey('natuurlijk', $computed['style_scores']);
     }
 }

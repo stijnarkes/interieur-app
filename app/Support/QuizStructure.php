@@ -26,15 +26,19 @@ class QuizStructure
         'keuken' => 'Keuken',
     ];
 
-    /** camelCase key => {label, slug} — zelfde 8 stijlen als STYLE_PROFILES in styleProfiles.js. */
+    /**
+     * camelCase key => {label, slug} — de 6 vaste woonstijlen. "Modern luxe" en "Natuurlijk" zijn
+     * hier bewust uitgehaald (was 8); zie migration 2026_09_15_120000_deactivate_options_for_removed_styles
+     * voor hoe bestaande koppelingen naar deze twee zijn opgeschoond. QuizScoringService negeert
+     * een stijl-key die hier niet (meer) in staat altijd veilig, dus een enkele gemiste plek kan
+     * nooit een verwijderde stijl als quizuitslag opleveren.
+     */
     private const STYLES = [
         'hotelLuxe' => ['label' => 'Hotel luxe', 'slug' => 'hotel-luxe'],
         'japandi' => ['label' => 'Japandi', 'slug' => 'japandi'],
         'kleurExplosie' => ['label' => 'Kleur explosie', 'slug' => 'kleur-explosie'],
         'landelijk' => ['label' => 'Landelijk', 'slug' => 'landelijk'],
         'modern' => ['label' => 'Modern', 'slug' => 'modern'],
-        'modernLuxe' => ['label' => 'Modern luxe', 'slug' => 'modern-luxe'],
-        'natuurlijk' => ['label' => 'Natuurlijk', 'slug' => 'natuurlijk'],
         'scandinavisch' => ['label' => 'Scandinavisch', 'slug' => 'scandinavisch'],
     ];
 
@@ -82,7 +86,7 @@ class QuizStructure
         return self::ROOMS;
     }
 
-    /** @return array<int, string> alle 8 vaste stijl-keys, o.a. voor het seeden van style_profiles */
+    /** @return array<int, string> alle 6 vaste stijl-keys, o.a. voor het seeden van style_profiles */
     public static function styleKeys(): array
     {
         return array_keys(self::STYLES);

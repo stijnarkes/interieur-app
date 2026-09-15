@@ -97,9 +97,16 @@ class QuizScoringService
 
             foreach ($chosenOptions as $option) {
                 // Regel 3: elke gekoppelde stijl krijgt de volledige punten van de optie, niet
-                // verder verdeeld over de 1-2 gekoppelde stijlen.
+                // verder verdeeld over de gekoppelde stijlen. Een stijl-key die niet (meer) in
+                // QuizStructure::STYLES staat (bv. een vervallen stijl waarvoor een optie nog niet
+                // herkoppeld is) telt bewust nergens voor mee — nooit een verwijderde stijl als
+                // quizuitslag.
                 foreach ($option->linkedStyleKeys() as $styleKey) {
-                    $styleScores[$styleKey] = ($styleScores[$styleKey] ?? 0) + $pointsPerOption;
+                    if (! array_key_exists($styleKey, $styleScores)) {
+                        continue;
+                    }
+
+                    $styleScores[$styleKey] += $pointsPerOption;
                     $stylesToppedUpThisQuestion[$styleKey] = true;
                 }
             }
