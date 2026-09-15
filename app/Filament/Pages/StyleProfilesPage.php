@@ -9,6 +9,8 @@ use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Get;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section as FormSection;
 use Filament\Forms\Components\TagsInput;
@@ -19,6 +21,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 /**
  * Beheert de rijke, per-stijl inhoud (kernomschrijving, kleuren, materialen, meubeladvies,
@@ -75,6 +78,8 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                     ...$profile->toArray(),
                     'furniture_intro' => $profile->furniture_shapes['intro'] ?? null,
                     'furniture_items' => $profile->furniture_shapes['items'] ?? [],
+                    'hero_image_preview_url' => $this->previewUrl($profile, 'hero_image'),
+                    'materials_image_preview_url' => $this->previewUrl($profile, 'materials_image'),
                 ];
             })
             ->form([
@@ -87,6 +92,7 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                         TagsInput::make('core_traits')
                             ->label('Kenmerken')
                             ->helperText('Losse trefwoorden, bv. "Warme, rustige kleuren" — Enter om toe te voegen.'),
+                        $this->imagePreview('hero_image_preview_url', 'Huidige sfeerfoto'),
                         FileUpload::make('hero_image_upload')
                             ->label('Sfeerfoto')
                             ->helperText('Laat leeg om de huidige sfeerfoto te behouden.')
@@ -122,6 +128,7 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                 FormSection::make('Materialen')
                     ->collapsed()
                     ->schema([
+                        $this->imagePreview('materials_image_preview_url', 'Huidige materialenfoto'),
                         FileUpload::make('materials_image_upload')
                             ->label('Materialenfoto')
                             ->helperText('Eén samengestelde foto met de materialen hieronder (bv. een moodboard-collage). Laat leeg om de huidige foto te behouden.')
@@ -192,6 +199,34 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                 $profile->update($data);
 
                 Notification::make()->title('Stijlprofiel bijgewerkt')->success()->send();
+            });
+    }
+
+    private function previewUrl(StyleProfile $profile, string $attribute): ?string
+    {
+        $path = $profile->{$attribute};
+
+        return $path ? QuizImageManifest::urlForKnownPath($path, $profile->updated_at?->timestamp) : null;
+    }
+
+    /**
+     * Toont de al opgeslagen foto boven het bijbehorende upload-veld, gevoed door een precomputed
+     * URL uit fillForm() (zie previewUrl()). Zonder dit lijkt een eerder geüploade foto bij het
+     * heropenen "weg" — het upload-veld zelf toont met opzet nooit de huidige foto (leeg laten =
+     * behouden, alleen een nieuwe upload vervangt 'm), maar dat oogde als dataverlies.
+     */
+    private function imagePreview(string $stateKey, string $label): Placeholder
+    {
+        return Placeholder::make("{$stateKey}_display")
+            ->label($label)
+            ->content(function (Get $get) use ($stateKey) {
+                $url = $get($stateKey);
+
+                if (! $url) {
+                    return 'Nog geen foto geüpload.';
+                }
+
+                return new HtmlString('<img src="'.e($url).'" style="max-width: 260px; max-height: 160px; border-radius: 8px; object-fit: cover;" />');
             });
     }
 
