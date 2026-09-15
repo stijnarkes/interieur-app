@@ -23,6 +23,20 @@ class StyleProfileSeeder extends Seeder
     public function run(): void
     {
         foreach ($this->profiles() as $profile) {
+            $existing = StyleProfile::where('style_key', $profile['style_key'])->first();
+
+            if ($existing) {
+                // materials_image staat hieronder altijd hardcoded op null (een placeholder — de
+                // echte foto wordt via StyleProfilesPage geüpload, niet hier geseed). Zonder deze
+                // uitzondering zou een hernieuwde run van deze seeder (bv. na een latere
+                // contentwijziging) een al geüploade materialenfoto stilzwijgend terugzetten naar
+                // leeg — precies het "de foto is weg"-patroon dat we eerder bij de sfeerfoto's
+                // zagen, maar dan zonder de bescherming die hero_image toevallig wel heeft (die
+                // wijst altijd naar hetzelfde vaste bestandspad, dus een reseed daarvan is
+                // onschadelijk).
+                unset($profile['materials_image']);
+            }
+
             StyleProfile::updateOrCreate(['style_key' => $profile['style_key']], $profile);
         }
     }

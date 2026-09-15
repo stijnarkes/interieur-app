@@ -260,11 +260,53 @@ body {
 
 @php
     $primaryStyle = $result['primaryStyle'] ?? null;
+
+    // dompdf negeert CSS object-fit volledig — een <img> met een vaste breedte én hoogte wordt
+    // dus altijd platgedrukt/uitgerekt i.p.v. bijgesneden, zoals een browser wel zou doen. Voor
+    // tegels met zo'n vaste verhouding (het moodboard) knippen we de foto daarom hier zelf met GD
+    // tot de doelverhouding, vóórdat 'ie als base64 in de PDF komt.
+    $cropToCoverRatio = function (string $contents, float $targetRatio): string {
+        $image = @imagecreatefromstring($contents);
+
+        if ($image === false) {
+            return $contents;
+        }
+
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $currentRatio = $width / $height;
+
+        if ($currentRatio > $targetRatio) {
+            $cropWidth = (int) round($height * $targetRatio);
+            $cropHeight = $height;
+            $srcX = (int) round(($width - $cropWidth) / 2);
+            $srcY = 0;
+        } else {
+            $cropWidth = $width;
+            $cropHeight = (int) round($width / $targetRatio);
+            $srcX = 0;
+            $srcY = (int) round(($height - $cropHeight) / 2);
+        }
+
+        $cropped = imagecreatetruecolor($cropWidth, $cropHeight);
+        imagecopy($cropped, $image, 0, 0, $srcX, $srcY, $cropWidth, $cropHeight);
+        imagedestroy($image);
+
+        ob_start();
+        imagewebp($cropped, null, 85);
+        $webp = ob_get_clean();
+        imagedestroy($cropped);
+
+        return $webp;
+    };
+
     // Embedt de foto als base64 data-URI i.p.v. een lokaal bestandspad aan dompdf te geven: dat
     // laatste bestaat niet meer zodra QUIZ_IMAGES_DISK op S3 staat. contentsFor() snapt zowel het
     // oude root-relatieve pad (oudere inzendingen) als een volledige URL (zie
     // QuizConfigController), en leest hoe dan ook alleen van de eigen, geconfigureerde disk.
-    $resolveImage = function (?string $path) {
+    // $coverRatio (breedte/hoogte) knipt de foto bij tot die verhouding — alleen nodig voor
+    // tegels met een vaste hoogte in de layout (zie hierboven).
+    $resolveImage = function (?string $path, ?float $coverRatio = null) use ($cropToCoverRatio) {
         if (! $path) {
             return null;
         }
@@ -273,6 +315,10 @@ body {
 
         if (! $contents) {
             return null;
+        }
+
+        if ($coverRatio !== null) {
+            return 'data:image/webp;base64,'.base64_encode($cropToCoverRatio($contents, $coverRatio));
         }
 
         $extension = strtolower(pathinfo(parse_url($path, PHP_URL_PATH) ?: $path, PATHINFO_EXTENSION));
@@ -399,7 +445,8 @@ body {
     <div class="section-title">Jouw persoonlijke moodboard</div>
     <div class="photo-grid">
         @foreach ($result['moodboard'] as $photo)
-        @php $photoImage = $resolveImage($photo['image'] ?? null); @endphp
+        {{-- Tegel is 22% breed × 70px hoog (zie .photo-item) — vaste verhouding, dus bijknippen i.p.v. uitrekken. --}}
+        @php $photoImage = $resolveImage($photo['image'] ?? null, 2.2); @endphp
         <div class="photo-item">
             @if ($photoImage)
                 <img src="{{ $photoImage }}" alt="{{ $photo['title'] ?? '' }}" />
