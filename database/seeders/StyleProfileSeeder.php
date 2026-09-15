@@ -6,11 +6,17 @@ use App\Models\StyleProfile;
 use Illuminate\Database\Seeder;
 
 /**
- * Migreert de content van resources/js/quiz/styleProfiles.js 1-op-1 naar de database, zodat
- * style_profiles vanaf nu de bron van waarheid is (admin-beheerbaar via StyleProfilesPage,
- * leesbaar voor de AI-tekstlaag). `advice_secondary`/`advice_tertiary`/`lighting`/`accessories`/
- * `wat_past_goed`/`accent_colors` bestonden niet in de oude, statische content — die blijven hier
- * bewust leeg, in te vullen door een admin.
+ * Migreert de content van resources/js/quiz/styleProfiles.js naar de database, zodat
+ * style_profiles de bron van waarheid is (admin-beheerbaar via StyleProfilesPage).
+ * `base_colors`/`accent_colors` zijn hier opgesplitst uit de oorspronkelijke, ongesplitste
+ * kleurenlijst — op basis van elke stijl se eigen "Basis"/"Accentkleur"-regel in `recipe`, zodat
+ * de resultatenpagina/PDF alleen de veilige basiskleuren toont ("Kleuren ter inspiratie") en geen
+ * specifieke accentkleur claimt die we niet per se weten (zie klantfeedback: bv. Japandi toonde
+ * olijfgroen als leek het een vaste basiskleur, terwijl het één van meerdere mogelijke accenten
+ * is). Voor Kleur explosie is zo'n splitsing niet zinvol — de hele stijl draait om levendige
+ * kleuren, er is geen apart "neutraal" basispalet. `advice_secondary`/`advice_tertiary`/
+ * `lighting`/`accessories`/`wat_past_goed` bestonden niet in de oude, statische content — die
+ * blijven hier bewust leeg, in te vullen door een admin.
  */
 class StyleProfileSeeder extends Seeder
 {
@@ -37,11 +43,12 @@ class StyleProfileSeeder extends Seeder
                 'base_colors' => [
                     ['name' => 'Warm beige', 'hex' => '#e3d3b8'],
                     ['name' => 'Taupe', 'hex' => '#a8967d'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Donkerbruin', 'hex' => '#3e2a20'],
                     ['name' => 'Champagne', 'hex' => '#c9a86a'],
                     ['name' => 'Diep groen', 'hex' => '#2e4034'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Gebruik beige en taupe als warme basis en voeg diepere tinten toe voor extra sfeer. Champagnekleurige of donkere accenten geven het geheel een luxe uitstraling zonder dat het te zwaar wordt.',
                 'materials' => [
                     ['name' => 'Fluweel', 'image' => '/images/interior/materials/hotel-luxe-1.webp'],
@@ -83,10 +90,11 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Warm wit', 'hex' => '#f5f0e6'],
                     ['name' => 'Zand', 'hex' => '#ddc9a0'],
                     ['name' => 'Beige', 'hex' => '#cbb188'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Taupe', 'hex' => '#a8967d'],
                     ['name' => 'Zacht olijfgroen', 'hex' => '#8d9873'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Gebruik de lichte tinten als rustige basis en voeg hout, taupe en een zachte accentkleur toe voor warmte en contrast.',
                 'materials' => [
                     ['name' => 'Naturel eiken', 'image' => '/images/interior/materials/japandi-1.webp'],
@@ -173,10 +181,11 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Gebroken wit', 'hex' => '#f4efe4'],
                     ['name' => 'Zand', 'hex' => '#ddc9a0'],
                     ['name' => 'Greige', 'hex' => '#c9bba3'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Warm bruin', 'hex' => '#7a5230'],
                     ['name' => 'Vergrijsd groen', 'hex' => '#8a9483'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Werk met warme, rustige basiskleuren en voeg bruin- en groentinten toe voor een natuurlijke sfeer. Door kleuren ton-sur-ton te combineren ontstaat een zachte en gezellige uitstraling.',
                 'materials' => [
                     ['name' => 'Eikenhout', 'image' => '/images/interior/materials/landelijk-1.webp'],
@@ -218,10 +227,11 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Wit', 'hex' => '#f5f5f4'],
                     ['name' => 'Lichtgrijs', 'hex' => '#d4d4d2'],
                     ['name' => 'Greige', 'hex' => '#cfc3ac'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Antraciet', 'hex' => '#33363a'],
                     ['name' => 'Zwart', 'hex' => '#17181a'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Gebruik lichte neutrale tinten als basis en creëer diepte met grijs, antraciet of zwart. Een warmere houttint kan voorkomen dat je interieur te koel aanvoelt.',
                 'materials' => [
                     ['name' => 'Eikenhout', 'image' => '/images/interior/materials/modern-1.webp'],
@@ -263,10 +273,11 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Warm wit', 'hex' => '#f5f0e6'],
                     ['name' => 'Greige', 'hex' => '#cfc3ac'],
                     ['name' => 'Taupe', 'hex' => '#a8967d'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Chocoladebruin', 'hex' => '#3e2a20'],
                     ['name' => 'Zwart', 'hex' => '#1a1a1a'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Houd de basis rustig met warm wit, greige en taupe en voeg donkerdere accenten toe voor contrast. Luxe materialen en subtiele glans mogen vervolgens voor extra diepte zorgen.',
                 'materials' => [
                     ['name' => 'Marmer', 'image' => '/images/interior/materials/modern-luxe-1.webp'],
@@ -306,12 +317,13 @@ class StyleProfileSeeder extends Seeder
                 'hero_image' => '/images/interior/atmosphere/natuurlijk.webp',
                 'base_colors' => [
                     ['name' => 'Zand', 'hex' => '#d8c3a0'],
+                    ['name' => 'Crème', 'hex' => '#f3ecd9'],
+                    ['name' => 'Warm bruin', 'hex' => '#7a5c3e'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Klei', 'hex' => '#a8623f'],
                     ['name' => 'Olijfgroen', 'hex' => '#6b7a4f'],
-                    ['name' => 'Warm bruin', 'hex' => '#7a5c3e'],
-                    ['name' => 'Crème', 'hex' => '#f3ecd9'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Laat zand- en crèmetinten de rustige basis vormen en voeg groen, bruin en kleitinten toe. Zo ontstaat een gelaagd kleurenpalet dat rechtstreeks uit de natuur lijkt te komen.',
                 'materials' => [
                     ['name' => 'Massief hout', 'image' => '/images/interior/materials/natuurlijk-1.webp'],
@@ -353,10 +365,11 @@ class StyleProfileSeeder extends Seeder
                     ['name' => 'Helder wit', 'hex' => '#fbfbf9'],
                     ['name' => 'Licht beige', 'hex' => '#eee2cb'],
                     ['name' => 'Zacht grijs', 'hex' => '#dfe1e0'],
+                ],
+                'accent_colors' => [
                     ['name' => 'Lichtblauw', 'hex' => '#a9c2d0'],
                     ['name' => 'Saliegroen', 'hex' => '#9caf88'],
                 ],
-                'accent_colors' => null,
                 'color_tip' => 'Gebruik wit en lichte neutrale tinten om de ruimte fris te houden. Voeg zachte pastel- of natuurtinten toe voor warmte en een subtiel kleuraccent.',
                 'materials' => [
                     ['name' => 'Licht eiken', 'image' => '/images/interior/materials/scandinavisch-1.webp'],

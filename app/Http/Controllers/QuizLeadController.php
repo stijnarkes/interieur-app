@@ -9,7 +9,6 @@ use App\Models\StyleProfile;
 use App\Models\Submission;
 use App\Services\QuizResultTextComposer;
 use App\Services\QuizResultPdfService;
-use App\Support\QuizAnswerBreakdown;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -115,7 +114,6 @@ class QuizLeadController extends Controller
                 ? "Dit zijn de kleuren die passen bij de {$primary->label}-stijl."
                 : '',
             'moodboard' => $this->moodboardFor($quizResult),
-            'answerBreakdown' => QuizAnswerBreakdown::build($quizResult->answers),
         ];
     }
 

@@ -200,7 +200,7 @@ body {
     margin-bottom: 6px;
 }
 
-.material-name, .photo-name {
+.material-name {
     font-size: 8.5pt;
     font-weight: bold;
     color: #2d2620;
@@ -239,23 +239,6 @@ body {
 
 .page-break {
     page-break-before: always;
-}
-
-.answer-item {
-    margin-bottom: 10px;
-}
-
-.answer-question {
-    font-weight: bold;
-    color: #9f6239;
-    font-size: 8.5pt;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-bottom: 2px;
-}
-
-.answer-choice {
-    color: #2d2620;
 }
 
 .footer {
@@ -405,7 +388,6 @@ body {
             @else
                 <div class="photo-item-placeholder"></div>
             @endif
-            <div class="photo-name">{{ $photo['title'] ?? '' }}</div>
         </div>
         @endforeach
     </div>
@@ -423,19 +405,6 @@ body {
         </tr>
         @endforeach
     </table>
-</div>
-@endif
-
-@if (!empty($result['answerBreakdown']))
-<div class="section">
-    <div class="section-title">Jouw keuzes</div>
-    <div class="section-intro">Dit zijn de antwoorden waarop jouw resultaat is gebaseerd.</div>
-    @foreach ($result['answerBreakdown'] as $item)
-    <div class="answer-item">
-        <div class="answer-question">{{ $item['question'] }}</div>
-        <div class="answer-choice">{{ collect($item['options'])->pluck('title')->implode(', ') }}</div>
-    </div>
-    @endforeach
 </div>
 @endif
 
