@@ -100,7 +100,7 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                             ->disk('public')
                             ->directory('tmp-quiz-uploads')
                             ->visibility('private')
-                            ->dehydrated(false),
+                            ->dehydrated(fn ($state): bool => filled($state)),
                     ]),
 
                 FormSection::make('Kleuren')
@@ -136,7 +136,7 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                             ->disk('public')
                             ->directory('tmp-quiz-uploads')
                             ->visibility('private')
-                            ->dehydrated(false),
+                            ->dehydrated(fn ($state): bool => filled($state)),
                         TagsInput::make('materials')
                             ->label('Materialen op de foto')
                             ->helperText('Namen van de materialen die op de foto hierboven te zien zijn — Enter om toe te voegen.'),
