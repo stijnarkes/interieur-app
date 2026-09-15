@@ -193,7 +193,8 @@ body {
 .photo-item img {
     width: 100%;
     height: 70px;
-    object-fit: cover;
+    object-fit: contain;
+    background: #f0e3d4;
     border-radius: 8px;
     margin-bottom: 6px;
 }
@@ -262,10 +263,13 @@ body {
     $primaryStyle = $result['primaryStyle'] ?? null;
 
     // dompdf negeert CSS object-fit volledig — een <img> met een vaste breedte én hoogte wordt
-    // dus altijd platgedrukt/uitgerekt i.p.v. bijgesneden, zoals een browser wel zou doen. Voor
-    // tegels met zo'n vaste verhouding (het moodboard) knippen we de foto daarom hier zelf met GD
-    // tot de doelverhouding, vóórdat 'ie als base64 in de PDF komt.
-    $cropToCoverRatio = function (string $contents, float $targetRatio): string {
+    // dus altijd platgedrukt/uitgerekt i.p.v. slim bijgesneden, zoals een browser wel zou doen.
+    // Bijsnijden (object-fit: cover) bleek op zijn beurt regelmatig net het belangrijkste deel
+    // van een foto wegsnijden (bv. een hanglamp die van boven wordt afgesneden) — in plaats
+    // daarvan wordt de hele foto hier altijd volledig zichtbaar gehouden en, waar nodig, opgevuld
+    // met een zachte, bij de stijl passende achtergrondkleur tot de tegelverhouding. Nooit
+    // uitrekken, nooit bijsnijden.
+    $padToContainRatio = function (string $contents, float $targetRatio): string {
         $image = @imagecreatefromstring($contents);
 
         if ($image === false) {
@@ -276,26 +280,31 @@ body {
         $height = imagesy($image);
         $currentRatio = $width / $height;
 
+        // De foto zelf wordt nooit geschaald — alleen het canvas wordt breder of hoger gemaakt
+        // dan de foto, zodat de volledige, ongewijzigde foto erin past.
         if ($currentRatio > $targetRatio) {
-            $cropWidth = (int) round($height * $targetRatio);
-            $cropHeight = $height;
-            $srcX = (int) round(($width - $cropWidth) / 2);
-            $srcY = 0;
+            $canvasWidth = $width;
+            $canvasHeight = (int) round($width / $targetRatio);
         } else {
-            $cropWidth = $width;
-            $cropHeight = (int) round($width / $targetRatio);
-            $srcX = 0;
-            $srcY = (int) round(($height - $cropHeight) / 2);
+            $canvasHeight = $height;
+            $canvasWidth = (int) round($height * $targetRatio);
         }
 
-        $cropped = imagecreatetruecolor($cropWidth, $cropHeight);
-        imagecopy($cropped, $image, 0, 0, $srcX, $srcY, $cropWidth, $cropHeight);
+        $canvas = imagecreatetruecolor($canvasWidth, $canvasHeight);
+        // Zelfde tint als .photo-item-placeholder/--accent-soft in app.css, voor een consistente
+        // uitstraling wanneer een foto niet exact de tegelverhouding heeft.
+        $background = imagecolorallocate($canvas, 0xF0, 0xE3, 0xD4);
+        imagefill($canvas, 0, 0, $background);
+
+        $destX = (int) round(($canvasWidth - $width) / 2);
+        $destY = (int) round(($canvasHeight - $height) / 2);
+        imagecopy($canvas, $image, $destX, $destY, 0, 0, $width, $height);
         imagedestroy($image);
 
         ob_start();
-        imagewebp($cropped, null, 85);
+        imagewebp($canvas, null, 85);
         $webp = ob_get_clean();
-        imagedestroy($cropped);
+        imagedestroy($canvas);
 
         return $webp;
     };
@@ -304,9 +313,9 @@ body {
     // laatste bestaat niet meer zodra QUIZ_IMAGES_DISK op S3 staat. contentsFor() snapt zowel het
     // oude root-relatieve pad (oudere inzendingen) als een volledige URL (zie
     // QuizConfigController), en leest hoe dan ook alleen van de eigen, geconfigureerde disk.
-    // $coverRatio (breedte/hoogte) knipt de foto bij tot die verhouding — alleen nodig voor
+    // $containRatio (breedte/hoogte) vult de foto aan tot die verhouding — alleen nodig voor
     // tegels met een vaste hoogte in de layout (zie hierboven).
-    $resolveImage = function (?string $path, ?float $coverRatio = null) use ($cropToCoverRatio) {
+    $resolveImage = function (?string $path, ?float $containRatio = null) use ($padToContainRatio) {
         if (! $path) {
             return null;
         }
@@ -317,8 +326,8 @@ body {
             return null;
         }
 
-        if ($coverRatio !== null) {
-            return 'data:image/webp;base64,'.base64_encode($cropToCoverRatio($contents, $coverRatio));
+        if ($containRatio !== null) {
+            return 'data:image/webp;base64,'.base64_encode($padToContainRatio($contents, $containRatio));
         }
 
         $extension = strtolower(pathinfo(parse_url($path, PHP_URL_PATH) ?: $path, PATHINFO_EXTENSION));
