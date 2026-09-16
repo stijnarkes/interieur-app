@@ -177,6 +177,39 @@ class QuizLeadControllerTest extends TestCase
     }
 
     #[Test]
+    public function de_statuscheck_geeft_de_actuele_uitkomst_van_een_inzending_terug(): void
+    {
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+        $this->postLead($quizResult->uuid);
+
+        $response = $this->getJson("/api/quiz-lead/{$quizResult->uuid}");
+
+        $response->assertOk();
+        $response->assertJsonFragment(['status' => 'sent']);
+    }
+
+    #[Test]
+    public function de_statuscheck_op_een_resultaat_zonder_inzending_geeft_onbekend_terug(): void
+    {
+        $quizResult = $this->makeQuizResult();
+
+        $response = $this->getJson("/api/quiz-lead/{$quizResult->uuid}");
+
+        $response->assertStatus(404);
+        $response->assertJsonFragment(['status' => 'unknown']);
+    }
+
+    #[Test]
+    public function de_statuscheck_op_een_niet_bestaand_resultaat_geeft_onbekend_terug(): void
+    {
+        $response = $this->getJson('/api/quiz-lead/'.Str::uuid());
+
+        $response->assertStatus(404);
+        $response->assertJsonFragment(['status' => 'unknown']);
+    }
+
+    #[Test]
     public function het_moodboard_toont_alleen_daadwerkelijk_gekozen_producten(): void
     {
         Mail::fake();

@@ -20,15 +20,17 @@ use Illuminate\Http\Request;
  *
  * PDF-generatie + mailverzending lopen synchroon binnen deze aanvraag (via
  * GenerateAndSendQuizResultPdfJob::handle(), rechtstreeks aangeroepen i.p.v. op een wachtrij gezet
- * — er draait geen queue-worker). Dat gaf eerder een vals "verzenden mislukt" bij een trage
- * aanvraag (veel foto's ophalen/verwerken), waardoor de verbinding tussen browser en server soms
- * verbrak vóórdat het antwoord terugkwam terwijl de mail server-side alsnog aankwam. De eigenlijke
- * fix zit in PdfImageResolver: foto's worden nu server-side gecachet (zie daar), zodat vrijwel
- * elke aanvraag na de eerste keer per foto razendsnel verwerkt wordt i.p.v. steeds opnieuw alles
- * bij S3 op te halen. `email_status` 'queued' bestaat nog wel als kortstondige tussentoestand
- * (voor het geval de aanvraag halverwege afbreekt) — zie isInFlight() hieronder — maar wordt in de
- * normale flow binnen dezelfde aanvraag alweer overschreven met 'sent'/'failed' vóórdat het
- * antwoord teruggaat.
+ * — er draait geen queue-worker) en mogen best een paar seconden duren (PdfImageResolver cachet
+ * de foto's server-side, maar dompdf's eigen verwerking van meerdere ingebedde foto's kost sowieso
+ * tijd). Dat op zichzelf is geen probleem — het echte probleem was dat de verbinding tussen
+ * browser en server bij zo'n iets langere aanvraag soms verbrak vóórdat het antwoord terugkwam,
+ * terwijl de server intussen gewoon doorwerkte en de mail alsnog verstuurde: de bezoeker zag dan
+ * ten onrechte "verzenden mislukt". Zie status() hieronder + resources/js/quiz/components/lead.js:
+ * bij zo'n afgebroken verbinding vraagt de browser nu gewoon na wat er écht gebeurd is, in plaats
+ * van meteen een mislukking te concluderen. `email_status` 'queued' bestaat als kortstondige
+ * tussentoestand (voor het geval de aanvraag halverwege afbreekt) — zie isInFlight() hieronder —
+ * en wordt in de normale flow binnen dezelfde aanvraag alweer overschreven met 'sent'/'failed'
+ * vóórdat het antwoord teruggaat.
  *
  * Idempotent per quiz_result_id, maar alleen zolang een eerdere poging daadwerkelijk slaagde of nog
  * loopt: een herhaalde inzending voor hetzelfde resultaat (dubbelklik, of een bevestigde "opnieuw
@@ -82,6 +84,25 @@ class QuizLeadController extends Controller
         }
 
         return $this->responseFor($submission->fresh());
+    }
+
+    /**
+     * Alleen-lezen statuscheck, gebruikt door lead.js wanneer de aanvraag zelf (POST hierboven)
+     * geen antwoord kreeg — een trage verbinding kan verbreken vóórdat het antwoord terugkomt,
+     * terwijl de server intussen gewoon doorwerkt en de mail alsnog verstuurt. In plaats van dan
+     * meteen "mislukt" te concluderen, vraagt de browser hier gewoon na wat er echt gebeurd is.
+     * Geen destructieve/bijwerkende actie — alleen de al bepaalde uitkomst opnieuw teruggeven.
+     */
+    public function status(string $resultUuid): JsonResponse
+    {
+        $quizResult = QuizResult::where('uuid', $resultUuid)->first();
+        $submission = $quizResult ? Submission::where('quiz_result_id', $quizResult->id)->first() : null;
+
+        if (! $submission) {
+            return response()->json(['status' => 'unknown'], 404);
+        }
+
+        return $this->responseFor($submission);
     }
 
     /** @see class-docblock voor de "vastgelopen"-uitzondering. */

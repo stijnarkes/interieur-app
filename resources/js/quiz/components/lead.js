@@ -64,6 +64,40 @@ function renderLeadForm(container, { result }) {
   }
 
   /**
+   * Vraagt na wat er écht gebeurd is met een aanvraag waarvan het antwoord niet aankwam — een wat
+   * langere aanvraag (PDF genereren kost realistisch een paar seconden) kan de verbinding tussen
+   * browser en server laten verbreken vóórdat het antwoord terugkomt, terwijl de server intussen
+   * gewoon doorwerkt en de mail alsnog verstuurt. In plaats van die afgebroken verbinding meteen
+   * als mislukking te behandelen, blijft dit een tijdje pollen (GET, geen bijwerkende actie) tot
+   * er een definitief 'sent'/'failed' bekend is, of geeft na te veel pogingen alsnog niets terug
+   * (dan weten we het écht niet, en toont de aanroeper een eerlijke "kon niet bevestigen"-melding).
+   */
+  async function pollForOutcome(resultUuid, { attempts = 20, intervalMs = 3000 } = {}) {
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+
+      try {
+        const response = await fetch(`/api/quiz-lead/${resultUuid}`, {
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (response.ok) {
+          const json = await response.json();
+          if (json.status === "sent" || json.status === "failed") {
+            return json;
+          }
+          // status 'queued' — de server is nog bezig, gewoon blijven pollen.
+        }
+      } catch {
+        // Netwerkfout tijdens het navragen zelf — gewoon bij de volgende poging opnieuw proberen.
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * @param {{name?: string, email?: string, marketingOptIn?: boolean, statusMessage?: string}} prefill
    *   Gebruikt om na een mislukte aanvraag of een netwerkfout het formulier opnieuw te tonen met
    *   de al ingevulde gegevens (nooit de bezoeker laten overtypen) en een uitleg wat er misging.
@@ -176,12 +210,20 @@ function renderLeadForm(container, { result }) {
       // de aanvraag mislukt.
       const [, leadResult] = await Promise.allSettled([scene.start(), submitLead({ name, email, marketingOptIn })]);
 
+      let response;
       if (leadResult.status === "rejected") {
-        renderForm({ name, email, marketingOptIn, statusMessage: leadResult.reason.message });
-        return;
+        // De aanvraag zelf kreeg geen antwoord — dat kan ook gewoon een verbinding zijn die
+        // afbrak terwijl de server nog gewoon doorwerkte. Eerst navragen wat er echt gebeurd is
+        // (de laadscene blijft intussen gewoon zichtbaar) i.p.v. meteen een mislukking claimen.
+        response = await pollForOutcome(result.resultUuid);
+        if (!response) {
+          renderForm({ name, email, marketingOptIn, statusMessage: leadResult.reason.message });
+          return;
+        }
+      } else {
+        response = leadResult.value;
       }
 
-      const response = leadResult.value;
       if (response.status === "sent") {
         renderSuccess({ name, email, marketingOptIn });
       } else if (response.status === "queued") {
