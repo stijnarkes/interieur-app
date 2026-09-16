@@ -40,7 +40,7 @@ class PdfImageResolverTest extends TestCase
         $disk->put($path, $this->makeWebp(200, 200, [10, 20, 30]));
 
         $mtime = QuizImageManifest::lastModifiedFor("/{$path}");
-        $cacheKey = 'pdf-image:'.md5("/{$path}".'|raw').":{$mtime}";
+        $cacheKey = 'pdf-image:'.md5("/{$path}".'|raw|full').":{$mtime}";
         Cache::put($cacheKey, 'SENTINEL-UIT-CACHE', now()->addMinutes(5));
 
         $result = (new PdfImageResolver())->resolve("/{$path}");
@@ -106,5 +106,23 @@ class PdfImageResolverTest extends TestCase
 
         $this->assertTrue($foundTop, 'Bovenmarkering had aanwezig moeten blijven.');
         $this->assertTrue($foundBottom, 'Ondermarkering had aanwezig moeten blijven.');
+    }
+
+    #[Test]
+    public function een_grote_bronfoto_wordt_verkleind_tot_de_gevraagde_maximale_breedte(): void
+    {
+        Storage::fake(config('filesystems.quiz_images_disk'));
+        $disk = Storage::disk(config('filesystems.quiz_images_disk'));
+        $path = 'images/interior/test/large.webp';
+        $disk->put($path, $this->makeWebp(1600, 800, [50, 60, 70]));
+
+        $dataUri = (new PdfImageResolver())->resolve("/{$path}", null, 400);
+
+        $this->assertNotNull($dataUri);
+        [, $base64] = explode(',', $dataUri, 2);
+        $decoded = imagecreatefromstring(base64_decode($base64));
+
+        $this->assertSame(400, imagesx($decoded));
+        $this->assertSame(200, imagesy($decoded));
     }
 }

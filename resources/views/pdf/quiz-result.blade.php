@@ -270,7 +270,10 @@ body {
     $resolveImage = fn (?string $path, ?float $containRatio = null) => $pdfImageResolver->resolve($path, $containRatio);
 @endphp
 
-@php $coverImage = $resolveImage($primaryStyle['heroImage'] ?? null); @endphp
+{{-- Tegel is ~42% van de paginabreedte × 150px hoog (zie .cover-image) — vaste verhouding, dus
+     aanvullen i.p.v. uitrekken; maxWidth voorkomt dat dompdf een veel grotere bron-foto dan nodig
+     moet verwerken (zie PdfImageResolver). --}}
+@php $coverImage = $resolveImage($primaryStyle['heroImage'] ?? null, 2.0, 400); @endphp
 
 <div class="cover">
     <table style="width: 100%; border-collapse: collapse;">
@@ -346,8 +349,9 @@ body {
 
 @if (!empty($primaryStyle['materials']) || !empty($primaryStyle['materialsImage']))
 {{-- Eigen ratio (i.p.v. uitrekken/bijsnijden) én een eigen pagina: dit beeld is bewust breed en
-     verdient de ruimte om goed leesbaar te tonen, i.p.v. verdrukt tussen andere onderdelen. --}}
-@php $materialsImage = $resolveImage($primaryStyle['materialsImage'] ?? null, 2.3); @endphp
+     verdient de ruimte om goed leesbaar te tonen, i.p.v. verdrukt tussen andere onderdelen.
+     maxWidth voorkomt dat dompdf een veel grotere bron-foto dan nodig moet verwerken. --}}
+@php $materialsImage = $resolveImage($primaryStyle['materialsImage'] ?? null, 2.3, 800); @endphp
 <div class="section page-break">
     <div class="section-title">Materialen die bij jou passen</div>
     @if ($materialsImage)
@@ -391,7 +395,9 @@ body {
         @foreach (array_chunk($result['moodboard'], 2) as $row)
         <tr>
             @foreach ($row as $photo)
-            @php $photoImage = $resolveImage($photo['image'] ?? null, 2.0); @endphp
+            {{-- maxWidth voorkomt dat dompdf een veel grotere bron-foto dan nodig moet verwerken
+                 (zie PdfImageResolver) — een tegel toont hier nooit breder dan ~340px. --}}
+            @php $photoImage = $resolveImage($photo['image'] ?? null, 2.0, 400); @endphp
             <td class="moodboard-cell">
                 @if ($photoImage)
                     <img src="{{ $photoImage }}" alt="{{ $photo['title'] ?? '' }}" class="moodboard-photo" />
