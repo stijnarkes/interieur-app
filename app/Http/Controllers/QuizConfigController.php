@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\QuizMaterial;
 use App\Models\QuizOption;
+use App\Models\QuizSetting;
 use App\Models\QuizTransitionSection;
 use App\Models\SiteContent;
 use App\Support\QuizImageManifest;
@@ -163,6 +164,10 @@ class QuizConfigController extends Controller
             'transitionPhotos' => $transitionPhotos,
             'sections' => $sections,
             'copy' => $copy,
+            // Zie App\Http\Middleware\EnsurePartnerFeatureEnabled: bepaalt of het
+            // uitnodigingsblok ("Ontdek jullie gezamenlijke woonstijl") getoond wordt — zie
+            // resources/js/quiz/components/partnerInvite.js.
+            'partnerFeatureEnabled' => QuizSetting::current()->partner_feature_enabled,
         ]);
     }
 }

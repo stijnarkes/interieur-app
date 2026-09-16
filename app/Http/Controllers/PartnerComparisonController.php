@@ -55,8 +55,33 @@ class PartnerComparisonController extends Controller
             'partnerPalette' => $link->partner_snapshot['chosen_base_palette'] ?? null,
             'initiatorAccentColors' => $link->initiator_snapshot['chosen_accent_colors'] ?? [],
             'partnerAccentColors' => $link->partner_snapshot['chosen_accent_colors'] ?? [],
-            'facts' => $comparison->facts,
+            'facts' => $this->resolveFactLabels($comparison->facts ?? []),
             'suggestions' => $comparison->suggestions,
         ]);
+    }
+
+    /**
+     * Vervangt de ruwe style_key-velden in elk feit door hun leesbare label (StyleProfile::label)
+     * — de webpagina/PDF tonen zelf nooit een interne key, en dit is de enige plek die de
+     * PartnerComparisonService-output ooit naar buiten geeft, dus hoort de vertaalslag hier.
+     */
+    private function resolveFactLabels(array $facts): array
+    {
+        $styleLabel = fn (?string $key) => $key ? (StyleProfile::forStyle($key)?->label ?? $key) : $key;
+
+        $mapFact = function (array $fact) use ($styleLabel): array {
+            foreach (['styleKey', 'initiatorStyleKey', 'partnerStyleKey'] as $field) {
+                if (isset($fact[$field])) {
+                    $fact[$field] = $styleLabel($fact[$field]);
+                }
+            }
+
+            return $fact;
+        };
+
+        return [
+            'similarities' => array_map($mapFact, $facts['similarities'] ?? []),
+            'differences' => array_map($mapFact, $facts['differences'] ?? []),
+        ];
     }
 }

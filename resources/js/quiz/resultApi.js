@@ -5,15 +5,17 @@
  * wat terugkomt. Zelfde timeout-conventie als remoteConfig.js's fetchQuizConfig().
  *
  * @param {Record<string, string[]>} answers  questionId => geselecteerde option-id's
+ * @param {string|null} [partnerClaimToken]  alleen gezet tijdens de geïsoleerde partnertest — zie
+ *   QuizResultController::store()'s optionele partnerClaimToken-veld.
  * @returns {Promise<object>} de resultaatpayload, of gooit een Error bij een falende/tragere aanvraag
  */
-async function fetchQuizResult(answers) {
+async function fetchQuizResult(answers, partnerClaimToken = null) {
   const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
 
   const response = await fetch("/api/quiz-result", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
-    body: JSON.stringify({ answers }),
+    body: JSON.stringify(partnerClaimToken ? { answers, partnerClaimToken } : { answers }),
     signal: AbortSignal.timeout(10000),
   });
 

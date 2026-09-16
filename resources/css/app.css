@@ -234,6 +234,12 @@ a.btn-primary:hover {
   margin-top: 0;
 }
 
+/* Uitnodigingsblok voor de partnerfunctie ("Ontdek jullie gezamenlijke woonstijl") — staat onder
+   het aanvraagformulier, dus altijd wat ruimte erboven i.p.v. er direct tegenaan te plakken. */
+.partner-invite {
+  margin-top: 20px;
+}
+
 /* Stijltest: startscherm */
 
 /* Houdt start-/laad-/overgangsscherm verticaal gecentreerd binnen de door quiz.js gereserveerde

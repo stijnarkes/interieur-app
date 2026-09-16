@@ -1,11 +1,21 @@
 <?php
 
+use App\Http\Controllers\PartnerPageController;
 use App\Http\Controllers\QuizPreviewController;
 use App\Http\Controllers\SubmissionPdfController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// Partnerfunctie ("Ontdek jullie gezamenlijke woonstijl") — publieke, bookmarkbare pagina's, staan
+// achter dezelfde feature-vlag als de bijbehorende JSON-routes (routes/api.php).
+Route::middleware('partner.feature')->group(function () {
+    Route::get('/gezamenlijk/uitnodiging/{inviteToken}', [PartnerPageController::class, 'invite'])
+        ->name('partner.invite');
+    Route::get('/gezamenlijk/{accessToken}', [PartnerPageController::class, 'result'])
+        ->name('partner.result');
 });
 
 Route::middleware('auth')->group(function () {

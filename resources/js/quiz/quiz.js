@@ -10,6 +10,7 @@ import { renderBasePaletteStep } from "./components/basePaletteStep.js";
 import { renderAccentColorStep } from "./components/accentColorStep.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
+import { renderPartnerInvite } from "./components/partnerInvite.js";
 import { createLoadingScene } from "./components/loadingScene.js";
 
 /**
@@ -84,7 +85,20 @@ const STAGE_HEIGHT_VIEWPORT_MARGIN = 40;
 // app.css.
 const STEP_TRANSITION_MS = 350;
 
-function initQuiz(root) {
+/**
+ * @param {HTMLElement} root
+ * @param {object} [options]
+ * @param {string|null} [options.partnerClaimToken] — alleen gezet wanneer dit de geïsoleerde
+ *   partnertest is (zie resources/js/partner.js): meegestuurd naar /api/quiz-result zodat de
+ *   server dit resultaat aan de juiste partner_participants-rij koppelt (zie
+ *   QuizResultController::store()). In de normale, individuele quiz altijd null/ongezet.
+ * @param {() => void} [options.onCompleted] — vuurt zodra het resultaat is opgehaald, vóór het
+ *   uitnodigingsblok gerenderd wordt. De partnertest gebruikt dit om door te schakelen naar de
+ *   gezamenlijke resultaatpagina i.p.v. het (voor haar zinloze) individuele uitnodigingsblok te
+ *   tonen — zie resources/js/partner.js.
+ */
+function initQuiz(root, options = {}) {
+  const { partnerClaimToken = null, onCompleted = null } = options;
   const els = {
     stage: root.querySelector("#quizStage"),
     start: root.querySelector("#quizStart"),
@@ -109,6 +123,7 @@ function initQuiz(root) {
     reportTeaserMount: root.querySelector("#reportTeaserMount"),
     leadCard: root.querySelector("#quizLeadCard"),
     leadMount: root.querySelector("#quizLeadMount"),
+    partnerInviteMount: root.querySelector("#partnerInviteMount"),
     restartBtn: root.querySelector("#restartQuizBtn"),
   };
 
@@ -380,6 +395,7 @@ function initQuiz(root) {
     els.reportTeaserMount.innerHTML = "";
     els.leadMount.innerHTML = "";
     els.leadCard.hidden = true;
+    if (els.partnerInviteMount) els.partnerInviteMount.innerHTML = "";
 
     const loading = document.createElement("p");
     loading.className = "section-intro";
@@ -390,7 +406,7 @@ function initQuiz(root) {
 
     let result;
     try {
-      result = await fetchQuizResult(answers);
+      result = await fetchQuizResult(answers, partnerClaimToken);
     } catch (error) {
       els.styleResultMount.innerHTML = "";
       const errorMessage = document.createElement("p");
@@ -409,10 +425,20 @@ function initQuiz(root) {
 
     renderStyleResult(els.styleResultMount, result);
 
+    if (onCompleted) {
+      onCompleted(result);
+    }
+
     const showReportAndLead = () => {
       renderReportTeaser(els.reportTeaserMount, { result });
       renderLeadForm(els.leadMount, { result });
       els.leadCard.hidden = false;
+
+      // Nooit tonen tijdens de geïsoleerde partnertest zelf (onCompleted() hierboven regelt dan
+      // al de doorschakeling naar de gezamenlijke resultaatpagina) — zie resources/js/partner.js.
+      if (!partnerClaimToken && els.partnerInviteMount) {
+        renderPartnerInvite(els.partnerInviteMount, { result });
+      }
     };
 
     // De accentkleurstap toont een kleur die exact de hex deelt met een kleur uit het gekozen
