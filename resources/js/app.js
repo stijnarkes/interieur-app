@@ -1,6 +1,14 @@
 import "./bootstrap";
 import { initQuiz } from "./quiz/quiz.js";
 import { loadRemoteQuizConfig } from "./quiz/remoteConfig.js";
+import { initPreview } from "./quiz/preview.js";
+
+// Losse admin-voorbeeldpagina's (zie QuizPreviewController) — draaien nooit tegelijk met
+// #quizRoot hierbeneden, dus dit raakt de echte quizflow niet aan.
+const previewRoot = document.getElementById("quizPreviewRoot");
+if (previewRoot) {
+  initPreview(previewRoot);
+}
 
 const root = document.getElementById("quizRoot");
 if (root) {

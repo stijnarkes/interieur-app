@@ -49,6 +49,13 @@
                                         class="cursor-move"
                                     />
                                     <x-filament::icon-button
+                                        tag="a"
+                                        :href="route('quiz.preview.question', $question->question_key)"
+                                        target="_blank"
+                                        icon="heroicon-o-eye"
+                                        label="Bekijk voorbeeld"
+                                    />
+                                    <x-filament::icon-button
                                         icon="heroicon-o-pencil-square"
                                         label="Vraag bewerken"
                                         wire:click="mountAction('editQuestion', {{ \Illuminate\Support\Js::from(['questionId' => $question->id]) }})"

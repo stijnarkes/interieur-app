@@ -68,6 +68,25 @@ class TekstenPage extends Page implements HasActions, HasForms
             ->all();
     }
 
+    /**
+     * Opent de bijbehorende voorbeeldpagina (zie QuizPreviewController) in een nieuw tabblad —
+     * laat precies zien hoe dit scherm er voor een bezoeker uitziet, zonder de hele quiz te
+     * hoeven doorlopen. Geen modal/formulier, dus een losse Action i.p.v. hergebruik van de
+     * bewerk-acties hieronder. Bewust niet "previewAction" genoemd (en dus niet via
+     * mountAction('preview') aan te roepen): deze neemt, anders dan de *Action()-methoden
+     * hieronder, een verplicht PHP-argument en is alleen bedoeld om direct in de view aan te
+     * roepen.
+     */
+    public function buildPreviewAction(string $url): Action
+    {
+        return Action::make('preview')
+            ->label('Bekijk voorbeeld')
+            ->icon('heroicon-o-eye')
+            ->color('gray')
+            ->url($url)
+            ->openUrlInNewTab();
+    }
+
     public function editStartScreenAction(): Action
     {
         return Action::make('editStartScreen')

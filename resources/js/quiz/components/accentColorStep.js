@@ -69,9 +69,10 @@ function createColorChip(color) {
  *   initialSelectedIds?: number[],
  *   onSelectionChange?: (ids: number[]) => void,
  *   onDone: (chosenColors: Array<{id: number, name: string, hex: string}>) => void,
+ *   previewMode?: boolean,
  * }} config
  */
-function renderAccentColorStep(container, { options, resultUuid, initialSelectedIds = [], onSelectionChange, onDone }) {
+function renderAccentColorStep(container, { options, resultUuid, initialSelectedIds = [], onSelectionChange, onDone, previewMode = false }) {
   let selectedIds = initialSelectedIds.filter((id) => options.some((option) => option.id === id));
 
   function renderChoice({ statusMessage = "", submitting = false } = {}) {
@@ -125,6 +126,16 @@ function renderAccentColorStep(container, { options, resultUuid, initialSelected
     continueBtn.textContent = submitting ? "Bezig..." : ACCENT_COLOR_STEP_COPY.continueLabel;
     continueBtn.disabled = submitting || selectedIds.length === 0;
     continueBtn.addEventListener("click", async () => {
+      // Voorbeeldweergave (zie QuizPreviewController/preview.js): geen echte opslag naar
+      // /api/quiz-result/*/accent-colors — de lokaal geselecteerde kleuren zijn al precies wat de
+      // server anders zou hebben teruggegeven (allemaal server-aangeleverde, geldige opties).
+      if (previewMode) {
+        const chosenColors = options.filter((option) => selectedIds.includes(option.id));
+        renderSummary(chosenColors);
+        onDone(chosenColors);
+        return;
+      }
+
       renderChoice({ submitting: true });
       try {
         const response = await saveAccentColors(resultUuid, selectedIds);

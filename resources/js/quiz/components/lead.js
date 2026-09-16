@@ -13,7 +13,7 @@ function escapeHtml(value) {
   })[char]);
 }
 
-function renderLeadForm(container, { result }) {
+function renderLeadForm(container, { result, previewMode = false }) {
   /**
    * Gedeeld met de "Opnieuw versturen"-knop in de successtatus. Stuurt alleen de verwijzing naar
    * het al server-side berekende resultaat (resultUuid) mee — de PDF-inhoud zelf bouwt
@@ -195,6 +195,14 @@ function renderLeadForm(container, { result }) {
 
       const marketingOptIn = form.querySelector("#leadOptIn").checked;
 
+      // Voorbeeldweergave (zie QuizPreviewController/preview.js): nooit een echte aanvraag
+      // versturen, maar wel meteen de bevestigingstekst tonen — zo ziet de admin ook precies die
+      // tekst zonder dat er een e-mail de deur uit gaat.
+      if (previewMode) {
+        renderSuccess({ name, email, marketingOptIn });
+        return;
+      }
+
       // Vervangt het hele formulier door de laadscene — dat sluit vanzelf een dubbele aanvraag
       // uit zolang de aanvraag loopt (de verzendknop bestaat dan even niet meer in de DOM).
       container.innerHTML = "";
@@ -341,6 +349,11 @@ function renderLeadForm(container, { result }) {
     followUp.appendChild(resendStatus);
 
     resendBtn.addEventListener("click", async () => {
+      if (previewMode) {
+        resendStatus.textContent = "Voorbeeldweergave — er wordt niets echt opnieuw verstuurd.";
+        return;
+      }
+
       resendBtn.disabled = true;
       resendStatus.textContent = "Bezig met opnieuw versturen...";
 

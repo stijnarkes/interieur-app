@@ -1620,3 +1620,42 @@ a.btn-primary:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.quiz-preview-banner {
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quiz-preview-banner p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.quiz-preview-style-picker {
+  margin-bottom: 24px;
+  padding: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.quiz-preview-style-picker .field {
+  margin-bottom: 0;
+  min-width: 220px;
+}
+
+.quiz-preview-email-frame {
+  width: 100%;
+  height: 80vh;
+  min-height: 500px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
