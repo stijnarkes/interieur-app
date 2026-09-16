@@ -159,4 +159,27 @@ class PartnerLinkTest extends TestCase
             ->assertOk()
             ->assertJson(['valid' => false]);
     }
+
+    #[Test]
+    public function alleen_de_initiator_kan_de_uitnodiging_intrekken(): void
+    {
+        $result = $this->makeQuizResult();
+
+        $create = $this->postJson('/api/partner-links', [
+            'resultUuid' => $result->uuid, 'shareConfirmationTextVersion' => 'v1',
+        ])->assertOk();
+        $inviteToken = Str::afterLast($create->json('inviteUrl'), '/');
+        $initiatorAccessToken = $create->json('accessToken');
+
+        $this->patchJson("/api/partner-links/{$inviteToken}/revoke", ['accessToken' => 'onzin-token'])
+            ->assertNotFound();
+        $this->assertSame('waiting', PartnerLink::first()->status);
+
+        $this->patchJson("/api/partner-links/{$inviteToken}/revoke", ['accessToken' => $initiatorAccessToken])
+            ->assertOk()
+            ->assertJson(['status' => 'revoked']);
+        $this->assertSame('revoked', PartnerLink::first()->fresh()->status);
+
+        $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertStatus(409);
+    }
 }
