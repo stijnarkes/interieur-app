@@ -58,7 +58,7 @@ class TekstenPageTest extends TestCase
                 'tagline' => 'Nieuwe tagline',
                 'wrap_up' => 'Nieuwe afsluitzin',
                 'cta' => 'Nieuwe cta',
-            ], arguments: ['sectionId' => $section->id])
+            ], arguments: ['sectionId' => $section->section_id])
             ->assertHasNoActionErrors();
 
         $section->refresh();

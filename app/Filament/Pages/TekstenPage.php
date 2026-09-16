@@ -90,8 +90,8 @@ class TekstenPage extends Page implements HasActions, HasForms
     {
         return Action::make('editSection')
             ->label('Bewerken')
-            ->modalHeading(fn (array $arguments): string => 'Overgangsscherm bewerken: '.(QuizTransitionSection::find($arguments['sectionId'])?->title ?? ''))
-            ->fillForm(fn (array $arguments): array => QuizTransitionSection::findOrFail($arguments['sectionId'])->toArray())
+            ->modalHeading(fn (array $arguments): string => 'Overgangsscherm bewerken: '.(QuizTransitionSection::forSection($arguments['sectionId'])?->title ?? ''))
+            ->fillForm(fn (array $arguments): array => $this->findSectionOrFail($arguments['sectionId'])->toArray())
             ->form([
                 TextInput::make('title')->label('Titel')->required()->maxLength(255),
                 Textarea::make('tagline')->label('Introductietekst')->rows(2)->required(),
@@ -99,10 +99,21 @@ class TekstenPage extends Page implements HasActions, HasForms
                 TextInput::make('cta')->label('Knoptekst')->required()->maxLength(255),
             ])
             ->action(function (array $arguments, array $data): void {
-                QuizTransitionSection::findOrFail($arguments['sectionId'])->update($data);
+                $this->findSectionOrFail($arguments['sectionId'])->update($data);
 
                 Notification::make()->title('Overgangsscherm bijgewerkt')->success()->send();
             });
+    }
+
+    /**
+     * `arguments['sectionId']` is de string-slug uit QuizStructure::SECTIONS (bv.
+     * "materials-colors"), niet de numerieke primaire sleutel — vandaar de lookup via
+     * forSection() i.p.v. find()/findOrFail(), die anders altijd een ModelNotFoundException
+     * (en dus een 404) geven omdat de slug nooit een geldige id is.
+     */
+    private function findSectionOrFail(string $sectionId): QuizTransitionSection
+    {
+        return QuizTransitionSection::forSection($sectionId) ?? throw new \RuntimeException("Onbekend overgangsscherm: {$sectionId}");
     }
 
     public function editResultCopyAction(): Action
