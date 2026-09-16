@@ -7,9 +7,11 @@
  * Geen eigen kaart-achtergrond/rand/schaduw: de aanroeper bepaalt de omlijsting, want de ene
  * plek heeft een eigen kaart nodig en de andere hergebruikt een al bestaande kaart-wrapper.
  *
- * start() geeft een promise terug die resolvet zodra de eenmalige opbouw klaar is (daarna gaat
- * de component vanzelf over in een subtiele, oneindige "nog bezig"-puls op het lampje, zonder de
- * opbouw te herhalen) — zo hoeft geen enkele aanroeper de opbouwduur zelf te kennen of te timen.
+ * start() geeft een promise terug die resolvet zodra de eenmalige opbouw klaar is (daarna gaat de
+ * component vanzelf over in een subtiele, oneindige "nog bezig"-toestand — een puls op het lampje
+ * plus drie kleine, na elkaar pulserende stipjes onder de tekst, zodat een langere wachttijd
+ * duidelijk aanvoelt als "nog actief bezig" i.p.v. vastgelopen — zonder de opbouw te herhalen) —
+ * zo hoeft geen enkele aanroeper de opbouwduur zelf te kennen of te timen.
  * Bij prefers-reduced-motion: reduce toont de component meteen de kamer in eindstaat, zonder
  * opbouw-animatie en zonder puls; de promise resolvet dan vrijwel direct.
  */
@@ -42,6 +44,7 @@ function createLoadingScene({ heading, subtext = "" }) {
     </svg>
     <h2 class="loading-scene-heading"></h2>
     ${subtext ? '<p class="loading-scene-subtext"></p>' : ""}
+    <p class="loading-scene-waiting-dots" aria-hidden="true"><span></span><span></span><span></span></p>
   `;
 
   element.querySelector(".loading-scene-heading").textContent = heading;
