@@ -1304,10 +1304,6 @@ a.btn-primary:hover {
 /* Resultaatpagina: hero */
 
 .result-hero {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 28px;
-  align-items: center;
   padding: 32px;
 }
 
@@ -1385,12 +1381,6 @@ a.btn-primary:hover {
   font-size: 0.92rem;
   color: var(--muted);
   margin-bottom: 18px;
-}
-
-.result-hero-image {
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
 }
 
 /* Resultaatpagina: praktische tip onder een sectie */
@@ -1703,13 +1693,6 @@ a.btn-primary:hover {
     grid-auto-rows: 80px;
   }
 
-  .result-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .result-hero-image {
-    aspect-ratio: 16 / 9;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1801,12 +1784,7 @@ a.btn-primary:hover {
   }
 
   .result-hero {
-    grid-template-columns: 1fr;
     padding: 22px;
-  }
-
-  .result-hero-image {
-    aspect-ratio: 16 / 10;
   }
 
   .materials-grid-visual {

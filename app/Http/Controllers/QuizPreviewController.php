@@ -158,14 +158,13 @@ class QuizPreviewController extends Controller
         return $textComposer->build($result);
     }
 
-    /** @return array{key: string, label: string, slug: ?string, heroImage: ?string, colors: array} */
+    /** @return array{key: string, label: string, slug: ?string, colors: array} */
     private function styleForFrontend(StyleProfile $profile): array
     {
         return [
             'key' => $profile->style_key,
             'label' => $profile->label,
             'slug' => $profile->slug,
-            'heroImage' => $profile->hero_image,
             'colors' => $profile->base_colors ?? [],
         ];
     }

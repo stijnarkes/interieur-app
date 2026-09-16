@@ -21,10 +21,10 @@ use Illuminate\Support\Facades\Cache;
  * toegevoegde extra optie/materiaal geen tegenhanger in de statische bundel heeft om op terug te
  * vallen — zie resources/js/quiz/remoteConfig.js, dat de vraag-/optielijst volledig vervangt
  * i.p.v. alleen bestaande rijen te overschrijven. Alleen actieve opties worden geretourneerd; dat
- * is het hele deactivatie-mechanisme voor opties. `atmosphere` en `transitionPhotos` geven de
- * echte URL van de sfeer-/overgangsschermfoto's mee, ter vervanging van de vaste paden die anders
- * hardcoded in de JS-bundel zouden staan (zie styleProfiles.js/sectionTransition.js) — nodig
- * zodra die foto's niet meer onder public/ staan.
+ * is het hele deactivatie-mechanisme voor opties. `transitionPhotos` geeft de echte URL van de
+ * overgangsschermfoto's mee, ter vervanging van de vaste paden die anders hardcoded in de
+ * JS-bundel zouden staan (zie sectionTransition.js) — nodig zodra die foto's niet meer onder
+ * public/ staan.
  */
 class QuizConfigController extends Controller
 {
@@ -77,20 +77,14 @@ class QuizConfigController extends Controller
             ])
             ->values();
 
-        // Sfeerfoto per stijl (hero op de resultaatpagina) en overgangsschermfoto per sectie
-        // staan met een vast pad in de JS-bundel (styleProfiles.js/sectionTransition.js) — die
-        // paden kloppen alleen zolang bestanden onder public/ staan. Hier krijgt de frontend de
-        // echte, disk-onafhankelijke URL mee zodat remoteConfig.js die kan overschrijven (zie
-        // applyTransitionPhotos()), ook wanneer de opslag naar S3 verhuist. publicUrlForPath()
-        // controleert hier per pad live of het bestand bestaat (er is geen has_image-achtige
-        // kolom voor deze vaste-slot-foto's) — op S3 is dat een netwerkverzoek per pad, dus 5
-        // minuten cachen om dat niet op elke paginabezoeker te laten drukken. Deze foto's
-        // veranderen toch zelden; een admin ziet een update dan met een kleine vertraging.
-        $atmosphere = Cache::remember('quiz-config:atmosphere-urls', 300, fn () => collect(QuizStructure::styleOptions())
-            ->mapWithKeys(fn (string $label, string $key): array => [
-                $key => QuizImageManifest::publicUrlForPath('images/interior/atmosphere/'.QuizStructure::styleSlug($key).'.webp'),
-            ]));
-
+        // Overgangsschermfoto per sectie staat met een vast pad in de JS-bundel
+        // (sectionTransition.js) — dat pad klopt alleen zolang bestanden onder public/ staan. Hier
+        // krijgt de frontend de echte, disk-onafhankelijke URL mee zodat remoteConfig.js die kan
+        // overschrijven (zie applyTransitionPhotos()), ook wanneer de opslag naar S3 verhuist.
+        // publicUrlForPath() controleert hier per pad live of het bestand bestaat (er is geen
+        // has_image-achtige kolom voor deze vaste-slot-foto's) — op S3 is dat een netwerkverzoek
+        // per pad, dus 5 minuten cachen om dat niet op elke paginabezoeker te laten drukken. Deze
+        // foto's veranderen toch zelden; een admin ziet een update dan met een kleine vertraging.
         $transitionPhotos = Cache::remember('quiz-config:transition-photo-urls', 300, fn () => collect(array_keys(QuizStructure::SECTIONS))
             ->mapWithKeys(fn (string $sectionId): array => [
                 $sectionId => QuizImageManifest::publicUrlForPath("images/interior/transitions/{$sectionId}.webp"),
@@ -166,7 +160,6 @@ class QuizConfigController extends Controller
             'questions' => $questions,
             'options' => $options,
             'materials' => $materials,
-            'atmosphere' => $atmosphere,
             'transitionPhotos' => $transitionPhotos,
             'sections' => $sections,
             'copy' => $copy,

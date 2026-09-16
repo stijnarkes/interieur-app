@@ -55,7 +55,6 @@ class QuizResultController extends Controller
                 'key' => $key,
                 'label' => $profile?->label ?? $key,
                 'slug' => $profile?->slug,
-                'heroImage' => $profile?->hero_image,
                 'colors' => $profile?->base_colors ?? [],
             ];
         };

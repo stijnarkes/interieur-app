@@ -51,13 +51,6 @@ body {
     color: #4a3526;
 }
 
-.cover-image {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-
 .cover-secondary {
     margin-top: 14px;
     font-size: 9pt;
@@ -279,33 +272,17 @@ body {
     $resolveImage = fn (?string $path, ?float $containRatio = null) => $pdfImageResolver->resolve($path, $containRatio);
 @endphp
 
-{{-- Tegel is ~42% van de paginabreedte × 150px hoog (zie .cover-image) — vaste verhouding, dus
-     aanvullen i.p.v. uitrekken; maxWidth voorkomt dat dompdf een veel grotere bron-foto dan nodig
-     moet verwerken (zie PdfImageResolver). --}}
-@php $coverImage = $resolveImage($primaryStyle['heroImage'] ?? null, 2.0, 400); @endphp
-
 <div class="cover">
-    <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="vertical-align: top; {{ $coverImage ? 'width: 58%;' : '' }}">
-                <div class="brand-label">Boer Staphorst &middot; Interieuradvies</div>
-                <div class="cover-title">{{ $result['resultName'] ?? 'Jouw woonstijl' }}</div>
-                @if (!empty($primaryStyle['subtitle']))
-                <div class="cover-subtitle">{{ $primaryStyle['subtitle'] }}</div>
-                @endif
-                <div class="cover-description">{{ $primaryStyle['longDescription'] ?? ($result['description'] ?? '') }}</div>
+    <div class="brand-label">Boer Staphorst &middot; Interieuradvies</div>
+    <div class="cover-title">{{ $result['resultName'] ?? 'Jouw woonstijl' }}</div>
+    @if (!empty($primaryStyle['subtitle']))
+    <div class="cover-subtitle">{{ $primaryStyle['subtitle'] }}</div>
+    @endif
+    <div class="cover-description">{{ $primaryStyle['longDescription'] ?? ($result['description'] ?? '') }}</div>
 
-                @if (!empty($result['secondaryStyleLabel']))
-                <div class="cover-secondary">Past ook goed bij jou: <strong>{{ $result['secondaryStyleLabel'] }}</strong></div>
-                @endif
-            </td>
-            @if ($coverImage)
-            <td style="vertical-align: top; width: 42%; padding-left: 18px;">
-                <img src="{{ $coverImage }}" class="cover-image" alt="" />
-            </td>
-            @endif
-        </tr>
-    </table>
+    @if (!empty($result['secondaryStyleLabel']))
+    <div class="cover-secondary">Past ook goed bij jou: <strong>{{ $result['secondaryStyleLabel'] }}</strong></div>
+    @endif
 </div>
 
 @if ($primaryStyle)

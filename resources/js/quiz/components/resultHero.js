@@ -51,24 +51,6 @@ function renderResultHero(container, { comboName, intro, primaryStyle, secondary
   copyBlock.appendChild(matches);
   hero.appendChild(copyBlock);
 
-  if (primaryStyle?.heroImage) {
-    // Bewust geen createImageTile()/placeholder-tint hier: die liet dit blok leeg/kapot ogen
-    // zodra de sfeerfoto ontbrak. In plaats daarvan tonen we een echte foto, of anders helemaal
-    // niets — zelfde patroon als sectionTransition.js's overgangsfoto's.
-    const image = document.createElement("span");
-    image.className = "img-tile result-hero-image";
-
-    const img = document.createElement("img");
-    img.src = primaryStyle.heroImage;
-    img.alt = `Sfeerbeeld van de ${primaryStyle.label}-stijl`;
-    img.loading = "lazy";
-    img.decoding = "async";
-    img.addEventListener("error", () => image.remove(), { once: true });
-
-    image.appendChild(img);
-    hero.appendChild(image);
-  }
-
   container.appendChild(hero);
 }
 

@@ -11,9 +11,10 @@ use RuntimeException;
  * startscherm-foto (1 slot) en de overgangsschermfoto's (1 slot per sectie uit
  * QuizStructure::SECTIONS) — samen `pageSections()`, beheerd op SitePhotosPage — en de
  * sfeerfoto's (6 vaste slots, één per woonstijl) — `atmosphereSections()`, gebruikt door
- * MigrateQuizImages. Het admin-beheer van de sfeerfoto's zelf loopt sinds de invoering van
- * StyleProfilesPage via het `hero_image`-uploadveld daar (per stijl, samen met de rest van de
- * stijlinhoud) — er is geen los beheerscherm meer voor. De 66 stap-foto's per antwoordoptie
+ * MigrateQuizImages voor eventuele nog aanwezige bestanden op dit pad. Dit "sfeerfoto op de
+ * resultatenpagina/PDF-omslag"-concept is zelf uitgefaseerd (geen admin-uploadveld meer, geen
+ * weergave meer) — `StyleProfile::hero_image` blijft alleen als ongebruikte kolom staan. De 66
+ * stap-foto's per antwoordoptie
  * staan ook niet hier: die worden per rij beheerd via de database
  * (QuizOption, zie QuizOptionsPage) omdat een admin ze inhoudelijk moet kunnen bewerken
  * (titel/stijl/actief), niet alleen de afbeelding kunnen vervangen.
@@ -34,8 +35,8 @@ class QuizImageManifest
     }
 
     /**
-     * Sfeerfoto's op de resultaatpagina — admin-beheer loopt via StyleProfilesPage
-     * (`hero_image`-uploadveld per stijl); deze methode voedt alleen nog MigrateQuizImages.
+     * Uitgefaseerd (geen admin-uploadveld/weergave meer, zie klasse-docblok) — deze methode voedt
+     * alleen nog MigrateQuizImages voor eventuele nog aanwezige bestanden op dit pad.
      */
     public static function atmosphereSections(): array
     {

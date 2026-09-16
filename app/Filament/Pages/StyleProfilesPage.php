@@ -78,7 +78,6 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                     ...$profile->toArray(),
                     'furniture_intro' => $profile->furniture_shapes['intro'] ?? null,
                     'furniture_items' => $profile->furniture_shapes['items'] ?? [],
-                    'hero_image_preview_url' => $this->previewUrl($profile, 'hero_image'),
                     'materials_image_preview_url' => $this->previewUrl($profile, 'materials_image'),
                 ];
             })
@@ -92,15 +91,6 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                         TagsInput::make('core_traits')
                             ->label('Kenmerken')
                             ->helperText('Losse trefwoorden, bv. "Warme, rustige kleuren" — Enter om toe te voegen.'),
-                        $this->imagePreview('hero_image_preview_url', 'Huidige sfeerfoto'),
-                        FileUpload::make('hero_image_upload')
-                            ->label('Sfeerfoto')
-                            ->helperText('Laat leeg om de huidige sfeerfoto te behouden.')
-                            ->image()
-                            ->disk('public')
-                            ->directory('tmp-quiz-uploads')
-                            ->visibility('private')
-                            ->dehydrated(fn ($state): bool => filled($state)),
                     ]),
 
                 FormSection::make('Kleuren')
@@ -171,11 +161,6 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
             ])
             ->action(function (array $arguments, array $data): void {
                 $profile = StyleProfile::findOrFail($arguments['profileId']);
-
-                if (! empty($data['hero_image_upload'])) {
-                    $data['hero_image'] = $this->storeUploadedImage($data['hero_image_upload'], "atmosphere/{$profile->slug}");
-                }
-                unset($data['hero_image_upload']);
 
                 if (! empty($data['materials_image_upload'])) {
                     $data['materials_image'] = $this->storeUploadedImage($data['materials_image_upload'], "materials-board/{$profile->slug}");

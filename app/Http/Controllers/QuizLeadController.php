@@ -165,7 +165,6 @@ class QuizLeadController extends Controller
                 'longDescription' => $primary->long_description,
                 'traitsIntro' => $primary->traits_intro,
                 'traits' => $primary->core_traits,
-                'heroImage' => $primary->hero_image,
                 'colorTip' => $primary->color_tip,
                 'materials' => $primary->materials,
                 'materialsImage' => $primary->materials_image,
