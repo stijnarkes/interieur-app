@@ -164,12 +164,20 @@ function renderAccentColorStep(container, { options, resultUuid, basePaletteColo
       }
     });
     actions.appendChild(continueBtn);
+    container.appendChild(actions);
 
     // Alternatief voor 1-2 accentkleuren kiezen: altijd beschikbaar, ook als er nog niets
-    // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze.
+    // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze. Bewust
+    // géén tweede volwaardige knop naast "Doorgaan": op mobiel (waar knoppen de volle breedte
+    // krijgen, zie .actions .btn) stapelde dat tot twee even grote, losstaande pillen onder
+    // elkaar — een directe, iets kleinere link vlak onder "Doorgaan" leest duidelijker als een
+    // "of"-alternatief bij diezelfde keuze i.p.v. een aparte actie verderop.
+    const skipWrap = document.createElement("p");
+    skipWrap.className = "accent-color-skip";
+
     const skipBtn = document.createElement("button");
     skipBtn.type = "button";
-    skipBtn.className = "btn btn-outline";
+    skipBtn.className = "btn-link accent-color-skip-btn";
     skipBtn.textContent = ACCENT_COLOR_STEP_COPY.skipLabel;
     skipBtn.disabled = submitting;
     skipBtn.addEventListener("click", async () => {
@@ -188,9 +196,8 @@ function renderAccentColorStep(container, { options, resultUuid, basePaletteColo
         renderChoice({ statusMessage: ACCENT_COLOR_STEP_COPY.errorMessage });
       }
     });
-    actions.appendChild(skipBtn);
-
-    container.appendChild(actions);
+    skipWrap.appendChild(skipBtn);
+    container.appendChild(skipWrap);
 
     const status = document.createElement("p");
     status.className = "error";
