@@ -254,6 +254,71 @@ class QuizLeadControllerTest extends TestCase
     }
 
     #[Test]
+    public function het_interieurrecept_toont_de_daadwerkelijk_gekozen_basis_en_accentkleuren(): void
+    {
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+        StyleProfile::where('style_key', 'japandi')->update([
+            'recipe' => [
+                ['label' => 'Basis', 'value' => 'Generieke stijladvies-tekst'],
+                ['label' => 'Grote meubels', 'value' => 'Lage bank'],
+                ['label' => 'Accentkleur', 'value' => 'Generiek accentadvies'],
+            ],
+        ]);
+        $quizResult->update([
+            'chosen_base_palette' => [
+                'id' => 1, 'name' => 'Licht en verstild', 'description' => 'Test',
+                'colors' => [['name' => 'Ecru', 'hex' => '#e4dac6'], ['name' => 'Zandkleur', 'hex' => '#d1bd9e']],
+            ],
+            'chosen_accent_colors' => [
+                ['id' => 1, 'name' => 'Kleiroze', 'hex' => '#ba9587'],
+            ],
+        ]);
+
+        $this->postLead($quizResult->uuid);
+
+        $recipe = collect(Submission::first()->quiz_result['primaryStyle']['recipe'])->keyBy('label');
+        $this->assertSame('Ecru, Zandkleur', $recipe['Basis']['value']);
+        $this->assertSame('Kleiroze', $recipe['Accentkleur']['value']);
+        $this->assertSame('Lage bank', $recipe['Grote meubels']['value']);
+    }
+
+    #[Test]
+    public function het_interieurrecept_toont_een_duidelijke_tekst_bij_bewust_geen_accentkleur(): void
+    {
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+        StyleProfile::where('style_key', 'japandi')->update([
+            'recipe' => [['label' => 'Accentkleur', 'value' => 'Generiek accentadvies']],
+        ]);
+        $quizResult->update(['chosen_accent_colors' => []]);
+
+        $this->postLead($quizResult->uuid);
+
+        $recipe = collect(Submission::first()->quiz_result['primaryStyle']['recipe'])->keyBy('label');
+        $this->assertSame('Geen accentkleur — bewust gekozen voor rustige basiskleuren', $recipe['Accentkleur']['value']);
+    }
+
+    #[Test]
+    public function het_interieurrecept_valt_terug_op_de_generieke_tekst_zonder_gekozen_kleuren(): void
+    {
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+        StyleProfile::where('style_key', 'japandi')->update([
+            'recipe' => [
+                ['label' => 'Basis', 'value' => 'Generieke stijladvies-tekst'],
+                ['label' => 'Accentkleur', 'value' => 'Generiek accentadvies'],
+            ],
+        ]);
+
+        $this->postLead($quizResult->uuid);
+
+        $recipe = collect(Submission::first()->quiz_result['primaryStyle']['recipe'])->keyBy('label');
+        $this->assertSame('Generieke stijladvies-tekst', $recipe['Basis']['value']);
+        $this->assertSame('Generiek accentadvies', $recipe['Accentkleur']['value']);
+    }
+
+    #[Test]
     public function resultatenpagina_en_pdf_gebruiken_exact_dezelfde_basisstijl(): void
     {
         Mail::fake();

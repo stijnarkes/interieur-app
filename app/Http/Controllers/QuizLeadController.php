@@ -171,7 +171,7 @@ class QuizLeadController extends Controller
                 'materialsImage' => $primary->materials_image,
                 'materialsTip' => $primary->materials_tip,
                 'furnitureAdvice' => $primary->furniture_shapes,
-                'recipe' => $primary->recipe,
+                'recipe' => $this->personalizedRecipe($primary, $quizResult),
                 'avoid' => implode(' ', $primary->wat_past_minder_goed ?? []),
             ] : null,
             'secondaryStyleLabel' => $secondary?->label,
@@ -204,6 +204,39 @@ class QuizLeadController extends Controller
                 ?? ($primary ? "Dit zijn de kleuren die passen bij de {$primary->label}-stijl." : ''),
             'moodboard' => $this->moodboardFor($quizResult),
         ];
+    }
+
+    /**
+     * Vervangt de vaste "Basis"/"Accentkleur"-regels in het interieurrecept (zie
+     * StyleProfile::recipe, altijd generieke stijladvies-tekst) door de kleuren die de bezoeker
+     * zelf koos bij de basispalet-/accentkleurstap — nooit een eigen suggestie tonen naast wat al
+     * écht gekozen is. Valt terug op de originele, generieke tekst voor resultaten van vóór deze
+     * feature (of een stijl zonder geconfigureerde basispaletten) zodat oude PDF's niet
+     * onverwacht een lege regel tonen. De overige regels (Grote meubels, Materialen,
+     * Accessoires) blijven ongewijzigd — dat is en blijft generiek stijladvies.
+     *
+     * @return array<int, array{label: string, value: string}>
+     */
+    private function personalizedRecipe(StyleProfile $primary, QuizResult $quizResult): array
+    {
+        $chosenPaletteColors = $quizResult->chosen_base_palette['colors'] ?? null;
+        $chosenAccentColors = $quizResult->chosen_accent_colors;
+
+        return collect($primary->recipe ?? [])
+            ->map(function (array $item) use ($chosenPaletteColors, $chosenAccentColors): array {
+                if (($item['label'] ?? null) === 'Basis' && ! empty($chosenPaletteColors)) {
+                    $item['value'] = collect($chosenPaletteColors)->pluck('name')->filter()->implode(', ');
+                }
+
+                if (($item['label'] ?? null) === 'Accentkleur' && $chosenAccentColors !== null) {
+                    $item['value'] = $chosenAccentColors !== []
+                        ? collect($chosenAccentColors)->pluck('name')->filter()->implode(', ')
+                        : 'Geen accentkleur — bewust gekozen voor rustige basiskleuren';
+                }
+
+                return $item;
+            })
+            ->all();
     }
 
     /**

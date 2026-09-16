@@ -407,25 +407,14 @@ body {
 </div>
 @endif
 
-@if (!empty($primaryStyle['furnitureAdvice']['items']))
-<div class="section page-break">
-    <div class="section-title">Kies meubels met deze uitstraling</div>
-    @if (!empty($primaryStyle['furnitureAdvice']['intro']))
-    <div class="section-intro">{{ $primaryStyle['furnitureAdvice']['intro'] }}</div>
-    @endif
-    <div class="pill-row">
-        @foreach ($primaryStyle['furnitureAdvice']['items'] as $item)
-        <span class="pill">{{ $item }}</span>
-        @endforeach
-    </div>
-</div>
-@endif
-
 @if (!empty($result['moodboard']))
-{{-- Eigen pagina en 2 (i.p.v. voorheen 3) bredere/hogere tegels per rij — beter zichtbaar dan de
-     eerdere kleine tegeltjes. Een <table> i.p.v. inline-block tegels: dompdf's ondersteuning voor
-     moderne CSS-layout (flex/grid, en zelfs consistente inline-block-breedtes) is beperkt, een
-     tabel geeft hier betrouwbaar precies 2 gelijke kolommen. --}}
+{{-- Staat bewust vóór "Kies meubels met deze uitstraling": die sectie forceert daarna zelf een
+     nieuwe pagina (.page-break), dus zo blijft het moodboard ongestoord op zijn eigen pagina i.p.v.
+     dat de (kortere) meubeltekst er eerst een stuk bovenaan van opeet. 2 (i.p.v. voorheen 3)
+     bredere/hogere tegels per rij — beter zichtbaar dan de eerdere kleine tegeltjes. Een <table>
+     i.p.v. inline-block tegels: dompdf's ondersteuning voor moderne CSS-layout (flex/grid, en
+     zelfs consistente inline-block-breedtes) is beperkt, een tabel geeft hier betrouwbaar precies
+     2 gelijke kolommen. --}}
 <div class="section">
     <div class="section-title">Jouw persoonlijke moodboard</div>
     <table class="moodboard-table">
@@ -449,6 +438,20 @@ body {
         </tr>
         @endforeach
     </table>
+</div>
+@endif
+
+@if (!empty($primaryStyle['furnitureAdvice']['items']))
+<div class="section page-break">
+    <div class="section-title">Kies meubels met deze uitstraling</div>
+    @if (!empty($primaryStyle['furnitureAdvice']['intro']))
+    <div class="section-intro">{{ $primaryStyle['furnitureAdvice']['intro'] }}</div>
+    @endif
+    <div class="pill-row">
+        @foreach ($primaryStyle['furnitureAdvice']['items'] as $item)
+        <span class="pill">{{ $item }}</span>
+        @endforeach
+    </div>
 </div>
 @endif
 
