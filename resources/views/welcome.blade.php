@@ -4,6 +4,11 @@
 
 @section('content')
 <main class="app-shell" id="quizRoot">
+    {{-- Gedeelde "stage" voor start/laad-/overgangsscherm: quiz.js reserveert hier bij het
+         klikken op start eenmalig een minimumhoogte (op basis van het zichtbare startscherm en de
+         viewport) zodat de kaartwissel niet laat inklappen en weer opveren — zie
+         reserveStageHeight()/releaseStageHeight(). --}}
+    <div class="quiz-stage" id="quizStage">
     {{-- Startscherm --}}
     <section class="card quiz-start" id="quizStart">
         @php
@@ -71,6 +76,7 @@
             </div>
         </section>
     </section>
+    </div>
 
     {{-- Resultaat --}}
     <section class="card results report" id="quizResult" hidden>

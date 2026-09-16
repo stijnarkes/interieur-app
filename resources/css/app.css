@@ -236,6 +236,23 @@ a.btn-primary:hover {
 
 /* Stijltest: startscherm */
 
+/* Houdt start-/laad-/overgangsscherm verticaal gecentreerd binnen de door quiz.js gereserveerde
+   minimumhoogte (zie reserveStageHeight()) — zonder gereserveerde hoogte (auto) heeft dit geen
+   zichtbaar effect, dus buiten de startanimatie om verandert er niets aan de lay-out. */
+.quiz-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .quiz-stage {
+    /* Zorgt dat het vrijgeven van de gereserveerde hoogte (zodra de eerste vraag verschijnt)
+       geleidelijk gaat i.p.v. abrupt — zie releaseStageHeight() in quiz.js. */
+    transition: min-height 0.4s ease;
+  }
+}
+
 .quiz-start {
   padding: 48px 44px;
   margin-bottom: 24px;

@@ -72,8 +72,16 @@ function positionInSection(step) {
   };
 }
 
+// Minimale hoogte die de stage sowieso krijgt tijdens de startanimatie, ook op een korte
+// viewport — genoeg voor de opbouw-illustratie zelf plus wat ademruimte om te centreren.
+const STAGE_HEIGHT_FLOOR = 400;
+// Marge t.o.v. de viewporthoogte: voorkomt dat de gereserveerde hoogte op een klein
+// browservenster (bv. laptop) groter wordt dan wat sowieso al zichtbaar/scrollbaar is.
+const STAGE_HEIGHT_VIEWPORT_MARGIN = 40;
+
 function initQuiz(root) {
   const els = {
+    stage: root.querySelector("#quizStage"),
     start: root.querySelector("#quizStart"),
     startBtn: root.querySelector("#startQuizBtn"),
     loading: root.querySelector("#quizLoading"),
@@ -115,6 +123,28 @@ function initQuiz(root) {
    *  het vorige scherm, wat op mobiel al snel midden in de nieuwe vraag/pagina uitkomt. */
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  /**
+   * Meet de daadwerkelijk gerenderde hoogte van het (nog zichtbare) startscherm en zet die als
+   * minimumhoogte op de gedeelde stage — vóórdat het startscherm wegvaagt. Zo blijft de kaart
+   * tijdens laden/overgang minstens even hoog als het startscherm zelf (geen inklappende
+   * lay-out), maar nooit hoger dan nodig is voor de huidige viewport (geen nodeloos lege ruimte
+   * op een kort browservenster). Puur op meting gebaseerd — geen vaste pixelwaarde — dus dit past
+   * zich vanzelf aan desktop én mobiel aan.
+   */
+  function reserveStageHeight() {
+    const startHeight = els.start.getBoundingClientRect().height;
+    const viewportCap = Math.max(window.innerHeight - STAGE_HEIGHT_VIEWPORT_MARGIN, STAGE_HEIGHT_FLOOR);
+    const reserved = Math.min(Math.max(startHeight, STAGE_HEIGHT_FLOOR), viewportCap);
+    els.stage.style.minHeight = `${reserved}px`;
+  }
+
+  /** Geeft de gereserveerde hoogte weer vrij zodra de echte quizinhoud (vanaf de eerste vraag)
+   *  het overneemt — anders zou elke volgende stap onnodig veel lege ruimte overhouden. Buiten de
+   *  startanimatie om is dit een no-op (er staat dan toch al geen inline hoogte). */
+  function releaseStageHeight() {
+    els.stage.style.minHeight = "";
   }
 
   function showScreen(screen) {
@@ -169,11 +199,20 @@ function initQuiz(root) {
       totalSections: stepperSections.length,
       section: SECTIONS[sectionIndex],
       onContinue: () => {
+        // Vanaf hier is de echte quizinhoud leidend voor de hoogte — de reservering die tijdens
+        // de startanimatie is gezet (zie reserveStageHeight()) mag dan los, anders houdt elke
+        // vraag onnodig de hoogte van het startscherm aan. Bij een latere sectie-overgang (niet
+        // de allereerste) staat er toch al geen inline hoogte meer, dus dan is dit een no-op.
+        releaseStageHeight();
         showScreen("steps");
         renderStep();
       },
       onBack: sectionIndex === 0
-        ? () => showScreen("start")
+        // Volledige restart() i.p.v. alleen showScreen("start"): anders blijven de
+        // "starting"-vlag, de uitgeschakelde startknop en de is-leaving-fade-klasse hangen, en
+        // lijkt "Ontdek mijn woonstijl" na teruggaan defect. Op dit punt zijn er nog geen
+        // antwoorden gegeven, dus de state.reset() binnen restart() verandert hier niets extra's.
+        ? restart
         : () => {
             state.goToStep(step - 1);
             showScreen("steps");
@@ -221,6 +260,7 @@ function initQuiz(root) {
     starting = false;
     els.startBtn.disabled = false;
     els.start.classList.remove("is-leaving");
+    releaseStageHeight();
     showScreen("start");
   }
 
@@ -332,6 +372,10 @@ function initQuiz(root) {
     if (starting) return;
     starting = true;
     els.startBtn.disabled = true;
+
+    // Meet de hoogte vóórdat het startscherm iets van zijn lay-out verliest (de is-leaving-klasse
+    // hieronder verandert alleen opacity/transform, maar meet voor de zekerheid eerst).
+    reserveStageHeight();
 
     state.reset();
     state.start();
