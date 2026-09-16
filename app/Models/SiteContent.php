@@ -53,6 +53,14 @@ class SiteContent extends Model
         'email_outro',
         'email_cta_label',
         'email_cta_url',
+
+        'accent_step_title',
+        'accent_step_intro',
+        'accent_step_hint',
+        'accent_step_continue_label',
+        'accent_step_chosen_title',
+        'accent_step_change_label',
+        'accent_step_error_message',
     ];
 
     protected $casts = [

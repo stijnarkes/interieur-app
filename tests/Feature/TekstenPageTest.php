@@ -107,6 +107,28 @@ class TekstenPageTest extends TestCase
     }
 
     #[Test]
+    public function de_accentkleurenstap_kan_bewerkt_worden(): void
+    {
+        SiteContent::current();
+
+        Livewire::actingAs($this->admin())
+            ->test(TekstenPage::class)
+            ->callAction('editAccentColorStep', data: [
+                'accent_step_title' => 'Nieuwe titel',
+                'accent_step_intro' => 'Nieuwe intro',
+                'accent_step_hint' => 'Nieuwe hint',
+                'accent_step_continue_label' => 'Verder',
+                'accent_step_chosen_title' => 'Nieuwe gekozen-titel',
+                'accent_step_change_label' => 'Aanpassen',
+                'accent_step_error_message' => 'Nieuwe foutmelding',
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame('Nieuwe titel', SiteContent::current()->accent_step_title);
+        $this->assertSame('Nieuwe foutmelding', SiteContent::current()->accent_step_error_message);
+    }
+
+    #[Test]
     public function de_e_mailtekst_kan_bewerkt_worden(): void
     {
         SiteContent::current();

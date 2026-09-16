@@ -33,6 +33,14 @@
     </x-filament::section>
 
     <x-filament::section
+        heading="Accentkleurenstap"
+        description="De stap ná de stijlberekening waar de bezoeker 1-2 accentkleuren kiest. De kleuren zelf beheer je via Accentkleuren."
+        :header-actions="[$this->editAccentColorStepAction()]"
+    >
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ $content->accent_step_title }}</p>
+    </x-filament::section>
+
+    <x-filament::section
         heading="Resultatenpagina"
         description="Heldenblok, rapport-teaser, aanvraagformulier en bevestiging na verzenden."
         :header-actions="[$this->editResultCopyAction()]"

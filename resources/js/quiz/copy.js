@@ -1,9 +1,9 @@
 /**
  * Stijl-onafhankelijke teksten voor de resultatenpagina (heldenblok, rapport-teaser,
- * aanvraagformulier, bevestiging) — admin-beheerbaar via Teksten (zie SiteContent/
- * QuizConfigController). De waarden hieronder zijn de fallback zolang /api/quiz-config niet (op
- * tijd) antwoordt; remoteConfig.js's applyCopy() overschrijft ze daarna in place, zelfde patroon
- * als data.js's SECTIONS voor de overgangsschermteksten.
+ * accentkleurenstap, aanvraagformulier, bevestiging) — admin-beheerbaar via Teksten (zie
+ * SiteContent/QuizConfigController). De waarden hieronder zijn de fallback zolang
+ * /api/quiz-config niet (op tijd) antwoordt; remoteConfig.js's applyCopy() overschrijft ze daarna
+ * in place, zelfde patroon als data.js's SECTIONS voor de overgangsschermteksten.
  */
 const RESULT_HERO_COPY = {
   eyebrow: "Jouw persoonlijke woonstijl",

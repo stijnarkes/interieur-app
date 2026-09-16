@@ -141,6 +141,15 @@ class QuizConfigController extends Controller
                 'expectItems' => $siteContent->lead_expect_items,
                 'resendLabel' => $siteContent->lead_resend_label,
             ],
+            'accentColorStep' => [
+                'title' => $siteContent->accent_step_title,
+                'intro' => $siteContent->accent_step_intro,
+                'hint' => $siteContent->accent_step_hint,
+                'continueLabel' => $siteContent->accent_step_continue_label,
+                'chosenTitle' => $siteContent->accent_step_chosen_title,
+                'changeLabel' => $siteContent->accent_step_change_label,
+                'errorMessage' => $siteContent->accent_step_error_message,
+            ],
         ];
 
         return response()->json([

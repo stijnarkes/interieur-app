@@ -72,6 +72,14 @@ class SiteContentSeeder extends Seeder
             'email_outro' => 'De volledige uitslag met jouw moodboard vind je in de bijgevoegde PDF.',
             'email_cta_label' => 'Plan een interieuradvies',
             'email_cta_url' => 'https://www.boer-staphorst.nl/wonen/interieuradvies',
+
+            'accent_step_title' => 'Welke accentkleuren spreken jou het meeste aan?',
+            'accent_step_intro' => 'Je woonstijl hebben we inmiddels goed in beeld. Kies nu maximaal twee kleuren waarmee jij jouw interieur persoonlijk zou maken.',
+            'accent_step_hint' => 'Kies minimaal 1, maximaal 2 kleuren.',
+            'accent_step_continue_label' => 'Doorgaan',
+            'accent_step_chosen_title' => 'Jouw gekozen accentkleuren',
+            'accent_step_change_label' => 'Wijzig keuze',
+            'accent_step_error_message' => 'Je keuze kon niet worden opgeslagen. Probeer het opnieuw.',
         ]);
     }
 }

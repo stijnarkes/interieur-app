@@ -34,6 +34,7 @@ class QuizConfigControllerTest extends TestCase
             'teaser_checklist_items' => ['Een', 'Twee'],
             'lead_heading' => 'Test-lead-titel',
             'lead_expect_items' => ['Drie', 'Vier'],
+            'accent_step_title' => 'Test-accentkleurenstap-titel',
         ]);
 
         $response = $this->getJson('/api/quiz-config');
@@ -46,5 +47,6 @@ class QuizConfigControllerTest extends TestCase
         $response->assertJsonPath('copy.reportTeaser.checklistItems', ['Een', 'Twee']);
         $response->assertJsonPath('copy.leadForm.heading', 'Test-lead-titel');
         $response->assertJsonPath('copy.leadForm.expectItems', ['Drie', 'Vier']);
+        $response->assertJsonPath('copy.accentColorStep.title', 'Test-accentkleurenstap-titel');
     }
 }
