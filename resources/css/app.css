@@ -951,17 +951,12 @@ a.btn-primary:hover {
   max-width: 100%;
 }
 
-/* Alternatief voor "Doorgaan" (zie accentColorStep.js) — een kleinere link vóór die knop i.p.v.
-   een tweede volwaardige knop ernaast/eronder, zodat het op mobiel niet als een losstaande, even
-   grote pil oogt. */
+/* Alternatief voor "Doorgaan" (zie accentColorStep.js) — eigen knoprij vóór die knop i.p.v.
+   ernaast/eronder in dezelfde rij, zodat het op mobiel niet als een tweede, verwarrende pil na
+   "Doorgaan" oogt. */
 .accent-color-skip {
-  margin: 0 0 4px;
-  text-align: center;
-}
-
-.accent-color-skip-btn {
-  font-weight: 700;
-  font-size: 0.95rem;
+  margin-bottom: 4px;
+  justify-content: center;
 }
 
 .accent-color-grid--summary {

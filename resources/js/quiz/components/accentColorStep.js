@@ -136,17 +136,16 @@ function renderAccentColorStep(container, { options, resultUuid, basePaletteColo
     container.appendChild(grid);
 
     // Alternatief voor 1-2 accentkleuren kiezen: altijd beschikbaar, ook als er nog niets
-    // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze. Bewust
-    // géén tweede volwaardige knop naast "Doorgaan": op mobiel (waar knoppen de volle breedte
-    // krijgen, zie .actions .btn) stapelde dat tot twee even grote, losstaande pillen onder
-    // elkaar — een kleinere link, vóór "Doorgaan" geplaatst, leest duidelijker als een
-    // "of"-alternatief bij diezelfde keuze i.p.v. een aparte actie erna.
-    const skipWrap = document.createElement("p");
-    skipWrap.className = "accent-color-skip";
+    // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze. Eigen
+    // knoprij vóór "Doorgaan" (i.p.v. ernaast/eronder in dezelfde rij) zodat hij op mobiel (waar
+    // knoppen de volle breedte krijgen, zie .btn) niet als een tweede, verwarrende pil na
+    // "Doorgaan" oogt, maar wel een volwaardige, goed zichtbare knop blijft.
+    const skipWrap = document.createElement("div");
+    skipWrap.className = "actions accent-color-skip";
 
     const skipBtn = document.createElement("button");
     skipBtn.type = "button";
-    skipBtn.className = "btn-link accent-color-skip-btn";
+    skipBtn.className = "btn btn-outline";
     skipBtn.textContent = ACCENT_COLOR_STEP_COPY.skipLabel;
     skipBtn.disabled = submitting;
     skipBtn.addEventListener("click", async () => {
