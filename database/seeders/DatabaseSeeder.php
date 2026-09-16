@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             StyleProfileSeeder::class,
             SiteContentSeeder::class,
             QuizTransitionSectionSeeder::class,
+            AccentColorSeeder::class,
         ]);
     }
 }

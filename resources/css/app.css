@@ -832,6 +832,103 @@ a.btn-primary:hover {
   border-top: 1px solid var(--line);
 }
 
+/* Stijltest: accentkleurstap (ná de stijlberekening, vóór de rapport-teaser/het leadformulier) —
+   zelfde kaart-/afstands-/border-radius-taal als .option-card hierboven, alleen met een ronde
+   kleurswatch i.p.v. een foto. */
+
+.accent-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.accent-color-card {
+  background: #fffaf5;
+  border: 1px solid #dfd0c0;
+  border-radius: 14px;
+  padding: 18px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.accent-color-card:hover {
+  border-color: #cfa57d;
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px rgba(61, 45, 30, 0.14);
+}
+
+.accent-color-card.is-selected {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(183, 121, 77, 0.22);
+}
+
+.accent-color-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.accent-color-swatch {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(45, 38, 32, 0.15);
+  box-shadow: var(--shadow);
+}
+
+.accent-color-check {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--accent-strong);
+  box-shadow: 0 2px 8px rgba(61, 45, 30, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.accent-color-card.is-selected .accent-color-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.accent-color-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.accent-color-grid--summary {
+  margin-bottom: 12px;
+}
+
+.accent-color-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Stijltest: resultaat */
 
 .quiz-result-name {
@@ -1472,6 +1569,13 @@ a.btn-primary:hover {
      1 kolom houdt elke optiefoto groot genoeg. */
   .option-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* 3 kolommen i.p.v. een enkele kolom: de swatch zelf is klein genoeg om ook op mobiel meerdere
+     naast elkaar te tonen, terwijl 56px ruim boven een comfortabele tapgrootte blijft. */
+  .accent-color-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .moodboard-grid {

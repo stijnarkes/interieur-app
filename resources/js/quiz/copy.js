@@ -28,6 +28,16 @@ const REPORT_TEASER_COPY = {
   mockLabel: "Jouw woonstijlrapport",
 };
 
+const ACCENT_COLOR_STEP_COPY = {
+  title: "Welke accentkleuren spreken jou het meeste aan?",
+  intro: "Je woonstijl hebben we inmiddels goed in beeld. Kies nu maximaal twee kleuren waarmee jij jouw interieur persoonlijk zou maken.",
+  hint: "Kies minimaal 1, maximaal 2 kleuren.",
+  continueLabel: "Doorgaan",
+  chosenTitle: "Jouw gekozen accentkleuren",
+  changeLabel: "Wijzig keuze",
+  errorMessage: "Je keuze kon niet worden opgeslagen. Probeer het opnieuw.",
+};
+
 const LEAD_FORM_COPY = {
   heading: "Ontvang jouw persoonlijke woonstijlrapport",
   intro: "Vul hieronder je gegevens in en ontvang jouw complete persoonlijke interieuradvies als PDF in je mailbox.",
@@ -53,4 +63,4 @@ const LEAD_FORM_COPY = {
   resendLabel: "Opnieuw versturen",
 };
 
-export { RESULT_HERO_COPY, REPORT_TEASER_COPY, LEAD_FORM_COPY };
+export { RESULT_HERO_COPY, REPORT_TEASER_COPY, ACCENT_COLOR_STEP_COPY, LEAD_FORM_COPY };

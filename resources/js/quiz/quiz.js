@@ -6,6 +6,7 @@ import { createQuizProgress } from "./components/quizProgress.js";
 import { renderSectionTransition } from "./components/sectionTransition.js";
 import { renderQuestionStep } from "./components/questionStep.js";
 import { renderStyleResult } from "./components/styleResult.js";
+import { renderAccentColorStep } from "./components/accentColorStep.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
 import { createLoadingScene } from "./components/loadingScene.js";
@@ -87,7 +88,9 @@ function initQuiz(root) {
     nextBtn: root.querySelector("#quizNextBtn"),
     result: root.querySelector("#quizResult"),
     styleResultMount: root.querySelector("#styleResultMount"),
+    accentColorMount: root.querySelector("#accentColorMount"),
     reportTeaserMount: root.querySelector("#reportTeaserMount"),
+    leadCard: root.querySelector("#quizLeadCard"),
     leadMount: root.querySelector("#quizLeadMount"),
     restartBtn: root.querySelector("#restartQuizBtn"),
   };
@@ -231,8 +234,10 @@ function initQuiz(root) {
     showScreen("result");
 
     els.styleResultMount.innerHTML = "";
+    els.accentColorMount.innerHTML = "";
     els.reportTeaserMount.innerHTML = "";
     els.leadMount.innerHTML = "";
+    els.leadCard.hidden = true;
 
     const loading = document.createElement("p");
     loading.className = "section-intro";
@@ -261,8 +266,32 @@ function initQuiz(root) {
     }
 
     renderStyleResult(els.styleResultMount, result);
-    renderReportTeaser(els.reportTeaserMount, { result });
-    renderLeadForm(els.leadMount, { result });
+
+    const showReportAndLead = () => {
+      renderReportTeaser(els.reportTeaserMount, { result });
+      renderLeadForm(els.leadMount, { result });
+      els.leadCard.hidden = false;
+    };
+
+    // De accentkleurstap valt bewust tussen het herkenningsblok en de rapport-teaser/het
+    // leadformulier: de stijl (en dus de aangeboden kleuren) staat dan al vast, maar de bezoeker
+    // heeft de belofte van het volledige rapport nog niet gezien — dat blijft zo de "beloning" na
+    // deze laatste, kleine keuze. Geen aangeboden kleuren (bv. een net leeggemaakte catalogus) ->
+    // meteen door, exact het gedrag van vóór deze stap.
+    if (result.accentColorOptions?.length > 0) {
+      renderAccentColorStep(els.accentColorMount, {
+        options: result.accentColorOptions,
+        resultUuid: result.resultUuid,
+        initialSelectedIds: state.get().accentColorIds,
+        onSelectionChange: (ids) => state.setAccentColorIds(ids),
+        onDone: (chosenColors) => {
+          state.setAccentColorIds(chosenColors.map((color) => color.id));
+          showReportAndLead();
+        },
+      });
+    } else {
+      showReportAndLead();
+    }
   }
 
   /**

@@ -176,7 +176,11 @@ class QuizLeadController extends Controller
             ] : null,
             'secondaryStyleLabel' => $secondary?->label,
             'personalPalette' => $primary?->base_colors ?? [],
-            'accentColors' => $primary?->accent_colors ?? [],
+            // Toont exact wat de bezoeker zelf koos bij de accentkleurstap (zie
+            // QuizResultController::chooseAccentColors()) — nooit een eigen suggestie. Oudere
+            // resultaten van vóór deze feature hebben geen keuze; dan blijft dit leeg en verbergt
+            // de PDF het accentkleurenblok vanzelf (zie quiz-result.blade.php).
+            'accentColors' => $quizResult->chosen_accent_colors ?? [],
             'colorExplanation' => $primary
                 ? "Dit zijn de kleuren die passen bij de {$primary->label}-stijl."
                 : '',

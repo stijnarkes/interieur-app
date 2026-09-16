@@ -84,9 +84,14 @@
              interieurrecept, nuance) is gereserveerd voor het PDF-rapport per e-mail. --}}
         <div id="styleResultMount"></div>
 
+        {{-- Laatste stap ná de stijlberekening: bezoeker kiest 1-2 accentkleuren die passen bij
+             het al berekende stijlprofiel — zie accentColorStep.js/quiz.js's renderResult(). Blijft
+             leeg (en dus onzichtbaar) zolang er geen passende kleuren zijn om aan te bieden. --}}
+        <div id="accentColorMount"></div>
+
         <div id="reportTeaserMount"></div>
 
-        <section class="cta card">
+        <section class="cta card" id="quizLeadCard" hidden>
             <div id="quizLeadMount"></div>
         </section>
     </section>

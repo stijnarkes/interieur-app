@@ -223,6 +223,37 @@ class QuizLeadControllerTest extends TestCase
     }
 
     #[Test]
+    public function de_pdf_toont_exact_de_accentkleuren_die_de_bezoeker_zelf_koos(): void
+    {
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+        $quizResult->update([
+            'chosen_accent_colors' => [
+                ['id' => 1, 'name' => 'Mosgroen', 'hex' => '#6b7a4f'],
+            ],
+        ]);
+
+        $this->postLead($quizResult->uuid);
+
+        $this->assertSame(
+            [['id' => 1, 'name' => 'Mosgroen', 'hex' => '#6b7a4f']],
+            Submission::first()->quiz_result['accentColors'],
+        );
+    }
+
+    #[Test]
+    public function een_oud_resultaat_zonder_gekozen_accentkleur_blijft_werken(): void
+    {
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+
+        $response = $this->postLead($quizResult->uuid);
+
+        $response->assertJsonFragment(['status' => 'sent']);
+        $this->assertSame([], Submission::first()->quiz_result['accentColors']);
+    }
+
+    #[Test]
     public function resultatenpagina_en_pdf_gebruiken_exact_dezelfde_basisstijl(): void
     {
         Mail::fake();

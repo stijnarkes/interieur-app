@@ -21,4 +21,18 @@ class QuizResultRepository
             'secondary_style' => $computed['secondary_style'],
         ]);
     }
+
+    /**
+     * Slaat de door de bezoeker gekozen accentkleuren gedenormaliseerd op ({id,name,hex} per
+     * kleur) — zie AccentColor::toOptionArray(). Zo blijft een eerder opgeslagen resultaat/PDF
+     * correct, ook als de kleur later in de admin hernoemd, van hex gewijzigd of verwijderd wordt.
+     *
+     * @param  array<int, array{id: int, name: string, hex: string}>  $colors
+     */
+    public function saveAccentColors(QuizResult $result, array $colors): QuizResult
+    {
+        $result->update(['chosen_accent_colors' => $colors]);
+
+        return $result;
+    }
 }
