@@ -408,14 +408,16 @@ body {
 @endif
 
 @if (!empty($result['moodboard']))
-{{-- Staat bewust vóór "Kies meubels met deze uitstraling": die sectie forceert daarna zelf een
-     nieuwe pagina (.page-break), dus zo blijft het moodboard ongestoord op zijn eigen pagina i.p.v.
-     dat de (kortere) meubeltekst er eerst een stuk bovenaan van opeet. 2 (i.p.v. voorheen 3)
-     bredere/hogere tegels per rij — beter zichtbaar dan de eerdere kleine tegeltjes. Een <table>
-     i.p.v. inline-block tegels: dompdf's ondersteuning voor moderne CSS-layout (flex/grid, en
-     zelfs consistente inline-block-breedtes) is beperkt, een tabel geeft hier betrouwbaar precies
-     2 gelijke kolommen. --}}
-<div class="section">
+{{-- Eigen pagina (.page-break): zonder eigen forced break begon dit blok gewoon halverwege de
+     pagina waar de materialensectie toevallig ophield, waardoor de tegelrijen daarna nog eens
+     onvoorspelbaar over een volgende pagina konden uitlopen — nu begint het moodboard altijd
+     schoon bovenaan een nieuwe pagina. Staat vóór "Kies meubels met deze uitstraling" (die zelf
+     ook een eigen nieuwe pagina forceert), zodat dat kortere blok niet alvast ruimte inneemt vóór
+     het moodboard. 2 (i.p.v. voorheen 3) bredere/hogere tegels per rij — beter zichtbaar dan de
+     eerdere kleine tegeltjes. Een <table> i.p.v. inline-block tegels: dompdf's ondersteuning voor
+     moderne CSS-layout (flex/grid, en zelfs consistente inline-block-breedtes) is beperkt, een
+     tabel geeft hier betrouwbaar precies 2 gelijke kolommen. --}}
+<div class="section page-break">
     <div class="section-title">Jouw persoonlijke moodboard</div>
     <table class="moodboard-table">
         @foreach (array_chunk($result['moodboard'], 2) as $row)
