@@ -8,6 +8,7 @@ use App\Models\QuizResult;
 use App\Models\SiteContent;
 use App\Models\StyleProfile;
 use App\Models\Submission;
+use App\Services\QuizResultPdfService;
 use App\Services\QuizResultTextComposer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,25 +18,30 @@ use Illuminate\Http\Request;
  * berekende QuizResult (zie QuizResultController/QuizScoringService) + StyleProfile, i.p.v. een
  * kant-en-klare resultaat-JSON van de client te vertrouwen.
  *
- * PDF-generatie + mailverzending gebeuren op de achtergrond (zie GenerateAndSendQuizResultPdfJob)
- * i.p.v. synchroon binnen deze aanvraag — dat voorkwam eerder een "verzenden mislukt"-melding
- * terwijl de mail bij een trage aanvraag (bv. meerdere moodboard-/materialenfoto's verwerken)
- * eigenlijk gewoon iets later alsnog aankwam, omdat de verbinding tussen browser en server dan kon
- * verbreken vóórdat het antwoord terugkwam. De bezoeker krijgt nu altijd meteen een bevestiging.
+ * PDF-generatie + mailverzending lopen synchroon binnen deze aanvraag (via
+ * GenerateAndSendQuizResultPdfJob::handle(), rechtstreeks aangeroepen i.p.v. op een wachtrij gezet
+ * — er draait geen queue-worker). Dat gaf eerder een vals "verzenden mislukt" bij een trage
+ * aanvraag (veel foto's ophalen/verwerken), waardoor de verbinding tussen browser en server soms
+ * verbrak vóórdat het antwoord terugkwam terwijl de mail server-side alsnog aankwam. De eigenlijke
+ * fix zit in PdfImageResolver: foto's worden nu server-side gecachet (zie daar), zodat vrijwel
+ * elke aanvraag na de eerste keer per foto razendsnel verwerkt wordt i.p.v. steeds opnieuw alles
+ * bij S3 op te halen. `email_status` 'queued' bestaat nog wel als kortstondige tussentoestand
+ * (voor het geval de aanvraag halverwege afbreekt) — zie isInFlight() hieronder — maar wordt in de
+ * normale flow binnen dezelfde aanvraag alweer overschreven met 'sent'/'failed' vóórdat het
+ * antwoord teruggaat.
  *
  * Idempotent per quiz_result_id, maar alleen zolang een eerdere poging daadwerkelijk slaagde of nog
  * loopt: een herhaalde inzending voor hetzelfde resultaat (dubbelklik, of een bevestigde "opnieuw
  * proberen"-klik na een echte mislukking — zie resources/js/quiz/components/lead.js) start nooit
- * een tweede taak zolang `email_status` `'sent'` of (nog vers) `'queued'` is. Een taak die al
- * langer dan 2 minuten op `'queued'` staat (bv. omdat er geen wachtrij-worker actief was) wordt als
- * vastgelopen beschouwd en mag opnieuw geprobeerd worden — anders zou een bezoeker daar voor altijd
- * in vast kunnen zitten.
+ * een tweede poging zolang `email_status` `'sent'` of (nog vers) `'queued'` is. Een poging die al
+ * langer dan 2 minuten op `'queued'` staat (bv. omdat de vorige aanvraag halverwege is afgebroken)
+ * wordt als vastgelopen beschouwd en mag opnieuw geprobeerd worden.
  */
 class QuizLeadController extends Controller
 {
     private const STALE_QUEUE_AFTER_MINUTES = 2;
 
-    public function handle(Request $request, QuizResultTextComposer $textComposer): JsonResponse
+    public function handle(Request $request, QuizResultTextComposer $textComposer, QuizResultPdfService $pdfService): JsonResponse
     {
         $data = $request->validate([
             'resultUuid' => 'required|uuid|exists:quiz_results,uuid',
@@ -67,12 +73,18 @@ class QuizLeadController extends Controller
             ]
         );
 
-        GenerateAndSendQuizResultPdfJob::dispatch($submission->id);
+        $job = new GenerateAndSendQuizResultPdfJob($submission->id);
 
-        return $this->responseFor($submission);
+        try {
+            $job->handle($pdfService);
+        } catch (\Throwable $e) {
+            $job->failed($e);
+        }
+
+        return $this->responseFor($submission->fresh());
     }
 
-    /** @see class-docblock voor de "vastgelopen wachtrij"-uitzondering. */
+    /** @see class-docblock voor de "vastgelopen"-uitzondering. */
     private function isInFlight(Submission $submission): bool
     {
         if ($submission->email_status === 'sent') {

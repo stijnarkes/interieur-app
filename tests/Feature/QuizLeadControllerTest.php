@@ -2,23 +2,25 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\GenerateAndSendQuizResultPdfJob;
+use App\Mail\QuizResultMail;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
 use App\Models\StyleProfile;
 use App\Models\Submission;
+use App\Services\QuizResultPdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
  * Dekt de opdracht-vereisten rond de verzendflow: nooit dubbel mailen, exact dezelfde uitslag als
- * op het scherm, en een moodboard met echt gekozen producten. PDF-generatie/mailverzending zelf
- * gebeurt op de achtergrond (zie GenerateAndSendQuizResultPdfJob, apart getest) — deze tests
- * gebruiken Bus::fake() en controleren alleen of de juiste taak wel/niet ingepland wordt.
+ * op het scherm, en een moodboard met echt gekozen producten. PDF-generatie/mailverzending lopen
+ * synchroon binnen de aanvraag (zie QuizLeadController/GenerateAndSendQuizResultPdfJob — er draait
+ * geen queue-worker, de eigenlijke snelheidswinst zit in PdfImageResolver). Verzendt nooit een
+ * echte mail — altijd Mail::fake().
  */
 class QuizLeadControllerTest extends TestCase
 {
@@ -60,24 +62,24 @@ class QuizLeadControllerTest extends TestCase
     }
 
     #[Test]
-    public function succesvolle_inzending_slaat_op_en_plant_precies_een_taak_in(): void
+    public function succesvolle_inzending_slaat_op_en_verstuurt_precies_een_mail(): void
     {
-        Bus::fake();
+        Mail::fake();
         $quizResult = $this->makeQuizResult();
 
         $response = $this->postLead($quizResult->uuid);
 
         $response->assertOk();
-        $response->assertJsonFragment(['status' => 'queued']);
+        $response->assertJsonFragment(['status' => 'sent']);
+        Mail::assertSent(QuizResultMail::class, 1);
         $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
-        $this->assertSame('queued', Submission::first()->email_status);
-        Bus::assertDispatched(GenerateAndSendQuizResultPdfJob::class, fn ($job) => $job->submissionId === Submission::first()->id);
+        $this->assertSame('sent', Submission::first()->email_status);
     }
 
     #[Test]
-    public function marketingoptin_is_optioneel_en_blokkeert_de_aanvraag_niet(): void
+    public function marketingoptin_is_optioneel_en_blokkeert_de_pdf_niet(): void
     {
-        Bus::fake();
+        Mail::fake();
         $quizResult = $this->makeQuizResult();
 
         // Bewust geen marketingOptIn meegegeven.
@@ -88,14 +90,14 @@ class QuizLeadControllerTest extends TestCase
         ]);
 
         $response->assertOk();
-        Bus::assertDispatched(GenerateAndSendQuizResultPdfJob::class);
+        Mail::assertSent(QuizResultMail::class, 1);
         $this->assertFalse(Submission::first()->email_opt_in);
     }
 
     #[Test]
-    public function een_dubbele_inzending_met_dezelfde_resultuuid_plant_de_taak_niet_opnieuw_in(): void
+    public function een_dubbele_inzending_met_dezelfde_resultuuid_verstuurt_nooit_een_tweede_mail(): void
     {
-        Bus::fake();
+        Mail::fake();
         $quizResult = $this->makeQuizResult();
 
         $first = $this->postLead($quizResult->uuid);
@@ -103,83 +105,81 @@ class QuizLeadControllerTest extends TestCase
 
         $first->assertOk();
         $second->assertOk();
-        $second->assertJsonFragment(['status' => 'queued']);
-        Bus::assertDispatchedTimes(GenerateAndSendQuizResultPdfJob::class, 1);
+        Mail::assertSent(QuizResultMail::class, 1);
         $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
     }
 
     #[Test]
-    public function een_al_verzonden_inzending_start_nooit_een_nieuwe_taak(): void
+    public function een_mislukte_pdf_of_mailaanroep_geeft_een_eerlijke_foutmelding_en_verstuurt_niets(): void
     {
-        Bus::fake();
+        Mail::fake();
+        $this->mock(QuizResultPdfService::class, function ($mock) {
+            $mock->shouldReceive('generate')->andThrow(new \RuntimeException('PDF-generatie mislukt in de test.'));
+        });
+
         $quizResult = $this->makeQuizResult();
-
-        Submission::create([
-            'quiz_result_id' => $quizResult->id,
-            'style' => 'Japandi',
-            'name' => 'Test',
-            'email' => 'test@example.com',
-            'email_status' => 'sent',
-            'email_sent_at' => now(),
-        ]);
-
         $response = $this->postLead($quizResult->uuid);
 
-        $response->assertJsonFragment(['status' => 'sent']);
-        Bus::assertNotDispatched(GenerateAndSendQuizResultPdfJob::class);
-        $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
+        $response->assertOk();
+        $response->assertJsonFragment([
+            'status' => 'failed',
+            'message' => 'Je gegevens zijn opgeslagen, maar het versturen van de e-mail is niet gelukt.',
+        ]);
+        Mail::assertNotSent(QuizResultMail::class);
+        $this->assertSame('failed', Submission::first()->email_status);
+        $this->assertSame('PDF-generatie mislukt in de test.', Submission::first()->email_error);
     }
 
     #[Test]
-    public function een_vastgelopen_wachtrij_status_mag_opnieuw_geprobeerd_worden(): void
+    public function een_mislukte_inzending_kan_opnieuw_geprobeerd_worden_en_verstuurt_dan_alsnog_een_mail(): void
     {
-        Bus::fake();
+        Mail::fake();
+        $this->mock(QuizResultPdfService::class, function ($mock) {
+            $mock->shouldReceive('generate')->once()->andThrow(new \RuntimeException('PDF-generatie mislukt in de test.'));
+            $mock->shouldReceive('generate')->once()->andReturn('submissions/1/quiz-result.pdf');
+        });
+
         $quizResult = $this->makeQuizResult();
 
-        $stale = Submission::create([
+        $first = $this->postLead($quizResult->uuid);
+        $first->assertJsonFragment(['status' => 'failed']);
+
+        $second = $this->postLead($quizResult->uuid);
+        $second->assertJsonFragment(['status' => 'sent']);
+
+        Mail::assertSent(QuizResultMail::class, 1);
+        $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
+        $this->assertSame('sent', Submission::first()->email_status);
+    }
+
+    #[Test]
+    public function een_vastgelopen_status_van_een_afgebroken_eerdere_aanvraag_mag_opnieuw_geprobeerd_worden(): void
+    {
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+
+        // Simuleert een aanvraag die halverwege is afgebroken (bv. de server werd herstart)
+        // vóórdat 'sent'/'failed' geregistreerd kon worden.
+        $stuck = Submission::create([
             'quiz_result_id' => $quizResult->id,
             'style' => 'Japandi',
             'name' => 'Test',
             'email' => 'test@example.com',
             'email_status' => 'queued',
         ]);
-        // Simuleert een taak die (bv. door een ontbrekende worker) al lang op 'queued' staat.
-        $stale->forceFill(['updated_at' => now()->subMinutes(5)])->saveQuietly();
+        $stuck->forceFill(['updated_at' => now()->subMinutes(5)])->saveQuietly();
 
         $response = $this->postLead($quizResult->uuid);
 
-        $response->assertJsonFragment(['status' => 'queued']);
-        Bus::assertDispatched(GenerateAndSendQuizResultPdfJob::class);
+        $response->assertJsonFragment(['status' => 'sent']);
+        Mail::assertSent(QuizResultMail::class, 1);
         $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
-    }
-
-    #[Test]
-    public function een_mislukte_inzending_kan_opnieuw_geprobeerd_worden(): void
-    {
-        Bus::fake();
-        $quizResult = $this->makeQuizResult();
-
-        Submission::create([
-            'quiz_result_id' => $quizResult->id,
-            'style' => 'Japandi',
-            'name' => 'Test',
-            'email' => 'test@example.com',
-            'email_status' => 'failed',
-            'email_error' => 'Eerdere test-mislukking.',
-        ]);
-
-        $response = $this->postLead($quizResult->uuid);
-
-        $response->assertJsonFragment(['status' => 'queued']);
-        Bus::assertDispatched(GenerateAndSendQuizResultPdfJob::class);
-        $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
-        $this->assertNull(Submission::first()->email_error);
     }
 
     #[Test]
     public function het_moodboard_toont_alleen_daadwerkelijk_gekozen_producten(): void
     {
-        Bus::fake();
+        Mail::fake();
         $quizResult = $this->makeQuizResult();
 
         $this->postLead($quizResult->uuid);
@@ -192,7 +192,7 @@ class QuizLeadControllerTest extends TestCase
     #[Test]
     public function resultatenpagina_en_pdf_gebruiken_exact_dezelfde_basisstijl(): void
     {
-        Bus::fake();
+        Mail::fake();
         $quizResult = $this->makeQuizResult();
 
         $resultResponse = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['eiken']]]);

@@ -261,83 +261,13 @@ body {
 @php
     $primaryStyle = $result['primaryStyle'] ?? null;
 
-    // dompdf negeert CSS object-fit volledig — een <img> met een vaste breedte én hoogte wordt
-    // dus altijd platgedrukt/uitgerekt i.p.v. slim bijgesneden, zoals een browser wel zou doen.
-    // Bijsnijden (object-fit: cover) bleek op zijn beurt regelmatig net het belangrijkste deel
-    // van een foto wegsnijden (bv. een hanglamp die van boven wordt afgesneden) — in plaats
-    // daarvan wordt de hele foto hier altijd volledig zichtbaar gehouden en, waar nodig, opgevuld
-    // met een zachte, bij de stijl passende achtergrondkleur tot de tegelverhouding. Nooit
-    // uitrekken, nooit bijsnijden.
-    $padToContainRatio = function (string $contents, float $targetRatio): string {
-        $image = @imagecreatefromstring($contents);
-
-        if ($image === false) {
-            return $contents;
-        }
-
-        $width = imagesx($image);
-        $height = imagesy($image);
-        $currentRatio = $width / $height;
-
-        // De foto zelf wordt nooit geschaald — alleen het canvas wordt breder of hoger gemaakt
-        // dan de foto, zodat de volledige, ongewijzigde foto erin past.
-        if ($currentRatio > $targetRatio) {
-            $canvasWidth = $width;
-            $canvasHeight = (int) round($width / $targetRatio);
-        } else {
-            $canvasHeight = $height;
-            $canvasWidth = (int) round($height * $targetRatio);
-        }
-
-        $canvas = imagecreatetruecolor($canvasWidth, $canvasHeight);
-        // Zelfde tint als .moodboard-placeholder/--accent-soft in app.css, voor een consistente
-        // uitstraling wanneer een foto niet exact de tegelverhouding heeft.
-        $background = imagecolorallocate($canvas, 0xF0, 0xE3, 0xD4);
-        imagefill($canvas, 0, 0, $background);
-
-        $destX = (int) round(($canvasWidth - $width) / 2);
-        $destY = (int) round(($canvasHeight - $height) / 2);
-        imagecopy($canvas, $image, $destX, $destY, 0, 0, $width, $height);
-        imagedestroy($image);
-
-        ob_start();
-        imagewebp($canvas, null, 85);
-        $webp = ob_get_clean();
-        imagedestroy($canvas);
-
-        return $webp;
-    };
-
-    // Embedt de foto als base64 data-URI i.p.v. een lokaal bestandspad aan dompdf te geven: dat
-    // laatste bestaat niet meer zodra QUIZ_IMAGES_DISK op S3 staat. contentsFor() snapt zowel het
-    // oude root-relatieve pad (oudere inzendingen) als een volledige URL (zie
-    // QuizConfigController), en leest hoe dan ook alleen van de eigen, geconfigureerde disk.
-    // $containRatio (breedte/hoogte) vult de foto aan tot die verhouding — alleen nodig voor
-    // tegels met een vaste hoogte in de layout (zie hierboven).
-    $resolveImage = function (?string $path, ?float $containRatio = null) use ($padToContainRatio) {
-        if (! $path) {
-            return null;
-        }
-
-        $contents = \App\Support\QuizImageManifest::contentsFor($path);
-
-        if (! $contents) {
-            return null;
-        }
-
-        if ($containRatio !== null) {
-            return 'data:image/webp;base64,'.base64_encode($padToContainRatio($contents, $containRatio));
-        }
-
-        $extension = strtolower(pathinfo(parse_url($path, PHP_URL_PATH) ?: $path, PATHINFO_EXTENSION));
-        $mime = match ($extension) {
-            'jpg', 'jpeg' => 'image/jpeg',
-            'png' => 'image/png',
-            default => 'image/webp',
-        };
-
-        return 'data:'.$mime.';base64,'.base64_encode($contents);
-    };
+    // Haalt/bewerkt en cachet PDF-foto's (zie App\Support\PdfImageResolver) — dezelfde ~70
+    // antwoordopties en 6 stijlfoto's komen terug in vrijwel elke PDF, dus na de eerste keer per
+    // foto komt dit uit een cache i.p.v. steeds opnieuw bij de opslag (mogelijk S3) op te halen.
+    // $containRatio (breedte/hoogte) vult de foto aan tot die verhouding zonder 'm uit te rekken
+    // of bij te snijden — alleen nodig voor tegels met een vaste hoogte in de layout.
+    $pdfImageResolver = app(\App\Support\PdfImageResolver::class);
+    $resolveImage = fn (?string $path, ?float $containRatio = null) => $pdfImageResolver->resolve($path, $containRatio);
 @endphp
 
 @php $coverImage = $resolveImage($primaryStyle['heroImage'] ?? null); @endphp

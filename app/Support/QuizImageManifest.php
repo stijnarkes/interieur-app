@@ -329,12 +329,35 @@ class QuizImageManifest
         }
 
         try {
-            return self::disk()->exists($key) ? self::disk()->get($key) : null;
+            // Rechtstreeks get() i.p.v. eerst exists() te checken: op een netwerkschijf (S3) is
+            // dat één aanroep i.p.v. twee. get() gooit zelf al een uitzondering op een
+            // niet-bestaand bestand, wat hieronder hetzelfde "geen afbeelding"-resultaat oplevert.
+            return self::disk()->get($key);
         } catch (\Throwable) {
-            // Flysystem gooit (i.p.v. false/null terug te geven) op bv. een pad-traversal-poging
-            // ("../") in de sleutel, ongeacht de 'throw'-instelling van de disk — dit is een
-            // low-level PDF-hulpmethode voor eigen, bekende paden, geen publieke invoervalidatie,
-            // dus elke onverwachte disk-fout hier resulteert gewoon in "geen afbeelding".
+            // Flysystem gooit (i.p.v. false/null terug te geven) op zowel een ontbrekend bestand
+            // als bv. een pad-traversal-poging ("../") in de sleutel — dit is een low-level
+            // PDF-hulpmethode voor eigen, bekende paden, geen publieke invoervalidatie, dus elke
+            // fout hier resulteert gewoon in "geen afbeelding".
+            return null;
+        }
+    }
+
+    /**
+     * Laatst-gewijzigd-tijdstip van een quizfoto — een goedkope metadata-aanroep (geen download),
+     * gebruikt door PdfImageResolver als cache-sleutel zodat een nieuwe upload vanzelf een nieuwe
+     * cache-sleutel krijgt, zonder dat iets de cache handmatig hoeft te legen bij een upload.
+     */
+    public static function lastModifiedFor(string $pathOrUrl): ?int
+    {
+        $key = self::keyFor($pathOrUrl);
+
+        if (! $key) {
+            return null;
+        }
+
+        try {
+            return self::disk()->lastModified($key);
+        } catch (\Throwable) {
             return null;
         }
     }

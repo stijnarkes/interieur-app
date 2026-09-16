@@ -13,20 +13,16 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
 /**
- * Genereert de PDF en verstuurt de bevestigingsmail op de achtergrond — dit gebeurde voorheen
- * synchroon binnen QuizLeadController::handle(), maar dat kon bij een trage aanvraag (bv. meerdere
- * moodboard-/materialenfoto's ophalen en verwerken) de verbinding tussen browser en server laten
- * verbreken vóórdat het antwoord terugkwam. De bezoeker zag dan "verzenden mislukt" terwijl de mail
- * server-side gewoon (iets later) alsnog verstuurd werd — dit werkt die aanname weg: de aanvraag
- * wordt meteen bevestigd (zie QuizLeadController::responseFor(), status 'queued'), en deze taak
- * mag zo lang duren als nodig.
+ * Genereert de PDF en verstuurt de bevestigingsmail. Bewust als job-class opgezet (i.p.v. gewoon
+ * een methode op de controller) zodat dit later zonder codewijziging alsnog op een echte
+ * wachtrij-worker kan draaien (`implements ShouldQueue` staat er al) — voorlopig roept
+ * QuizLeadController handle()/failed() rechtstreeks aan binnen de aanvraag zelf, omdat er geen
+ * queue-worker actief is. De eigenlijke snelheidswinst die dit synchroon houdbaar maakt zit in
+ * PdfImageResolver (server-side caching van bewerkte foto's), niet in deze klasse.
  *
- * Bewuste automatische retries ($tries): een deel van de eerder gemelde mislukkingen was
- * waarschijnlijk voorbijgaande PDF-/mailinfrastructuur-hikjes, geen structurele fouten — Laravel
- * probeert het bij een mislukte poging zelf nog een paar keer opnieuw vóórdat failed() de
- * inzending definitief als mislukt registreert. Dat is precies het patroon dat eerder handmatig
- * zichtbaar was voor de bezoeker ("de eerste 1-2 pogingen mislukken, dan lukt het") — nu lost de
- * wachtrij dat zelf op, zonder dat de bezoeker het ooit merkt.
+ * $tries/$backoff zijn alleen relevant zodra dit ooit wél via ::dispatch() op een wachtrij loopt —
+ * bij een rechtstreekse handle()-aanroep (huidige situatie) heeft de aanroeper zelf een try/catch
+ * en roept bij een fout zelf failed() aan, zie QuizLeadController::handle().
  */
 class GenerateAndSendQuizResultPdfJob implements ShouldQueue
 {
