@@ -1,5 +1,5 @@
 import { QUESTIONS, SECTIONS } from "./data.js";
-import { RESULT_HERO_COPY, REPORT_TEASER_COPY, LEAD_FORM_COPY, ACCENT_COLOR_STEP_COPY } from "./copy.js";
+import { RESULT_HERO_COPY, REPORT_TEASER_COPY, LEAD_FORM_COPY, BASE_PALETTE_STEP_COPY, ACCENT_COLOR_STEP_COPY } from "./copy.js";
 
 /**
  * Haalt de admin-bewerkbare inhoud (vragen/opties) op bij /api/quiz-config en muteert de
@@ -155,6 +155,7 @@ function applyCopy(remoteCopy) {
   if (remoteCopy.resultHero) Object.assign(RESULT_HERO_COPY, remoteCopy.resultHero);
   if (remoteCopy.reportTeaser) Object.assign(REPORT_TEASER_COPY, remoteCopy.reportTeaser);
   if (remoteCopy.leadForm) Object.assign(LEAD_FORM_COPY, remoteCopy.leadForm);
+  if (remoteCopy.basePaletteStep) Object.assign(BASE_PALETTE_STEP_COPY, remoteCopy.basePaletteStep);
   if (remoteCopy.accentColorStep) Object.assign(ACCENT_COLOR_STEP_COPY, remoteCopy.accentColorStep);
 }
 

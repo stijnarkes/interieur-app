@@ -187,15 +187,21 @@ class QuizLeadController extends Controller
                 'materialsImage' => $secondary->materials_image,
                 'materialsTip' => $secondary->materials_tip,
             ] : null,
-            'personalPalette' => $primary?->base_colors ?? [],
+            // Toont het door de bezoeker gekozen basispalet (zie
+            // QuizResultController::chooseBasePalette()) — nooit een eigen suggestie. Oudere
+            // resultaten van vóór deze feature (of resultaten waarvan de stijl geen paletten had)
+            // vallen terug op de vaste StyleProfile::base_colors, exact het oude gedrag; dan
+            // blijft 'basePaletteName' leeg en toont de PDF de generieke titel/tekst.
+            'personalPalette' => $quizResult->chosen_base_palette['colors'] ?? $primary?->base_colors ?? [],
+            'basePaletteName' => $quizResult->chosen_base_palette['name'] ?? null,
             // Toont exact wat de bezoeker zelf koos bij de accentkleurstap (zie
             // QuizResultController::chooseAccentColors()) — nooit een eigen suggestie. Oudere
-            // resultaten van vóór deze feature hebben geen keuze; dan blijft dit leeg en verbergt
-            // de PDF het accentkleurenblok vanzelf (zie quiz-result.blade.php).
+            // resultaten van vóór deze feature (of een bewuste "geen accentkleur"-keuze) hebben
+            // geen kleuren; dan blijft dit leeg en verbergt de PDF het accentkleurenblok vanzelf
+            // (zie quiz-result.blade.php).
             'accentColors' => $quizResult->chosen_accent_colors ?? [],
-            'colorExplanation' => $primary
-                ? "Dit zijn de kleuren die passen bij de {$primary->label}-stijl."
-                : '',
+            'colorExplanation' => $quizResult->chosen_base_palette['description']
+                ?? ($primary ? "Dit zijn de kleuren die passen bij de {$primary->label}-stijl." : ''),
             'moodboard' => $this->moodboardFor($quizResult),
         ];
     }

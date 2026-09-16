@@ -5,7 +5,7 @@
 @section('content')
 <main class="app-shell">
     <div class="quiz-preview-banner card">
-        <p>Dit is een voorbeeld van de resultatenpagina — er wordt niets opgeslagen of verzonden, ook niet als je het leadformulier of de accentkleurenstap hieronder probeert.</p>
+        <p>Dit is een voorbeeld van de resultatenpagina — er wordt niets opgeslagen of verzonden, ook niet als je het basispalet, de accentkleurenstap of het leadformulier hieronder probeert.</p>
         <a href="{{ route('filament.admin.pages.teksten') }}" class="btn btn-secondary">&larr; Terug naar Teksten</a>
     </div>
 
@@ -36,6 +36,7 @@
         data-preview="{{ json_encode(['type' => 'result', 'result' => $result]) }}"
     >
         <div id="styleResultMount"></div>
+        <div id="basePaletteMount"></div>
         <div id="accentColorMount"></div>
         <div id="reportTeaserMount"></div>
 

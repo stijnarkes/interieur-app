@@ -326,7 +326,7 @@ body {
 
 @if (!empty($result['personalPalette']))
 <div class="section">
-    <div class="section-title">Kleuren ter inspiratie</div>
+    <div class="section-title">{{ !empty($result['basePaletteName']) ? 'Jouw basispalet: '.$result['basePaletteName'] : 'Kleuren ter inspiratie' }}</div>
     @if (!empty($result['colorExplanation']))
     <div class="section-intro">{{ $result['colorExplanation'] }}</div>
     @endif
@@ -344,7 +344,7 @@ body {
 
     @if (!empty($result['accentColors']))
     <div class="section-title accent-colors-title">Jouw accentkleuren</div>
-    <div class="section-intro">Op basis van jouw woonstijl hebben we een passend basispalet samengesteld. Met de accentkleuren die jij zelf hebt gekozen, geef je deze stijl een persoonlijke uitstraling.</div>
+    <div class="section-intro">Deze accentkleuren geven je gekozen basispalet een persoonlijke uitstraling.</div>
     <div class="swatch-grid">
         @foreach ($result['accentColors'] as $color)
         <div class="swatch">

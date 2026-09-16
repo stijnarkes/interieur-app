@@ -35,4 +35,19 @@ class QuizResultRepository
 
         return $result;
     }
+
+    /**
+     * Slaat het door de bezoeker gekozen basispalet gedenormaliseerd op ({id,name,description,
+     * colors}) — zie BasePalette::toOptionArray(). Zelfde denormalisatieredenering als
+     * saveAccentColors(): een later gewijzigde/verwijderde catalogusrij mag een al opgeslagen
+     * resultaat/PDF nooit met terugwerkende kracht veranderen.
+     *
+     * @param  array{id: int, name: string, description: ?string, colors: array}  $palette
+     */
+    public function saveBasePalette(QuizResult $result, array $palette): QuizResult
+    {
+        $result->update(['chosen_base_palette' => $palette]);
+
+        return $result;
+    }
 }

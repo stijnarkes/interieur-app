@@ -47,4 +47,28 @@ async function saveAccentColors(resultUuid, accentColorIds) {
   return response.json();
 }
 
-export { fetchQuizResult, saveAccentColors };
+/**
+ * Bewaart het basispalet dat de bezoeker koos bij het al berekende resultaat (zie
+ * basePaletteStep.js/quiz.js's renderResult()) — analoog aan saveAccentColors() hierboven. De
+ * server herberekent zelf of dit palet (nog) bij de primaire stijl van dít resultaat hoort.
+ *
+ * @param  string  resultUuid
+ * @param  number  basePaletteId
+ * @returns {Promise<object>} het opgeslagen palet ({basePalette: {...}})
+ */
+async function saveBasePalette(resultUuid, basePaletteId) {
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
+
+  const response = await fetch(`/api/quiz-result/${resultUuid}/base-palette`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
+    body: JSON.stringify({ basePaletteId }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) throw new Error(`Onverwachte status ${response.status}`);
+
+  return response.json();
+}
+
+export { fetchQuizResult, saveBasePalette, saveAccentColors };

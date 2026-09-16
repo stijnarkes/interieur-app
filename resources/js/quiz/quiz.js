@@ -6,6 +6,7 @@ import { createQuizProgress } from "./components/quizProgress.js";
 import { renderSectionTransition } from "./components/sectionTransition.js";
 import { renderQuestionStep } from "./components/questionStep.js";
 import { renderStyleResult } from "./components/styleResult.js";
+import { renderBasePaletteStep } from "./components/basePaletteStep.js";
 import { renderAccentColorStep } from "./components/accentColorStep.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
@@ -88,6 +89,7 @@ function initQuiz(root) {
     nextBtn: root.querySelector("#quizNextBtn"),
     result: root.querySelector("#quizResult"),
     styleResultMount: root.querySelector("#styleResultMount"),
+    basePaletteMount: root.querySelector("#basePaletteMount"),
     accentColorMount: root.querySelector("#accentColorMount"),
     reportTeaserMount: root.querySelector("#reportTeaserMount"),
     leadCard: root.querySelector("#quizLeadCard"),
@@ -234,6 +236,7 @@ function initQuiz(root) {
     showScreen("result");
 
     els.styleResultMount.innerHTML = "";
+    els.basePaletteMount.innerHTML = "";
     els.accentColorMount.innerHTML = "";
     els.reportTeaserMount.innerHTML = "";
     els.leadMount.innerHTML = "";
@@ -273,24 +276,46 @@ function initQuiz(root) {
       els.leadCard.hidden = false;
     };
 
-    // De accentkleurstap valt bewust tussen het herkenningsblok en de rapport-teaser/het
-    // leadformulier: de stijl (en dus de aangeboden kleuren) staat dan al vast, maar de bezoeker
-    // heeft de belofte van het volledige rapport nog niet gezien — dat blijft zo de "beloning" na
-    // deze laatste, kleine keuze. Geen aangeboden kleuren (bv. een net leeggemaakte catalogus) ->
-    // meteen door, exact het gedrag van vóór deze stap.
-    if (result.accentColorOptions?.length > 0) {
-      renderAccentColorStep(els.accentColorMount, {
-        options: result.accentColorOptions,
+    // De accentkleurstap toont een kleur die exact de hex deelt met een kleur uit het gekozen
+    // basispalet als "Zit al in je basis" (zie accentColorStep.js) — dus opnieuw renderen bij elke
+    // (latere) wijziging van dat palet, niet alleen bij de eerste keer. `state.get().accentColorIds`
+    // bewaart een eerder gemaakte keuze; de component zelf filtert die alsnog op de huidige
+    // overlap, zodat een net "in de basis" beland kleurtje nooit stilzwijgend gekozen blijft.
+    const renderAccentStep = (basePaletteColors) => {
+      if (result.accentColorOptions?.length > 0) {
+        renderAccentColorStep(els.accentColorMount, {
+          options: result.accentColorOptions,
+          resultUuid: result.resultUuid,
+          basePaletteColors,
+          initialSelectedIds: state.get().accentColorIds,
+          onSelectionChange: (ids) => state.setAccentColorIds(ids),
+          onDone: (chosenColors) => {
+            state.setAccentColorIds(chosenColors.map((color) => color.id));
+            showReportAndLead();
+          },
+        });
+      } else {
+        showReportAndLead();
+      }
+    };
+
+    // Het basispalet valt vóór de accentkleurstap: elke stijl heeft zijn eigen paletten (nooit
+    // gemengd met een secundaire stijl, zie QuizResultController::store()), en de kleuren die de
+    // accentstap moet uitsluiten zijn pas bekend zodra het palet vaststaat. Geen aangeboden
+    // paletten (bv. een stijl zonder catalogus) -> meteen door naar de accentkleurstap, exact het
+    // gedrag dat die stap zelf ook al had bij een lege catalogus.
+    if (result.basePaletteOptions?.length > 0) {
+      renderBasePaletteStep(els.basePaletteMount, {
+        options: result.basePaletteOptions,
         resultUuid: result.resultUuid,
-        initialSelectedIds: state.get().accentColorIds,
-        onSelectionChange: (ids) => state.setAccentColorIds(ids),
-        onDone: (chosenColors) => {
-          state.setAccentColorIds(chosenColors.map((color) => color.id));
-          showReportAndLead();
+        initialPaletteId: state.get().basePaletteId,
+        onDone: (chosenPalette) => {
+          state.setBasePaletteId(chosenPalette.id);
+          renderAccentStep(chosenPalette.colors ?? []);
         },
       });
     } else {
-      showReportAndLead();
+      renderAccentStep([]);
     }
   }
 

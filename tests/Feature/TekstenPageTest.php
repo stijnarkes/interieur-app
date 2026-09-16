@@ -121,11 +121,35 @@ class TekstenPageTest extends TestCase
                 'accent_step_chosen_title' => 'Nieuwe gekozen-titel',
                 'accent_step_change_label' => 'Aanpassen',
                 'accent_step_error_message' => 'Nieuwe foutmelding',
+                'accent_step_skip_label' => 'Nieuwe overslaan-tekst',
+                'accent_step_skipped_summary' => 'Nieuwe samenvatting na overslaan',
             ])
             ->assertHasNoActionErrors();
 
         $this->assertSame('Nieuwe titel', SiteContent::current()->accent_step_title);
         $this->assertSame('Nieuwe foutmelding', SiteContent::current()->accent_step_error_message);
+        $this->assertSame('Nieuwe overslaan-tekst', SiteContent::current()->accent_step_skip_label);
+    }
+
+    #[Test]
+    public function de_basispaletstap_kan_bewerkt_worden(): void
+    {
+        SiteContent::current();
+
+        Livewire::actingAs($this->admin())
+            ->test(TekstenPage::class)
+            ->callAction('editBasePaletteStep', data: [
+                'base_palette_step_title' => 'Nieuwe titel',
+                'base_palette_step_intro' => 'Nieuwe intro',
+                'base_palette_step_hint' => 'Nieuwe hint',
+                'base_palette_step_continue_label' => 'Verder',
+                'base_palette_step_chosen_title' => 'Nieuwe gekozen-titel',
+                'base_palette_step_change_label' => 'Aanpassen',
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame('Nieuwe titel', SiteContent::current()->base_palette_step_title);
+        $this->assertSame('Aanpassen', SiteContent::current()->base_palette_step_change_label);
     }
 
     #[Test]

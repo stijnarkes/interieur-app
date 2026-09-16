@@ -1,7 +1,7 @@
 /**
  * Stijl-onafhankelijke teksten voor de resultatenpagina (heldenblok, rapport-teaser,
- * accentkleurenstap, aanvraagformulier, bevestiging) — admin-beheerbaar via Teksten (zie
- * SiteContent/QuizConfigController). De waarden hieronder zijn de fallback zolang
+ * basispaletstap, accentkleurenstap, aanvraagformulier, bevestiging) — admin-beheerbaar via
+ * Teksten (zie SiteContent/QuizConfigController). De waarden hieronder zijn de fallback zolang
  * /api/quiz-config niet (op tijd) antwoordt; remoteConfig.js's applyCopy() overschrijft ze daarna
  * in place, zelfde patroon als data.js's SECTIONS voor de overgangsschermteksten.
  */
@@ -28,6 +28,16 @@ const REPORT_TEASER_COPY = {
   mockLabel: "Jouw woonstijlrapport",
 };
 
+const BASE_PALETTE_STEP_COPY = {
+  title: "Welk basispalet past het beste bij jou?",
+  intro: "Elk basispalet vertaalt jouw woonstijl naar een eigen sfeer van kleuren. Kies het palet dat het beste bij jou past.",
+  hint: "Kies het palet dat het beste bij jou past.",
+  continueLabel: "Doorgaan",
+  chosenTitle: "Jouw gekozen basispalet",
+  changeLabel: "Wijzig keuze",
+  errorMessage: "Je keuze kon niet worden opgeslagen. Probeer het opnieuw.",
+};
+
 const ACCENT_COLOR_STEP_COPY = {
   title: "Welke accentkleuren spreken jou het meeste aan?",
   intro: "Je woonstijl hebben we inmiddels goed in beeld. Kies nu maximaal twee kleuren waarmee jij jouw interieur persoonlijk zou maken.",
@@ -36,6 +46,10 @@ const ACCENT_COLOR_STEP_COPY = {
   chosenTitle: "Jouw gekozen accentkleuren",
   changeLabel: "Wijzig keuze",
   errorMessage: "Je keuze kon niet worden opgeslagen. Probeer het opnieuw.",
+  // Alternatief voor het kiezen van 1-2 accentkleuren — niet iedereen wil een kleuraccent, het
+  // basispalet hierboven is zelf al de rustige/neutrale keuze. Zie accentColorStep.js.
+  skipLabel: "Ik houd het liever bij rustige basiskleuren",
+  skippedSummary: "Je hebt gekozen voor rustige basiskleuren, zonder extra accentkleur.",
 };
 
 const LEAD_FORM_COPY = {
@@ -63,4 +77,4 @@ const LEAD_FORM_COPY = {
   resendLabel: "Opnieuw versturen",
 };
 
-export { RESULT_HERO_COPY, REPORT_TEASER_COPY, ACCENT_COLOR_STEP_COPY, LEAD_FORM_COPY };
+export { RESULT_HERO_COPY, REPORT_TEASER_COPY, BASE_PALETTE_STEP_COPY, ACCENT_COLOR_STEP_COPY, LEAD_FORM_COPY };

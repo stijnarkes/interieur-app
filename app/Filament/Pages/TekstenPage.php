@@ -20,12 +20,13 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * Beheert de stijl-onafhankelijke schermteksten (startscherm, overgangsschermen,
- * resultatenpagina, accentkleurenstap, bevestigingsmail) die tot nu toe hardcoded stonden in
- * welcome.blade.php, de resultaatpagina-JS-componenten en de mail — zie
+ * resultatenpagina, basispaletstap, accentkleurenstap, bevestigingsmail) die tot nu toe
+ * hardcoded stonden in welcome.blade.php, de resultaatpagina-JS-componenten en de mail — zie
  * SiteContent/QuizTransitionSection. De stijlspecifieke teksten (introductie, kenmerken, kleuren,
- * materialen, advies) blijven op Stijlprofielen staan, dit gaat er niet over. De accentkleuren
- * zélf (naam/hex/gekoppelde stijlen) staan los op AccentColorsPage — hier gaat het alleen om de
- * vaste titel/intro/knopteksten van die stap.
+ * materialen, advies) blijven op Stijlprofielen staan, dit gaat er niet over. De basispaletten en
+ * accentkleuren zélf (naam/omschrijving/kleuren/gekoppelde stijlen) staan los op respectievelijk
+ * BasePalettesPage en AccentColorsPage — hier gaat het alleen om de vaste titel/intro/
+ * knopteksten van die twee stappen.
  */
 class TekstenPage extends Page implements HasActions, HasForms
 {
@@ -199,6 +200,27 @@ class TekstenPage extends Page implements HasActions, HasForms
             });
     }
 
+    public function editBasePaletteStepAction(): Action
+    {
+        return Action::make('editBasePaletteStep')
+            ->label('Bewerken')
+            ->modalHeading('Basispaletstap bewerken')
+            ->fillForm(fn (): array => $this->getSiteContent()->toArray())
+            ->form([
+                TextInput::make('base_palette_step_title')->label('Titel')->required()->maxLength(255),
+                Textarea::make('base_palette_step_intro')->label('Introductietekst')->rows(2)->required(),
+                TextInput::make('base_palette_step_hint')->label('Hint boven de paletkeuze')->required()->maxLength(255),
+                TextInput::make('base_palette_step_continue_label')->label('Knoptekst')->required()->maxLength(255),
+                TextInput::make('base_palette_step_chosen_title')->label('Titel na het kiezen')->required()->maxLength(255),
+                TextInput::make('base_palette_step_change_label')->label('Knoptekst "keuze wijzigen"')->required()->maxLength(255),
+            ])
+            ->action(function (array $data): void {
+                $this->getSiteContent()->update($data);
+
+                Notification::make()->title('Basispaletstap bijgewerkt')->success()->send();
+            });
+    }
+
     public function editAccentColorStepAction(): Action
     {
         return Action::make('editAccentColorStep')
@@ -213,6 +235,8 @@ class TekstenPage extends Page implements HasActions, HasForms
                 TextInput::make('accent_step_chosen_title')->label('Titel na het kiezen')->required()->maxLength(255),
                 TextInput::make('accent_step_change_label')->label('Knoptekst "keuze wijzigen"')->required()->maxLength(255),
                 TextInput::make('accent_step_error_message')->label('Foutmelding bij mislukt opslaan')->required()->maxLength(255),
+                TextInput::make('accent_step_skip_label')->label('Knoptekst "geen accentkleur"')->helperText('Alternatief voor 1-2 kleuren kiezen, altijd beschikbaar.')->required()->maxLength(255),
+                Textarea::make('accent_step_skipped_summary')->label('Tekst na het overslaan')->rows(2)->required(),
             ])
             ->action(function (array $data): void {
                 $this->getSiteContent()->update($data);

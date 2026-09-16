@@ -1,28 +1,41 @@
 <?php
 
-namespace Database\Seeders;
-
 use App\Models\AccentColor;
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
 
 /**
- * Definitieve kleurencatalogus voor de accentkleurstap (zie App\Services\AccentColorSelector) —
- * 6 kleuren per stijl, admin-beheerbaar via AccentColorsPage. Een kleur mag bewust bij meerdere
- * stijlen horen als de kleur letterlijk hetzelfde is (bv. Bordeaux past bij zowel Hotel luxe als
- * Modern) i.p.v. per stijl gedupliceerd te worden. Zie ook de migratie
- * `2026_09_16_141703_replace_accent_color_catalog`, die deze definitieve lijst ook op een al
- * gevulde (productie)database toepast.
+ * Vervangt de eerste, voorlopige accentkleurencatalogus (20 kleuren, zie AccentColorSeeder) door
+ * de definitieve set van 33 kleuren (6 per stijl, met bewuste overlap tussen stijlen waar de
+ * kleur letterlijk hetzelfde is — zie het implementatieplan "Basispaletten + vernieuwde
+ * accentkleuren", Bijlage A). Draait als migratie (niet alleen als seeder-wijziging) omdat dit
+ * ook op de al gevulde productiedatabase moet landen. Veilig: gekozen accentkleuren per
+ * quizresultaat staan al gedenormaliseerd opgeslagen (chosen_accent_colors), dus geen enkel
+ * al gegenereerd PDF/e-mail verandert met terugwerkende kracht door deze cataloguswijziging.
  */
-class AccentColorSeeder extends Seeder
+return new class extends Migration
 {
-    public function run(): void
+    public function up(): void
     {
-        foreach ($this->colors() as $index => $color) {
+        $colors = $this->colors();
+
+        foreach ($colors as $index => $color) {
             AccentColor::updateOrCreate(
                 ['name' => $color['name']],
                 [...$color, 'sort_order' => ($index + 1) * 10],
             );
         }
+
+        // Ruimt kleuren op die niet meer in de nieuwe, definitieve lijst voorkomen — nooit een
+        // live koppeling naar quizresultaten (zie hierboven), dus veilig te verwijderen.
+        AccentColor::query()
+            ->whereNotIn('name', collect($colors)->pluck('name')->all())
+            ->delete();
+    }
+
+    public function down(): void
+    {
+        // Bewust geen terugdraai-logica: de oude catalogus is een startwaarde die niet
+        // teruggehaald hoeft te worden, en een admin kan intussen al wijzigingen hebben gemaakt.
     }
 
     /** @return array<int, array{name: string, hex: string, style_keys: array<int, string>}> */
@@ -64,4 +77,4 @@ class AccentColorSeeder extends Seeder
             ['name' => 'Zacht lila', 'hex' => '#C8BDD9', 'style_keys' => ['scandinavisch']],
         ];
     }
-}
+};

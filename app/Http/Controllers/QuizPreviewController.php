@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccentColor;
+use App\Models\BasePalette;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
@@ -91,6 +92,14 @@ class QuizPreviewController extends Controller
             ->map(fn (AccentColor $color): array => $color->toOptionArray())
             ->all();
 
+        // Nooit gemengd met de secundaire stijl — zelfde regel als QuizResultController::store().
+        $basePaletteOptions = $primary
+            ? BasePalette::query()->active()->forStyle($primary->style_key)
+                ->get()
+                ->map(fn (BasePalette $palette): array => $palette->toOptionArray())
+                ->all()
+            : [];
+
         return view('quiz.preview.result', [
             'styles' => $styles,
             'selectedPrimaryKey' => $primary?->style_key,
@@ -100,6 +109,7 @@ class QuizPreviewController extends Controller
                 'intro' => $advice['intro'],
                 'primaryStyle' => $primary ? $this->styleForFrontend($primary) : null,
                 'secondaryStyle' => $secondary ? $this->styleForFrontend($secondary) : null,
+                'basePaletteOptions' => $basePaletteOptions,
                 'accentColorOptions' => $accentColorOptions,
             ],
         ]);

@@ -21,6 +21,16 @@ class AccentColorSelectionTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // De migratie die de definitieve accentkleurencatalogus zet
+        // (2026_09_16_141703_replace_accent_color_catalog) draait ook hier mee — deze tests
+        // willen een schone catalogus met alleen hun eigen fixtures, dus die 33 kleuren eerst weg.
+        AccentColor::query()->delete();
+    }
+
     private function makeQuestionAndOption(): QuizOption
     {
         StyleProfile::create([
@@ -122,6 +132,47 @@ class AccentColorSelectionTest extends TestCase
 
         $response = $this->patchJson("/api/quiz-result/{$quizResult->uuid}/accent-colors", [
             'accentColorIds' => [$foreign->id],
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertNull($quizResult->fresh()->chosen_accent_colors);
+    }
+
+    #[Test]
+    public function een_lege_keuze_is_geldig_en_wordt_opgeslagen_als_bewust_geen_accentkleur(): void
+    {
+        $this->makeQuestionAndOption();
+        AccentColor::create(['name' => 'Mosgroen', 'hex' => '#6b7a4f', 'style_keys' => ['japandi']]);
+        $quizResult = $this->makeQuizResult();
+
+        $response = $this->patchJson("/api/quiz-result/{$quizResult->uuid}/accent-colors", [
+            'accentColorIds' => [],
+        ]);
+
+        $response->assertOk();
+        $response->assertExactJson(['accentColors' => []]);
+        $this->assertSame([], $quizResult->fresh()->chosen_accent_colors);
+    }
+
+    #[Test]
+    public function een_kleur_die_exact_de_hex_van_het_gekozen_basispalet_deelt_wordt_geweigerd(): void
+    {
+        $this->makeQuestionAndOption();
+        $color = AccentColor::create(['name' => 'Mosgroen', 'hex' => '#6b7a4f', 'style_keys' => ['japandi']]);
+        $quizResult = $this->makeQuizResult();
+        $quizResult->update([
+            'chosen_base_palette' => [
+                'id' => 1,
+                'name' => 'Test-palet',
+                'description' => 'Test',
+                // Zelfde hex als de accentkleur hierboven, met bewust afwijkende hoofdlettering —
+                // de vergelijking moet case-insensitief zijn.
+                'colors' => [['name' => 'Mosgroen', 'hex' => '#6B7A4F']],
+            ],
+        ]);
+
+        $response = $this->patchJson("/api/quiz-result/{$quizResult->uuid}/accent-colors", [
+            'accentColorIds' => [$color->id],
         ]);
 
         $response->assertStatus(422);

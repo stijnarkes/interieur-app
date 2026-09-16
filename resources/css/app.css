@@ -875,6 +875,20 @@ a.btn-primary:hover {
   pointer-events: none;
 }
 
+/* Een accentkleur die exact de hex van een kleur uit het gekozen basispalet deelt ("Zit al in je
+   basis") is altijd :disabled, maar krijgt een eigen, iets minder "kapot" ogende stijl dan een
+   gewone disabled-kaart — dit is een bewuste uitsluiting, geen fout. */
+.accent-color-card.is-in-base {
+  opacity: 0.7;
+  background: var(--bg-soft);
+  border-style: dashed;
+}
+
+.accent-color-card.is-in-base .accent-color-name {
+  font-style: italic;
+  color: var(--muted);
+}
+
 .accent-color-swatch {
   position: relative;
   display: block;
@@ -927,6 +941,116 @@ a.btn-primary:hover {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+}
+
+/* Stijltest: basispaletstap (vóór de accentkleurstap) — zelfde kaart-/selectie-taal als
+   .accent-color-card hierboven, maar breder (tekst + een rij kleurvlakjes i.p.v. één ronde
+   swatch) omdat een basispalet een sfeernaam, omschrijving én meerdere kleuren toont. */
+
+.base-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.base-palette-card {
+  background: #fffaf5;
+  border: 1px solid #dfd0c0;
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text);
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.base-palette-card:hover {
+  border-color: #cfa57d;
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px rgba(61, 45, 30, 0.14);
+}
+
+.base-palette-card.is-selected {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(183, 121, 77, 0.22);
+}
+
+.base-palette-card:disabled {
+  cursor: default;
+}
+
+.base-palette-check {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--accent-strong);
+  box-shadow: 0 2px 8px rgba(61, 45, 30, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.base-palette-card.is-selected .base-palette-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.base-palette-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.base-palette-description {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.base-palette-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.base-palette-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Zichtbare rand nodig, anders verdwijnt een wit/heel licht kleurvlak tegen de kaartachtergrond. */
+.base-palette-swatch-color {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(45, 38, 32, 0.15);
+}
+
+.base-palette-swatch-name {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* Stijltest: resultaat */

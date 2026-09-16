@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccentColor;
+use App\Models\BasePalette;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
@@ -64,13 +65,54 @@ class QuizResultController extends Controller
             ->map(fn (AccentColor $color): array => $color->toOptionArray())
             ->all();
 
+        // Nooit gemengd met de secundaire stijl (in tegenstelling tot accentkleuren): elke stijl
+        // heeft zijn eigen, bewust samengestelde basispaletten — zie het implementatieplan
+        // "Basispaletten + vernieuwde accentkleuren".
+        $basePaletteOptions = $result->primary_style
+            ? BasePalette::query()->active()->forStyle($result->primary_style)
+                ->get()
+                ->map(fn (BasePalette $palette): array => $palette->toOptionArray())
+                ->all()
+            : [];
+
         return response()->json([
             'resultUuid' => $result->uuid,
             'comboName' => $advice['comboName'],
             'intro' => $advice['intro'],
             'primaryStyle' => $styleLabel($result->primary_style),
             'secondaryStyle' => $styleLabel($result->secondary_style),
+            'basePaletteOptions' => $basePaletteOptions,
             'accentColorOptions' => $accentColorOptions,
+        ]);
+    }
+
+    /**
+     * Slaat het door de bezoeker gekozen basispalet op — een losse stap ná store(), analoog aan
+     * chooseAccentColors() hieronder. Alleen een palet dat daadwerkelijk (nog) actief bij de
+     * primaire stijl van dít resultaat hoort wordt geaccepteerd — nooit de client vertrouwen.
+     */
+    public function chooseBasePalette(Request $request, string $uuid, QuizResultRepository $repository): JsonResponse
+    {
+        $data = $request->validate([
+            'basePaletteId' => ['required', 'integer', Rule::exists('base_palettes', 'id')],
+        ]);
+
+        $result = QuizResult::where('uuid', $uuid)->firstOrFail();
+
+        $palette = $result->primary_style
+            ? BasePalette::query()->active()->forStyle($result->primary_style)->find($data['basePaletteId'])
+            : null;
+
+        if (! $palette) {
+            return response()->json([
+                'message' => 'Dit basispalet is niet (meer) geldig voor dit resultaat.',
+            ], 422);
+        }
+
+        $repository->saveBasePalette($result, $palette->toOptionArray());
+
+        return response()->json([
+            'basePalette' => $palette->toOptionArray(),
         ]);
     }
 
@@ -78,7 +120,9 @@ class QuizResultController extends Controller
      * Slaat de door de bezoeker gekozen accentkleuren op bij het al berekende resultaat — een
      * losse stap ná store(), zodat de stijlberekening zelf nooit opnieuw hoeft te draaien. Alleen
      * ID's die daadwerkelijk in de (server-side herberekende) toegestane set voor dít resultaat
-     * zitten worden geaccepteerd — zelfde anti-manipulatiepatroon als onlyValidAnswers().
+     * zitten worden geaccepteerd — zelfde anti-manipulatiepatroon als onlyValidAnswers(). Een
+     * lege lijst is een geldige, bewuste keuze ("Ik houd het liever bij rustige basiskleuren") —
+     * geen minimum meer, in tegenstelling tot vóór de basispaletten-feature.
      */
     public function chooseAccentColors(
         Request $request,
@@ -87,16 +131,33 @@ class QuizResultController extends Controller
         AccentColorSelector $accentColorSelector,
     ): JsonResponse {
         $data = $request->validate([
-            'accentColorIds' => 'required|array|min:1|max:2',
+            'accentColorIds' => ['present', 'array', 'max:2'],
             'accentColorIds.*' => ['integer', Rule::exists('accent_colors', 'id')],
         ]);
 
         $result = QuizResult::where('uuid', $uuid)->firstOrFail();
 
+        if ($data['accentColorIds'] === []) {
+            $repository->saveAccentColors($result, []);
+
+            return response()->json(['accentColors' => []]);
+        }
+
+        // Een kleur die exact de hex van een kleur uit het al gekozen basispalet deelt telt niet
+        // meer als geldige, aparte accentkeuze ("Zit al in je basis") — zelfde controle als de
+        // klant-quiz zelf al doet (zie accentColorStep.js), hier herhaald omdat de client nooit
+        // vertrouwd wordt.
+        $baseHexes = collect($result->chosen_base_palette['colors'] ?? [])
+            ->pluck('hex')
+            ->filter()
+            ->map(fn (string $hex): string => strtolower($hex))
+            ->all();
+
         $allowed = $accentColorSelector->forResult($result->primary_style, $result->secondary_style);
 
         $chosen = $allowed
             ->filter(fn (AccentColor $color) => in_array($color->id, $data['accentColorIds'], true))
+            ->reject(fn (AccentColor $color) => in_array(strtolower($color->hex), $baseHexes, true))
             ->map(fn (AccentColor $color): array => $color->toOptionArray())
             ->values();
 

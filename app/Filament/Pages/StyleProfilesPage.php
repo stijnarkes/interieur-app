@@ -106,14 +106,6 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                 FormSection::make('Kleuren')
                     ->collapsed()
                     ->schema([
-                        Repeater::make('base_colors')
-                            ->label('Basiskleuren')
-                            ->helperText('Dit zijn de enige kleuren die de bezoeker te zien krijgt onder "Kleuren ter inspiratie" — houd dit bewust neutraal/veilig, geen specifieke accentkleur.')
-                            ->schema([
-                                TextInput::make('name')->label('Naam')->required(),
-                                TextInput::make('hex')->label('Hexcode')->required(),
-                            ])
-                            ->columns(2),
                         Repeater::make('accent_colors')
                             ->label('Accentkleuren')
                             ->helperText('Alleen intern/voor de styliste — deze worden niet aan de bezoeker getoond, omdat we niet weten welke accentkleur bij deze specifieke bezoeker past.')

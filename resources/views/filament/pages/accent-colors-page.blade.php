@@ -1,9 +1,11 @@
 <x-filament-panels::page>
     <x-filament::section>
         <p class="text-sm text-gray-500 dark:text-gray-400">
-            Deze kleuren worden aangeboden bij de laatste quizvraag ("Welke accentkleuren spreken jou het meeste aan?"),
-            ná de stijlberekening. Per bezoeker worden alleen kleuren getoond die aan diens berekende
-            woonstijl(en) gekoppeld zijn — koppel een kleur aan meerdere stijlen als die overal past.
+            Deze kleuren worden aangeboden bij de accentkleurenstap, ná de stijlberekening en ná het
+            gekozen basispalet (zie Basispaletten). Per bezoeker worden alleen kleuren getoond die aan
+            diens berekende woonstijl(en) gekoppeld zijn — koppel een kleur aan meerdere stijlen als die
+            overal past. Een kleur die exact de hex deelt met een kleur uit het gekozen basispalet wordt
+            in de klant-quiz automatisch als "Zit al in je basis" getoond en is dan niet apart te kiezen.
         </p>
     </x-filament::section>
 

@@ -61,6 +61,15 @@ class SiteContent extends Model
         'accent_step_chosen_title',
         'accent_step_change_label',
         'accent_step_error_message',
+        'accent_step_skip_label',
+        'accent_step_skipped_summary',
+
+        'base_palette_step_title',
+        'base_palette_step_intro',
+        'base_palette_step_hint',
+        'base_palette_step_continue_label',
+        'base_palette_step_chosen_title',
+        'base_palette_step_change_label',
     ];
 
     protected $casts = [

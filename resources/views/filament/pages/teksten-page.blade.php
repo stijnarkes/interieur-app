@@ -42,8 +42,16 @@
     </x-filament::section>
 
     <x-filament::section
+        heading="Basispaletstap"
+        description="De eerste stap ná de stijlberekening waar de bezoeker één basispalet kiest. De paletten zelf beheer je via Basispaletten."
+        :header-actions="[$this->editBasePaletteStepAction(), $this->buildPreviewAction(route('quiz.preview.result'))]"
+    >
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ $content->base_palette_step_title }}</p>
+    </x-filament::section>
+
+    <x-filament::section
         heading="Accentkleurenstap"
-        description="De stap ná de stijlberekening waar de bezoeker 1-2 accentkleuren kiest. De kleuren zelf beheer je via Accentkleuren."
+        description="De tweede stap waar de bezoeker 1-2 accentkleuren kiest, of bewust overslaat. De kleuren zelf beheer je via Accentkleuren."
         :header-actions="[$this->editAccentColorStepAction(), $this->buildPreviewAction(route('quiz.preview.result'))]"
     >
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ $content->accent_step_title }}</p>

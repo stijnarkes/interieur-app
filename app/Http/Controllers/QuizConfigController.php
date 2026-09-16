@@ -141,6 +141,14 @@ class QuizConfigController extends Controller
                 'expectItems' => $siteContent->lead_expect_items,
                 'resendLabel' => $siteContent->lead_resend_label,
             ],
+            'basePaletteStep' => [
+                'title' => $siteContent->base_palette_step_title,
+                'intro' => $siteContent->base_palette_step_intro,
+                'hint' => $siteContent->base_palette_step_hint,
+                'continueLabel' => $siteContent->base_palette_step_continue_label,
+                'chosenTitle' => $siteContent->base_palette_step_chosen_title,
+                'changeLabel' => $siteContent->base_palette_step_change_label,
+            ],
             'accentColorStep' => [
                 'title' => $siteContent->accent_step_title,
                 'intro' => $siteContent->accent_step_intro,
@@ -149,6 +157,8 @@ class QuizConfigController extends Controller
                 'chosenTitle' => $siteContent->accent_step_chosen_title,
                 'changeLabel' => $siteContent->accent_step_change_label,
                 'errorMessage' => $siteContent->accent_step_error_message,
+                'skipLabel' => $siteContent->accent_step_skip_label,
+                'skippedSummary' => $siteContent->accent_step_skipped_summary,
             ],
         ];
 

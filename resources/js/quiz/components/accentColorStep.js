@@ -3,12 +3,18 @@ import { ACCENT_COLOR_STEP_COPY } from "../copy.js";
 
 const MAX_SELECTIONS = 2;
 
-/** Eén klikbare kleurkeuze — swatch + naam, met een vinkje-badge als duidelijke selected-state die niet uitsluitend op kleur leunt (zie optionCard.js voor hetzelfde patroon bij foto-opties). */
-function createColorCard(color, { selected, disabled, onToggle }) {
+/**
+ * Eén klikbare kleurkeuze — swatch + naam, met een vinkje-badge als duidelijke selected-state die
+ * niet uitsluitend op kleur leunt (zie optionCard.js voor hetzelfde patroon bij foto-opties). Een
+ * kleur die exact de hex van een kleur uit het gekozen basispalet deelt (`inBase`) is nooit apart
+ * kiesbaar — de naam maakt dan plaats voor een duidelijke uitleg waarom.
+ */
+function createColorCard(color, { selected, disabled, inBase, onToggle }) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "accent-color-card";
   button.classList.toggle("is-selected", selected);
+  button.classList.toggle("is-in-base", Boolean(inBase));
   button.setAttribute("aria-pressed", String(selected));
   button.disabled = disabled;
 
@@ -24,7 +30,7 @@ function createColorCard(color, { selected, disabled, onToggle }) {
 
   const name = document.createElement("span");
   name.className = "accent-color-name";
-  name.textContent = color.name;
+  name.textContent = inBase ? "Zit al in je basis" : color.name;
 
   button.appendChild(swatch);
   button.appendChild(name);
@@ -66,14 +72,24 @@ function createColorChip(color) {
  * @param {{
  *   options: Array<{id: number, name: string, hex: string}>,
  *   resultUuid: string,
+ *   basePaletteColors?: Array<{name: string, hex: string}>,
  *   initialSelectedIds?: number[],
  *   onSelectionChange?: (ids: number[]) => void,
  *   onDone: (chosenColors: Array<{id: number, name: string, hex: string}>) => void,
  *   previewMode?: boolean,
  * }} config
  */
-function renderAccentColorStep(container, { options, resultUuid, initialSelectedIds = [], onSelectionChange, onDone, previewMode = false }) {
-  let selectedIds = initialSelectedIds.filter((id) => options.some((option) => option.id === id));
+function renderAccentColorStep(container, { options, resultUuid, basePaletteColors = [], initialSelectedIds = [], onSelectionChange, onDone, previewMode = false }) {
+  // Een accentkleur die exact dezelfde hex heeft als een kleur uit het gekozen basispalet ("Zit
+  // al in je basis") telt niet meer als aparte, kiesbare optie — zie createColorCard(). Hex-
+  // vergelijking case-insensitief, admin/data kan afwijkend casen gebruiken.
+  const baseHexes = basePaletteColors.map((color) => (color.hex ?? "").toLowerCase());
+  const isInBase = (color) => baseHexes.includes((color.hex ?? "").toLowerCase());
+
+  let selectedIds = initialSelectedIds.filter((id) => {
+    const option = options.find((candidate) => candidate.id === id);
+    return option && !isInBase(option);
+  });
 
   function renderChoice({ statusMessage = "", submitting = false } = {}) {
     container.innerHTML = "";
@@ -97,9 +113,11 @@ function renderAccentColorStep(container, { options, resultUuid, initialSelected
 
     options.forEach((color) => {
       const selected = selectedIds.includes(color.id);
+      const inBase = isInBase(color);
       const card = createColorCard(color, {
         selected,
-        disabled: submitting || (!selected && selectedIds.length >= MAX_SELECTIONS),
+        inBase,
+        disabled: inBase || submitting || (!selected && selectedIds.length >= MAX_SELECTIONS),
         onToggle: (id) => {
           if (selectedIds.includes(id)) {
             selectedIds = selectedIds.filter((existingId) => existingId !== id);
@@ -146,6 +164,32 @@ function renderAccentColorStep(container, { options, resultUuid, initialSelected
       }
     });
     actions.appendChild(continueBtn);
+
+    // Alternatief voor 1-2 accentkleuren kiezen: altijd beschikbaar, ook als er nog niets
+    // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze.
+    const skipBtn = document.createElement("button");
+    skipBtn.type = "button";
+    skipBtn.className = "btn btn-secondary";
+    skipBtn.textContent = ACCENT_COLOR_STEP_COPY.skipLabel;
+    skipBtn.disabled = submitting;
+    skipBtn.addEventListener("click", async () => {
+      if (previewMode) {
+        renderSkippedSummary();
+        onDone([]);
+        return;
+      }
+
+      renderChoice({ submitting: true });
+      try {
+        const response = await saveAccentColors(resultUuid, []);
+        renderSkippedSummary();
+        onDone(response.accentColors);
+      } catch {
+        renderChoice({ statusMessage: ACCENT_COLOR_STEP_COPY.errorMessage });
+      }
+    });
+    actions.appendChild(skipBtn);
+
     container.appendChild(actions);
 
     const status = document.createElement("p");
@@ -167,6 +211,27 @@ function renderAccentColorStep(container, { options, resultUuid, initialSelected
     grid.className = "accent-color-grid accent-color-grid--summary";
     chosenColors.forEach((color) => grid.appendChild(createColorChip(color)));
     container.appendChild(grid);
+
+    const changeBtn = document.createElement("button");
+    changeBtn.type = "button";
+    changeBtn.className = "btn btn-link";
+    changeBtn.textContent = ACCENT_COLOR_STEP_COPY.changeLabel;
+    changeBtn.addEventListener("click", () => renderChoice());
+    container.appendChild(changeBtn);
+  }
+
+  /** Bevestiging na het bewust overslaan van de accentkleurstap (zie skipBtn hierboven). */
+  function renderSkippedSummary() {
+    container.innerHTML = "";
+
+    const heading = document.createElement("h3");
+    heading.textContent = ACCENT_COLOR_STEP_COPY.chosenTitle;
+    container.appendChild(heading);
+
+    const body = document.createElement("p");
+    body.className = "section-intro";
+    body.textContent = ACCENT_COLOR_STEP_COPY.skippedSummary;
+    container.appendChild(body);
 
     const changeBtn = document.createElement("button");
     changeBtn.type = "button";

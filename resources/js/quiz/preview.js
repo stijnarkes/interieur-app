@@ -1,6 +1,7 @@
 import { renderQuestionStep } from "./components/questionStep.js";
 import { renderSectionTransition } from "./components/sectionTransition.js";
 import { renderStyleResult } from "./components/styleResult.js";
+import { renderBasePaletteStep } from "./components/basePaletteStep.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
 import { renderAccentColorStep } from "./components/accentColorStep.js";
@@ -54,6 +55,7 @@ function initQuestionPreview(root, question) {
 
 function initResultPreview(root, result) {
   const styleResultMount = root.querySelector("#styleResultMount");
+  const basePaletteMount = root.querySelector("#basePaletteMount");
   const accentColorMount = root.querySelector("#accentColorMount");
   const reportTeaserMount = root.querySelector("#reportTeaserMount");
   const leadMount = root.querySelector("#quizLeadMount");
@@ -65,15 +67,29 @@ function initResultPreview(root, result) {
     renderLeadForm(leadMount, { result, previewMode: true });
   };
 
-  if (result.accentColorOptions?.length > 0) {
-    renderAccentColorStep(accentColorMount, {
-      options: result.accentColorOptions,
+  const renderAccentStep = (basePaletteColors) => {
+    if (result.accentColorOptions?.length > 0) {
+      renderAccentColorStep(accentColorMount, {
+        options: result.accentColorOptions,
+        resultUuid: result.resultUuid,
+        basePaletteColors,
+        previewMode: true,
+        onDone: showReportAndLead,
+      });
+    } else {
+      showReportAndLead();
+    }
+  };
+
+  if (result.basePaletteOptions?.length > 0) {
+    renderBasePaletteStep(basePaletteMount, {
+      options: result.basePaletteOptions,
       resultUuid: result.resultUuid,
       previewMode: true,
-      onDone: showReportAndLead,
+      onDone: (chosenPalette) => renderAccentStep(chosenPalette.colors ?? []),
     });
   } else {
-    showReportAndLead();
+    renderAccentStep([]);
   }
 }
 

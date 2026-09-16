@@ -14,6 +14,7 @@ class QuizResult extends Model
         'primary_style',
         'secondary_style',
         'chosen_accent_colors',
+        'chosen_base_palette',
         'tertiary_style',
         'primary_strength',
         'secondary_strength',
@@ -29,6 +30,7 @@ class QuizResult extends Model
         'style_scores' => 'array',
         'style_percentages' => 'array',
         'chosen_accent_colors' => 'array',
+        'chosen_base_palette' => 'array',
         'dominant_traits' => 'array',
         'room_profiles' => 'array',
     ];

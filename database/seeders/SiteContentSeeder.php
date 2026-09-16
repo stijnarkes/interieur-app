@@ -80,6 +80,15 @@ class SiteContentSeeder extends Seeder
             'accent_step_chosen_title' => 'Jouw gekozen accentkleuren',
             'accent_step_change_label' => 'Wijzig keuze',
             'accent_step_error_message' => 'Je keuze kon niet worden opgeslagen. Probeer het opnieuw.',
+            'accent_step_skip_label' => 'Ik houd het liever bij rustige basiskleuren',
+            'accent_step_skipped_summary' => 'Je hebt gekozen voor rustige basiskleuren, zonder extra accentkleur.',
+
+            'base_palette_step_title' => 'Welk basispalet past het beste bij jou?',
+            'base_palette_step_intro' => 'Elk basispalet vertaalt jouw woonstijl naar een eigen sfeer van kleuren. Kies het palet dat het beste bij jou past.',
+            'base_palette_step_hint' => 'Kies het palet dat het beste bij jou past.',
+            'base_palette_step_continue_label' => 'Doorgaan',
+            'base_palette_step_chosen_title' => 'Jouw gekozen basispalet',
+            'base_palette_step_change_label' => 'Wijzig keuze',
         ]);
     }
 }

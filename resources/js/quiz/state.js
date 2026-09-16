@@ -7,17 +7,18 @@ const STORAGE_KEY = "interieur_stijltest_v2";
 function loadState() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { started: false, step: 0, answers: {}, completed: false, accentColorIds: [] };
+    if (!raw) return { started: false, step: 0, answers: {}, completed: false, basePaletteId: null, accentColorIds: [] };
     const parsed = JSON.parse(raw);
     return {
       started: Boolean(parsed.started),
       step: Number(parsed.step) || 0,
       answers: parsed.answers && typeof parsed.answers === "object" ? parsed.answers : {},
       completed: Boolean(parsed.completed),
+      basePaletteId: Number.isInteger(parsed.basePaletteId) ? parsed.basePaletteId : null,
       accentColorIds: Array.isArray(parsed.accentColorIds) ? parsed.accentColorIds : [],
     };
   } catch {
-    return { started: false, step: 0, answers: {}, completed: false, accentColorIds: [] };
+    return { started: false, step: 0, answers: {}, completed: false, basePaletteId: null, accentColorIds: [] };
   }
 }
 
@@ -68,12 +69,16 @@ function createQuizState() {
       state = { ...state, completed: true };
       persist(state);
     },
+    setBasePaletteId(basePaletteId) {
+      state = { ...state, basePaletteId };
+      persist(state);
+    },
     setAccentColorIds(accentColorIds) {
       state = { ...state, accentColorIds };
       persist(state);
     },
     reset() {
-      state = { started: false, step: 0, answers: {}, completed: false, accentColorIds: [] };
+      state = { started: false, step: 0, answers: {}, completed: false, basePaletteId: null, accentColorIds: [] };
       persist(state);
     },
   };

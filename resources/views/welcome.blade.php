@@ -84,9 +84,14 @@
              interieurrecept, nuance) is gereserveerd voor het PDF-rapport per e-mail. --}}
         <div id="styleResultMount"></div>
 
-        {{-- Laatste stap ná de stijlberekening: bezoeker kiest 1-2 accentkleuren die passen bij
-             het al berekende stijlprofiel — zie accentColorStep.js/quiz.js's renderResult(). Blijft
-             leeg (en dus onzichtbaar) zolang er geen passende kleuren zijn om aan te bieden. --}}
+        {{-- Eerste stap ná de stijlberekening: bezoeker kiest één basispalet dat bij de
+             primaire stijl hoort — zie basePaletteStep.js/quiz.js's renderResult(). Blijft leeg
+             (en dus onzichtbaar) zolang de stijl geen basispaletten heeft. --}}
+        <div id="basePaletteMount"></div>
+
+        {{-- Tweede stap: bezoeker kiest 1-2 accentkleuren, of slaat dit bewust over — zie
+             accentColorStep.js/quiz.js's renderResult(). Blijft leeg (en dus onzichtbaar) zolang
+             er geen passende kleuren zijn om aan te bieden. --}}
         <div id="accentColorMount"></div>
 
         <div id="reportTeaserMount"></div>

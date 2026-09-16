@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BasePalette;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
@@ -122,13 +123,25 @@ class QuizPreviewControllerTest extends TestCase
     }
 
     #[Test]
-    public function het_resultaatvoorbeeld_crasht_niet_zonder_geconfigureerde_accentkleuren(): void
+    public function het_resultaatvoorbeeld_crasht_niet_zonder_geconfigureerde_accentkleuren_of_basispaletten(): void
     {
         StyleProfile::create(['style_key' => 'japandi', 'label' => 'Japandi', 'slug' => 'japandi', 'long_description' => 'Rustig en warm.']);
 
         $response = $this->actingAs($this->admin())->get('/admin/voorbeeld/resultaat?style=japandi');
 
         $response->assertOk();
+    }
+
+    #[Test]
+    public function het_resultaatvoorbeeld_toont_de_basispaletten_van_de_gekozen_stijl(): void
+    {
+        StyleProfile::create(['style_key' => 'japandi', 'label' => 'Japandi', 'slug' => 'japandi', 'long_description' => 'Rustig en warm.']);
+        BasePalette::create(['style_key' => 'japandi', 'name' => 'Test-basispalet', 'description' => 'Test', 'colors' => [['name' => 'Ecru', 'hex' => '#e4dac6']]]);
+
+        $response = $this->actingAs($this->admin())->get('/admin/voorbeeld/resultaat?style=japandi');
+
+        $response->assertOk();
+        $response->assertSee('Test-basispalet', false);
     }
 
     #[Test]
