@@ -178,41 +178,40 @@ body {
     margin-bottom: 8px;
 }
 
-.photo-grid {
-    width: 100%;
-}
-
-.photo-item {
-    display: inline-block;
-    width: 22%;
-    margin: 0 3% 12px 0;
-    text-align: center;
-    vertical-align: top;
-}
-
-.photo-item img {
-    width: 100%;
-    height: 70px;
-    object-fit: contain;
-    background: #f0e3d4;
-    border-radius: 8px;
-    margin-bottom: 6px;
-}
-
-.photo-item-placeholder {
-    width: 100%;
-    height: 70px;
-    background: #f0e3d4;
-    border-radius: 8px;
-    margin-bottom: 6px;
-}
 
 .materials-board-image {
+    display: block;
     width: 100%;
-    max-height: 220px;
-    object-fit: cover;
+    height: auto;
     border-radius: 8px;
     margin-bottom: 12px;
+}
+
+.moodboard-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 12px;
+    margin-bottom: 4px;
+}
+
+.moodboard-table tr {
+    page-break-inside: avoid;
+}
+
+.moodboard-cell {
+    width: 50%;
+}
+
+.moodboard-photo,
+.moodboard-placeholder {
+    display: block;
+    width: 100%;
+    height: 170px;
+    border-radius: 8px;
+}
+
+.moodboard-placeholder {
+    background: #f0e3d4;
 }
 
 .recipe-table {
@@ -291,7 +290,7 @@ body {
         }
 
         $canvas = imagecreatetruecolor($canvasWidth, $canvasHeight);
-        // Zelfde tint als .photo-item-placeholder/--accent-soft in app.css, voor een consistente
+        // Zelfde tint als .moodboard-placeholder/--accent-soft in app.css, voor een consistente
         // uitstraling wanneer een foto niet exact de tegelverhouding heeft.
         $background = imagecolorallocate($canvas, 0xF0, 0xE3, 0xD4);
         imagefill($canvas, 0, 0, $background);
@@ -416,8 +415,10 @@ body {
 @endif
 
 @if (!empty($primaryStyle['materials']) || !empty($primaryStyle['materialsImage']))
-@php $materialsImage = $resolveImage($primaryStyle['materialsImage'] ?? null); @endphp
-<div class="section">
+{{-- Eigen ratio (i.p.v. uitrekken/bijsnijden) én een eigen pagina: dit beeld is bewust breed en
+     verdient de ruimte om goed leesbaar te tonen, i.p.v. verdrukt tussen andere onderdelen. --}}
+@php $materialsImage = $resolveImage($primaryStyle['materialsImage'] ?? null, 2.3); @endphp
+<div class="section page-break">
     <div class="section-title">Materialen die bij jou passen</div>
     @if ($materialsImage)
     <img src="{{ $materialsImage }}" class="materials-board-image" alt="Materialen die bij jouw stijl passen" />
@@ -450,21 +451,31 @@ body {
 @endif
 
 @if (!empty($result['moodboard']))
+{{-- Eigen pagina en 2 (i.p.v. voorheen 3) bredere/hogere tegels per rij — beter zichtbaar dan de
+     eerdere kleine tegeltjes. Een <table> i.p.v. inline-block tegels: dompdf's ondersteuning voor
+     moderne CSS-layout (flex/grid, en zelfs consistente inline-block-breedtes) is beperkt, een
+     tabel geeft hier betrouwbaar precies 2 gelijke kolommen. --}}
 <div class="section">
     <div class="section-title">Jouw persoonlijke moodboard</div>
-    <div class="photo-grid">
-        @foreach ($result['moodboard'] as $photo)
-        {{-- Tegel is 22% breed × 70px hoog (zie .photo-item) — vaste verhouding, dus bijknippen i.p.v. uitrekken. --}}
-        @php $photoImage = $resolveImage($photo['image'] ?? null, 2.2); @endphp
-        <div class="photo-item">
-            @if ($photoImage)
-                <img src="{{ $photoImage }}" alt="{{ $photo['title'] ?? '' }}" />
-            @else
-                <div class="photo-item-placeholder"></div>
+    <table class="moodboard-table">
+        @foreach (array_chunk($result['moodboard'], 2) as $row)
+        <tr>
+            @foreach ($row as $photo)
+            @php $photoImage = $resolveImage($photo['image'] ?? null, 2.0); @endphp
+            <td class="moodboard-cell">
+                @if ($photoImage)
+                    <img src="{{ $photoImage }}" alt="{{ $photo['title'] ?? '' }}" class="moodboard-photo" />
+                @else
+                    <div class="moodboard-placeholder"></div>
+                @endif
+            </td>
+            @endforeach
+            @if (count($row) === 1)
+            <td class="moodboard-cell"></td>
             @endif
-        </div>
+        </tr>
         @endforeach
-    </div>
+    </table>
 </div>
 @endif
 
