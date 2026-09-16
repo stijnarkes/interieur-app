@@ -308,6 +308,7 @@ function initQuiz(root) {
       renderBasePaletteStep(els.basePaletteMount, {
         options: result.basePaletteOptions,
         resultUuid: result.resultUuid,
+        primaryStyleLabel: result.primaryStyle?.label ?? "",
         initialPaletteId: state.get().basePaletteId,
         onDone: (chosenPalette) => {
           state.setBasePaletteId(chosenPalette.id);

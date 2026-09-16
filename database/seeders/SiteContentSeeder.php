@@ -75,7 +75,7 @@ class SiteContentSeeder extends Seeder
 
             'accent_step_title' => 'Welke accentkleuren spreken jou het meeste aan?',
             'accent_step_intro' => 'Je woonstijl hebben we inmiddels goed in beeld. Kies nu maximaal twee kleuren waarmee jij jouw interieur persoonlijk zou maken.',
-            'accent_step_hint' => 'Kies minimaal 1, maximaal 2 kleuren.',
+            'accent_step_hint' => 'Kies maximaal 2 kleuren.',
             'accent_step_continue_label' => 'Doorgaan',
             'accent_step_chosen_title' => 'Jouw gekozen accentkleuren',
             'accent_step_change_label' => 'Wijzig keuze',
@@ -84,7 +84,7 @@ class SiteContentSeeder extends Seeder
             'accent_step_skipped_summary' => 'Je hebt gekozen voor rustige basiskleuren, zonder extra accentkleur.',
 
             'base_palette_step_title' => 'Welk basispalet past het beste bij jou?',
-            'base_palette_step_intro' => 'Elk basispalet vertaalt jouw woonstijl naar een eigen sfeer van kleuren. Kies het palet dat het beste bij jou past.',
+            'base_palette_step_intro' => 'Op basis van je antwoorden past de {style}-stijl het beste bij jou. Deze basispaletten sluiten daar allemaal op aan — kies de sfeer die jij het mooist vindt om je basis verder te verfijnen.',
             'base_palette_step_hint' => 'Kies het palet dat het beste bij jou past.',
             'base_palette_step_continue_label' => 'Doorgaan',
             'base_palette_step_chosen_title' => 'Jouw gekozen basispalet',

@@ -61,12 +61,13 @@ function createPaletteCard(palette, { selected, onSelect }) {
  * @param {{
  *   options: Array<{id: number, name: string, description: ?string, colors: Array<{name: string, hex: string}>}>,
  *   resultUuid: string,
+ *   primaryStyleLabel?: string,
  *   initialPaletteId?: ?number,
  *   onDone: (chosenPalette: {id: number, name: string, description: ?string, colors: Array}) => void,
  *   previewMode?: boolean,
  * }} config
  */
-function renderBasePaletteStep(container, { options, resultUuid, initialPaletteId = null, onDone, previewMode = false }) {
+function renderBasePaletteStep(container, { options, resultUuid, primaryStyleLabel = "", initialPaletteId = null, onDone, previewMode = false }) {
   let selectedId = options.some((option) => option.id === initialPaletteId) ? initialPaletteId : null;
 
   function renderChoice({ statusMessage = "", submitting = false } = {}) {
@@ -78,7 +79,7 @@ function renderBasePaletteStep(container, { options, resultUuid, initialPaletteI
 
     const intro = document.createElement("p");
     intro.className = "section-intro";
-    intro.textContent = BASE_PALETTE_STEP_COPY.intro;
+    intro.textContent = BASE_PALETTE_STEP_COPY.intro.replace("{style}", primaryStyleLabel);
     container.appendChild(intro);
 
     const grid = document.createElement("div");

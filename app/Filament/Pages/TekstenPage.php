@@ -208,7 +208,7 @@ class TekstenPage extends Page implements HasActions, HasForms
             ->fillForm(fn (): array => $this->getSiteContent()->toArray())
             ->form([
                 TextInput::make('base_palette_step_title')->label('Titel')->required()->maxLength(255),
-                Textarea::make('base_palette_step_intro')->label('Introductietekst')->rows(2)->required(),
+                Textarea::make('base_palette_step_intro')->label('Introductietekst')->helperText('Gebruik {style} — dat wordt automatisch vervangen door de berekende woonstijl (bv. "Hotel luxe").')->rows(2)->required(),
                 TextInput::make('base_palette_step_hint')->label('Hint boven de paletkeuze')->required()->maxLength(255),
                 TextInput::make('base_palette_step_continue_label')->label('Knoptekst')->required()->maxLength(255),
                 TextInput::make('base_palette_step_chosen_title')->label('Titel na het kiezen')->required()->maxLength(255),

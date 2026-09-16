@@ -85,6 +85,7 @@ function initResultPreview(root, result) {
     renderBasePaletteStep(basePaletteMount, {
       options: result.basePaletteOptions,
       resultUuid: result.resultUuid,
+      primaryStyleLabel: result.primaryStyle?.label ?? "",
       previewMode: true,
       onDone: (chosenPalette) => renderAccentStep(chosenPalette.colors ?? []),
     });

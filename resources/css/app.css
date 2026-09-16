@@ -949,7 +949,7 @@ a.btn-primary:hover {
 
 .base-palette-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
   margin: 0 0 20px;
 }
@@ -1027,30 +1027,36 @@ a.btn-primary:hover {
 .base-palette-swatch-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 14px;
+  margin-top: 6px;
 }
 
+/* Vaste breedte i.p.v. mee laten schalen met de kleurnaam — anders duwt een langere naam (bv.
+   "Champagnebeige") de kaart uit lijn met andere kaarten die alleen korte namen tonen. Een
+   langere naam wrapt hierdoor gewoon door naar een tweede regel, de kleurvlakken zelf blijven
+   altijd netjes uitgelijnd. */
 .base-palette-swatch {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  width: 68px;
 }
 
 /* Zichtbare rand nodig, anders verdwijnt een wit/heel licht kleurvlak tegen de kaartachtergrond. */
 .base-palette-swatch-color {
   display: block;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
   border: 1px solid rgba(45, 38, 32, 0.15);
 }
 
 .base-palette-swatch-name {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--muted);
   text-align: center;
+  line-height: 1.25;
 }
 
 /* Stijltest: resultaat */

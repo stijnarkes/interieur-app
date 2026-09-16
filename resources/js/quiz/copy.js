@@ -30,7 +30,10 @@ const REPORT_TEASER_COPY = {
 
 const BASE_PALETTE_STEP_COPY = {
   title: "Welk basispalet past het beste bij jou?",
-  intro: "Elk basispalet vertaalt jouw woonstijl naar een eigen sfeer van kleuren. Kies het palet dat het beste bij jou past.",
+  // {style} wordt door basePaletteStep.js met .replace() ingevuld met de berekende primaire
+  // stijl — benadrukt dat elk getoond palet al bij die stijl past en de keuze dus een verfijning
+  // is, geen risico om "verkeerd" te kiezen. Zelfde plekhoudertechniek als lead.js's {name}/{email}.
+  intro: "Op basis van je antwoorden past de {style}-stijl het beste bij jou. Deze basispaletten sluiten daar allemaal op aan — kies de sfeer die jij het mooist vindt om je basis verder te verfijnen.",
   hint: "Kies het palet dat het beste bij jou past.",
   continueLabel: "Doorgaan",
   chosenTitle: "Jouw gekozen basispalet",
@@ -41,7 +44,7 @@ const BASE_PALETTE_STEP_COPY = {
 const ACCENT_COLOR_STEP_COPY = {
   title: "Welke accentkleuren spreken jou het meeste aan?",
   intro: "Je woonstijl hebben we inmiddels goed in beeld. Kies nu maximaal twee kleuren waarmee jij jouw interieur persoonlijk zou maken.",
-  hint: "Kies minimaal 1, maximaal 2 kleuren.",
+  hint: "Kies maximaal 2 kleuren.",
   continueLabel: "Doorgaan",
   chosenTitle: "Jouw gekozen accentkleuren",
   changeLabel: "Wijzig keuze",
