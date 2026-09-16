@@ -175,6 +175,18 @@ class QuizLeadController extends Controller
                 'avoid' => implode(' ', $primary->wat_past_minder_goed ?? []),
             ] : null,
             'secondaryStyleLabel' => $secondary?->label,
+            // Alleen de materialen-gerelateerde velden — de rest van het secundaire stijlprofiel
+            // (kenmerken, meubeladvies, recept, etc.) blijft bewust ongebruikt: alleen de
+            // primaire stijl bepaalt die onderdelen van de PDF. Zie quiz-result.blade.php's
+            // materialenblok: toont dit board alleen als $quizResult->secondary_style ook echt
+            // gezet is — exact dezelfde "invloed"-bepaling als QuizResultTextComposer gebruikt
+            // voor "... met ...-invloeden" in de titel, geen aparte/nieuwe drempel.
+            'secondaryStyle' => $secondary ? [
+                'label' => $secondary->label,
+                'materials' => $secondary->materials,
+                'materialsImage' => $secondary->materials_image,
+                'materialsTip' => $secondary->materials_tip,
+            ] : null,
             'personalPalette' => $primary?->base_colors ?? [],
             // Toont exact wat de bezoeker zelf koos bij de accentkleurstap (zie
             // QuizResultController::chooseAccentColors()) — nooit een eigen suggestie. Oudere

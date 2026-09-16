@@ -178,6 +178,15 @@ body {
     margin-bottom: 8px;
 }
 
+.materials-style-title {
+    font-size: 10.5pt;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+.materials-style-title:first-of-type {
+    margin-top: 0;
+}
 
 .materials-board-image {
     display: block;
@@ -349,25 +358,52 @@ body {
 @endif
 
 @if (!empty($primaryStyle['materials']) || !empty($primaryStyle['materialsImage']))
-{{-- Eigen ratio (i.p.v. uitrekken/bijsnijden) én een eigen pagina: dit beeld is bewust breed en
-     verdient de ruimte om goed leesbaar te tonen, i.p.v. verdrukt tussen andere onderdelen.
-     maxWidth voorkomt dat dompdf een veel grotere bron-foto dan nodig moet verwerken. --}}
-@php $materialsImage = $resolveImage($primaryStyle['materialsImage'] ?? null, 2.3, 800); @endphp
+{{--
+    Toont het materialenbord van de primaire stijl, en alléén als de bestaande resultaatlogica een
+    tweede stijl als "invloed" heeft aangemerkt (QuizScoringService::determineResult(), hetzelfde
+    secondary_style-veld dat QuizResultTextComposer gebruikt voor "... met ...-invloeden" in de
+    titel) óók dat van de secundaire stijl — geen nieuwe/eigen drempel hier. Een secundaire stijl
+    zonder eigen materialenbord (nog niet ingevuld in Stijlprofielen) valt gewoon terug op de
+    enkele-stijl-weergave, zonder de PDF te laten crashen.
+
+    Eigen beeldverhouding (i.p.v. uitrekken/bijsnijden) én een eigen pagina: dit beeld is bewust
+    breed en verdient de ruimte om goed leesbaar te tonen, i.p.v. verdrukt tussen andere
+    onderdelen. maxWidth voorkomt dat dompdf een veel grotere bron-foto dan nodig moet verwerken.
+    Bij twee borden komen ze onder elkaar (nooit naast elkaar) zodat beide groot en leesbaar
+    blijven i.p.v. te verdrukken.
+--}}
+@php
+    $secondaryStyle = $result['secondaryStyle'] ?? null;
+    $hasSecondaryMaterials = $secondaryStyle && (!empty($secondaryStyle['materials']) || !empty($secondaryStyle['materialsImage']));
+    $materialsBoards = $hasSecondaryMaterials ? [$primaryStyle, $secondaryStyle] : [$primaryStyle];
+@endphp
 <div class="section page-break">
-    <div class="section-title">Materialen die bij jou passen</div>
-    @if ($materialsImage)
-    <img src="{{ $materialsImage }}" class="materials-board-image" alt="Materialen die bij jouw stijl passen" />
+    @if ($hasSecondaryMaterials)
+    <div class="section-title">Materialen die passen bij jouw stijlmix</div>
+    <div class="section-intro">Jouw woonstijl combineert elementen van {{ $primaryStyle['label'] }} met invloeden van {{ $secondaryStyle['label'] }}. Daarom laten we je de materialen van beide stijlen zien.</div>
+    @else
+    <div class="section-title">Materialen die passen bij jouw stijl</div>
     @endif
-    @if (!empty($primaryStyle['materials']))
-    <div class="pill-row">
-        @foreach ($primaryStyle['materials'] as $materialName)
-        <span class="pill">{{ is_array($materialName) ? ($materialName['name'] ?? '') : $materialName }}</span>
-        @endforeach
-    </div>
-    @endif
-    @if (!empty($primaryStyle['materialsTip']))
-    <div class="tip-box">{{ $primaryStyle['materialsTip'] }}</div>
-    @endif
+
+    @foreach ($materialsBoards as $board)
+        @if ($hasSecondaryMaterials)
+        <div class="section-title materials-style-title">{{ $board['label'] }}</div>
+        @endif
+        @php $boardImage = $resolveImage($board['materialsImage'] ?? null, 2.3, 800); @endphp
+        @if ($boardImage)
+        <img src="{{ $boardImage }}" class="materials-board-image" alt="Materialen die bij de {{ $board['label'] }}-stijl passen" />
+        @endif
+        @if (!empty($board['materials']))
+        <div class="pill-row">
+            @foreach ($board['materials'] as $materialName)
+            <span class="pill">{{ is_array($materialName) ? ($materialName['name'] ?? '') : $materialName }}</span>
+            @endforeach
+        </div>
+        @endif
+        @if (!empty($board['materialsTip']))
+        <div class="tip-box">{{ $board['materialsTip'] }}</div>
+        @endif
+    @endforeach
 </div>
 @endif
 
