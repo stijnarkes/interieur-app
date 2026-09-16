@@ -79,6 +79,11 @@ const STAGE_HEIGHT_FLOOR = 400;
 // browservenster (bv. laptop) groter wordt dan wat sowieso al zichtbaar/scrollbaar is.
 const STAGE_HEIGHT_VIEWPORT_MARGIN = 40;
 
+// Duur van de schuifovergang tussen twee vragen (zie swapStepContent()) — bewust kort zodat snel
+// doorklikken vlot blijft aanvoelen. Moet gelijk blijven aan de transition-duur van
+// .quiz-step-transitioning in app.css.
+const STEP_TRANSITION_MS = 220;
+
 function initQuiz(root) {
   const els = {
     stage: root.querySelector("#quizStage"),
@@ -109,6 +114,9 @@ function initQuiz(root) {
   // Voorkomt dat meerdere klikken op de startknop de test meerdere keren starten — de knop wordt
   // ook meteen uitgeschakeld, maar deze vlag dekt ook een eventuele dubbele event-afvuring af.
   let starting = false;
+  // Volgt de lopende vraagovergang (zie swapStepContent()) zodat razendsnel doorklikken die
+  // netjes afrondt i.p.v. twee overlappende overgangen tegelijk te laten lopen.
+  let stepTransitionTimer = null;
   // De stepper toont, naast de echte vraag-onderdelen, ook "Jouw woonstijl" als afsluitende
   // stap — die licht pas op zodra de resultaatpagina wordt getoond (zie renderResult()).
   // Deze extra stap bestaat alleen visueel in de stepper en heeft geen eigen vragen: de
@@ -222,7 +230,71 @@ function initQuiz(root) {
     showScreen("transition");
   }
 
-  function renderStep({ scroll = false } = {}) {
+  /**
+   * Wisselt de inhoud van #quizStepMount, met een korte schuif+fade-overgang wanneer `direction`
+   * is meegegeven ("forward" voor Volgende, "back" voor Terug): de oude vraag schuift/vervaagt
+   * naar de ene kant terwijl de nieuwe tegelijk vanaf de andere kant verschijnt. Zonder richting
+   * (eerste vraag van een sectie, of opnieuw renderen na het kiezen van een optie) wisselt de
+   * inhoud instant — dat is geen "vraagovergang" maar een directe weergave.
+   */
+  function swapStepContent(newContent, direction) {
+    const mount = els.stepMount;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Rondt een eventueel nog lopende overgang direct af (bv. bij razendsnel doorklikken), zodat
+    // er nooit meer dan één "vorige" vraag tegelijk in de mount hangt.
+    if (stepTransitionTimer) {
+      clearTimeout(stepTransitionTimer);
+      stepTransitionTimer = null;
+    }
+    while (mount.children.length > 1) {
+      mount.firstElementChild.remove();
+    }
+    const previous = mount.firstElementChild;
+
+    if (!direction || !previous || reducedMotion) {
+      mount.classList.remove("is-animating-step");
+      mount.style.height = "";
+      mount.innerHTML = "";
+      mount.appendChild(newContent);
+      return;
+    }
+
+    // Meet de hoogte van de huidige vraag terwijl die nog normaal in de flow staat (nog geen
+    // .is-animating-step) — anders klapt de mount in zodra beide vragen zo meteen absoluut
+    // gepositioneerd over elkaar staan.
+    const previousHeight = previous.getBoundingClientRect().height;
+
+    mount.classList.add("is-animating-step");
+    mount.style.height = `${previousHeight}px`;
+
+    const exitClass = direction === "back" ? "quiz-step-offset-right" : "quiz-step-offset-left";
+    const enterFromClass = direction === "back" ? "quiz-step-offset-left" : "quiz-step-offset-right";
+
+    newContent.classList.add(enterFromClass);
+    mount.appendChild(newContent);
+
+    // Nu newContent absoluut gepositioneerd is (via .is-animating-step > *) geeft dit alsnog de
+    // natuurlijke inhoudshoogte terug, én forceert de reflow die nodig is om de beginstaat
+    // hierboven (nog zonder transition) daadwerkelijk te laten "vastklikken" vóórdat de overgang
+    // hieronder start — anders wordt de sprong naar de eindstaat niet als animatie gezien.
+    const newHeight = newContent.getBoundingClientRect().height;
+    mount.style.height = `${Math.max(previousHeight, newHeight)}px`;
+
+    previous.classList.add("quiz-step-transitioning", exitClass);
+    newContent.classList.add("quiz-step-transitioning");
+    newContent.classList.remove(enterFromClass);
+
+    stepTransitionTimer = setTimeout(() => {
+      previous.remove();
+      mount.classList.remove("is-animating-step");
+      newContent.classList.remove("quiz-step-transitioning");
+      mount.style.height = "";
+      stepTransitionTimer = null;
+    }, STEP_TRANSITION_MS);
+  }
+
+  function renderStep({ scroll = false, direction = null } = {}) {
     const { step, answers } = state.get();
     const question = QUESTIONS[step];
     const sectionIndex = sectionIndexOf(step);
@@ -231,10 +303,12 @@ function initQuiz(root) {
     stepper.update(sectionIndex, step);
     progress.update(SECTIONS[sectionIndex].title, index + 1, total);
 
-    renderQuestionStep(els.stepMount, question, answers[question.id] || [], (optionId) => {
+    const stepContent = document.createElement("div");
+    renderQuestionStep(stepContent, question, answers[question.id] || [], (optionId) => {
       state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
       renderStep();
     });
+    swapStepContent(stepContent, direction);
     updateNextButton();
     if (scroll) scrollToTop();
 
@@ -404,7 +478,7 @@ function initQuiz(root) {
     if (QUESTIONS[nextStep].section !== QUESTIONS[step].section) {
       showSectionTransition(nextStep);
     } else {
-      renderStep({ scroll: true });
+      renderStep({ scroll: true, direction: "forward" });
     }
   });
 
@@ -416,7 +490,7 @@ function initQuiz(root) {
       return;
     }
     state.goToStep(step - 1);
-    renderStep({ scroll: true });
+    renderStep({ scroll: true, direction: "back" });
   });
 
   els.restartBtn.addEventListener("click", restart);

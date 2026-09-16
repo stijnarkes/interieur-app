@@ -672,7 +672,9 @@ a.btn-primary:hover {
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, #b7794d, #d3a479);
-  transition: width 0.3s ease;
+  /* Zelfde duur als de schuifovergang tussen vragen (zie quiz-step-transitioning hieronder) zodat
+     de voortgangsbalk daar merkbaar mee opschuift. */
+  transition: width 0.22s ease;
 }
 
 /* Stijltest: vraag + foto-opties */
@@ -695,6 +697,38 @@ a.btn-primary:hover {
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+/* Schuifovergang tussen twee vragen binnen dezelfde sectie (zie swapStepContent() in quiz.js) —
+   bewust kort (~220ms) zodat snel doorklikken vlot blijft aanvoelen. Alleen actief tijdens de
+   overgang zelf: de eerste vraag van een nieuwe sectie en het opnieuw renderen na het kiezen van
+   een optie verschijnen instant (geen richting meegegeven = geen van deze klassen toegepast). */
+#quizStepMount.is-animating-step {
+  position: relative;
+  overflow: hidden;
+}
+
+#quizStepMount.is-animating-step > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.quiz-step-offset-left {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+
+.quiz-step-offset-right {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .quiz-step-transitioning {
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
 }
 
 .option-grid {
