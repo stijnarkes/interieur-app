@@ -69,4 +69,23 @@ class QuizSettingsPage extends Page implements HasActions, HasForms
                 Notification::make()->title('Instelling opgeslagen')->success()->send();
             });
     }
+
+    /**
+     * Enige aan/uit-schakelaar voor de partnerfunctie ("Ontdek jullie gezamenlijke woonstijl") —
+     * zie App\Http\Middleware\EnsurePartnerFeatureEnabled. Staat uit totdat hier expliciet
+     * aangezet, zodat de bestaande individuele quiz tot activering onveranderd blijft.
+     */
+    public function togglePartnerFeatureAction(): Action
+    {
+        return Action::make('togglePartnerFeature')
+            ->label(fn (): string => $this->getSettings()->partner_feature_enabled ? 'Uitschakelen' : 'Inschakelen')
+            ->color(fn (): string => $this->getSettings()->partner_feature_enabled ? 'danger' : 'success')
+            ->requiresConfirmation()
+            ->action(function (): void {
+                $settings = $this->getSettings();
+                $settings->update(['partner_feature_enabled' => ! $settings->partner_feature_enabled]);
+
+                Notification::make()->title('Instelling opgeslagen')->success()->send();
+            });
+    }
 }

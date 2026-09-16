@@ -13,10 +13,12 @@ class QuizSetting extends Model
 {
     protected $fillable = [
         'secondary_influence_ratio',
+        'partner_feature_enabled',
     ];
 
     protected $casts = [
         'secondary_influence_ratio' => 'integer',
+        'partner_feature_enabled' => 'boolean',
     ];
 
     public static function current(): self

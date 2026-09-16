@@ -28,6 +28,7 @@ class QuizOption extends Model
         'product_url',
         'price',
         'showroom_product',
+        'tags',
     ];
 
     protected $casts = [
@@ -35,6 +36,7 @@ class QuizOption extends Model
         'showroom_product' => 'boolean',
         'price' => 'decimal:2',
         'style_keys' => 'array',
+        'tags' => 'array',
     ];
 
     /**

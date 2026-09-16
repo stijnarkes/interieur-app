@@ -4,14 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\AccentColor;
 use App\Models\BasePalette;
+use App\Models\PartnerEvent;
+use App\Models\PartnerLink;
+use App\Models\PartnerParticipant;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
 use App\Models\StyleProfile;
 use App\Repositories\QuizResultRepository;
 use App\Services\AccentColorSelector;
+use App\Services\PartnerComparisonService;
 use App\Services\QuizResultTextComposer;
 use App\Services\QuizScoringService;
+use App\Support\PartnerAccessGuard;
+use App\Support\PartnerSnapshotBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -30,17 +36,23 @@ class QuizResultController extends Controller
         QuizResultRepository $repository,
         QuizResultTextComposer $textComposer,
         AccentColorSelector $accentColorSelector,
+        PartnerComparisonService $partnerComparisonService,
     ): JsonResponse {
         $data = $request->validate([
             'answers' => 'required|array',
             'answers.*' => 'array',
             'answers.*.*' => 'string',
+            'partnerClaimToken' => 'nullable|string',
         ]);
 
         $answers = $this->onlyValidAnswers($data['answers']);
 
         $computed = $scoring->compute($answers);
         $result = $repository->store($answers, $computed);
+
+        if (! empty($data['partnerClaimToken'])) {
+            $this->linkPartnerParticipant($data['partnerClaimToken'], $result, $partnerComparisonService);
+        }
 
         $advice = $textComposer->build($result);
 
@@ -171,6 +183,45 @@ class QuizResultController extends Controller
         return response()->json([
             'accentColors' => $chosen->all(),
         ]);
+    }
+
+    /**
+     * Koppelt een net afgeronde, geïsoleerde partnertest aan de bijbehorende
+     * partner_participants-rij (aangemaakt bij PartnerLinkController::claim()) en start meteen,
+     * synchroon, de vergelijking — zelfde synchrone patroon als PDF/mail in QuizLeadController,
+     * geen queue nodig. Een ongeldig/onbekend/reeds-gebruikt token wordt bewust stilzwijgend
+     * genegeerd: de individuele test van déze bezoeker is en blijft dan gewoon geldig, alleen
+     * zonder partnerkoppeling — nooit de hele quizinzending laten mislukken op een kapot token.
+     */
+    private function linkPartnerParticipant(
+        string $partnerClaimToken,
+        QuizResult $result,
+        PartnerComparisonService $partnerComparisonService,
+    ): void {
+        $participant = PartnerAccessGuard::resolve($partnerClaimToken);
+
+        if (! $participant || $participant->role !== PartnerParticipant::ROLE_PARTNER || $participant->quiz_result_id !== null) {
+            return;
+        }
+
+        $link = $participant->partnerLink;
+
+        if (! $link || $link->status === PartnerLink::STATUS_REVOKED) {
+            return;
+        }
+
+        $participant->update(['quiz_result_id' => $result->id]);
+
+        $link->update([
+            'partner_quiz_result_id' => $result->id,
+            'partner_snapshot' => PartnerSnapshotBuilder::build($result),
+            'status' => PartnerLink::STATUS_COMPLETED,
+            'completed_at' => now(),
+        ]);
+
+        $partnerComparisonService->compareAndStore($link->fresh());
+
+        PartnerEvent::record('partner_completed', $link->id);
     }
 
     /**

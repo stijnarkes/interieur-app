@@ -12,5 +12,16 @@
         </dl>
     </x-filament::section>
 
+    <x-filament::section
+        heading="Partnerfunctie"
+        description="'Ontdek jullie gezamenlijke woonstijl' — zolang uitgeschakeld is deze functie nergens zichtbaar of bereikbaar, ook niet via een directe link."
+        :header-actions="[$this->togglePartnerFeatureAction()]"
+    >
+        <dl>
+            <dt class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</dt>
+            <dd class="text-lg font-bold text-gray-950 dark:text-white">{{ $settings->partner_feature_enabled ? 'Ingeschakeld' : 'Uitgeschakeld' }}</dd>
+        </dl>
+    </x-filament::section>
+
     <x-filament-actions::modals />
 </x-filament-panels::page>
