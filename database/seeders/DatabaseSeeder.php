@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             QuizTransitionSectionSeeder::class,
             BasePaletteSeeder::class,
             AccentColorSeeder::class,
+            StyleCombinationAdviceSeeder::class,
         ]);
     }
 }
