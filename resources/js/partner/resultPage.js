@@ -157,18 +157,85 @@ function initResultPage(root) {
         });
     }
 
+    const reportActions = document.createElement("div");
+    reportActions.className = "actions";
+
+    const downloadLink = document.createElement("a");
+    downloadLink.className = "btn btn-secondary";
+    downloadLink.href = `/api/partner-comparisons/${accessToken}/report`;
+    downloadLink.target = "_blank";
+    downloadLink.rel = "noopener noreferrer";
+    downloadLink.textContent = "Bekijk als PDF";
+    reportActions.appendChild(downloadLink);
+
     if (ctaLabel && ctaUrl) {
-      const actions = document.createElement("div");
-      actions.className = "actions";
       const ctaLink = document.createElement("a");
       ctaLink.className = "btn btn-primary";
       ctaLink.href = ctaUrl;
       ctaLink.target = "_blank";
       ctaLink.rel = "noopener noreferrer";
       ctaLink.textContent = ctaLabel;
-      actions.appendChild(ctaLink);
-      mount.appendChild(actions);
+      reportActions.appendChild(ctaLink);
     }
+    mount.appendChild(reportActions);
+
+    renderMailForm();
+  }
+
+  function renderMailForm() {
+    const wrap = document.createElement("div");
+    wrap.className = "field";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Ontvang dit ook per e-mail";
+    wrap.appendChild(heading);
+
+    const emailInput = document.createElement("input");
+    emailInput.type = "email";
+    emailInput.placeholder = "Jouw e-mailadres";
+    wrap.appendChild(emailInput);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const sendBtn = document.createElement("button");
+    sendBtn.type = "button";
+    sendBtn.className = "btn btn-secondary";
+    sendBtn.textContent = "Versturen";
+    actions.appendChild(sendBtn);
+    wrap.appendChild(actions);
+
+    const status = document.createElement("p");
+    status.className = "hint";
+    status.setAttribute("aria-live", "polite");
+    wrap.appendChild(status);
+
+    sendBtn.addEventListener("click", async () => {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+        status.textContent = "Vul een geldig e-mailadres in.";
+        return;
+      }
+
+      sendBtn.disabled = true;
+      status.textContent = "Bezig met versturen...";
+
+      try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
+        const response = await fetch(`/api/partner-comparisons/${accessToken}/mail`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
+          body: JSON.stringify({ email: emailInput.value.trim() }),
+          signal: AbortSignal.timeout(30000),
+        });
+        const data = await response.json();
+        status.textContent = data.message || "";
+      } catch {
+        status.textContent = "Versturen is niet gelukt. Probeer het nog eens.";
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+
+    mount.appendChild(wrap);
   }
 
   async function poll() {

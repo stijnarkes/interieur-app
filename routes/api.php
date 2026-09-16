@@ -24,4 +24,6 @@ Route::middleware('partner.feature')->group(function () {
     Route::get('/partner-links/{inviteToken}/status', [PartnerLinkController::class, 'status']);
     Route::patch('/partner-links/{inviteToken}/revoke', [PartnerLinkController::class, 'revoke']);
     Route::get('/partner-comparisons/{accessToken}', [PartnerComparisonController::class, 'show']);
+    Route::get('/partner-comparisons/{accessToken}/report', [PartnerComparisonController::class, 'report']);
+    Route::post('/partner-comparisons/{accessToken}/mail', [PartnerComparisonController::class, 'mail']);
 });

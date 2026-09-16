@@ -2,11 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PartnerReportMail;
 use App\Models\PartnerComparison;
 use App\Models\PartnerLink;
+use App\Models\PartnerParticipant;
 use App\Models\StyleProfile;
+use App\Services\PartnerReportPdfService;
 use App\Support\PartnerAccessGuard;
+use App\Support\PartnerFactPresenter;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Toont het gezamenlijke resultaat aan een geldige deelnemer — zie het implementatieplan,
@@ -16,6 +23,8 @@ use Illuminate\Http\JsonResponse;
  */
 class PartnerComparisonController extends Controller
 {
+    private const STALE_QUEUE_AFTER_MINUTES = 2;
+
     public function show(string $accessToken): JsonResponse
     {
         $participant = PartnerAccessGuard::resolve($accessToken);
@@ -55,33 +64,126 @@ class PartnerComparisonController extends Controller
             'partnerPalette' => $link->partner_snapshot['chosen_base_palette'] ?? null,
             'initiatorAccentColors' => $link->initiator_snapshot['chosen_accent_colors'] ?? [],
             'partnerAccentColors' => $link->partner_snapshot['chosen_accent_colors'] ?? [],
-            'facts' => $this->resolveFactLabels($comparison->facts ?? []),
+            'facts' => PartnerFactPresenter::resolveStyleKeys(
+                $comparison->facts ?? [],
+                fn (?string $key) => $key ? (StyleProfile::forStyle($key)?->label ?? $key) : $key,
+            ),
             'suggestions' => $comparison->suggestions,
         ]);
     }
 
     /**
-     * Vervangt de ruwe style_key-velden in elk feit door hun leesbare label (StyleProfile::label)
-     * — de webpagina/PDF tonen zelf nooit een interne key, en dit is de enige plek die de
-     * PartnerComparisonService-output ooit naar buiten geeft, dus hoort de vertaalslag hier.
+     * Genereert de gezamenlijke PDF (of hergebruikt een al eerder gegenereerd bestand — de inhoud
+     * ligt vast zodra de vergelijking 'ready' is, dus opnieuw genereren voegt niets toe) en
+     * streamt 'm direct terug. Zelfde token-toegangsregel als show(): pas beschikbaar zodra de
+     * koppeling voltooid én de vergelijking klaar is.
      */
-    private function resolveFactLabels(array $facts): array
+    public function report(string $accessToken)
     {
-        $styleLabel = fn (?string $key) => $key ? (StyleProfile::forStyle($key)?->label ?? $key) : $key;
+        [$participant, $link, $comparison] = $this->resolveReadyComparison($accessToken);
 
-        $mapFact = function (array $fact) use ($styleLabel): array {
-            foreach (['styleKey', 'initiatorStyleKey', 'partnerStyleKey'] as $field) {
-                if (isset($fact[$field])) {
-                    $fact[$field] = $styleLabel($fact[$field]);
-                }
+        if (! $comparison) {
+            abort(404);
+        }
+
+        if (! $comparison->pdf_path || ! Storage::disk(config('filesystems.quiz_pdfs_disk'))->exists($comparison->pdf_path)) {
+            $pdfPath = app(PartnerReportPdfService::class)->generate($link, $comparison);
+            $comparison->update(['pdf_path' => $pdfPath]);
+        }
+
+        return Storage::disk(config('filesystems.quiz_pdfs_disk'))->response(
+            $comparison->pdf_path,
+            'gezamenlijke-woonstijl.pdf',
+            ['Content-Disposition' => 'inline; filename="gezamenlijke-woonstijl.pdf"'],
+        );
+    }
+
+    /**
+     * Stuurt de gezamenlijke PDF naar het eigen e-mailadres van déze deelnemer — nooit naar het
+     * adres van de ander, en nooit gekoppeld aan diens toegangstoken. Zelfde idempotentiepatroon
+     * als QuizLeadController::isInFlight(): een al verzonden of nog verse aanvraag start nooit een
+     * tweede verzending, een eerder mislukte of vastgelopen poging mag wél opnieuw.
+     */
+    public function mail(Request $request, string $accessToken): JsonResponse
+    {
+        $data = $request->validate(['email' => 'required|email|max:255']);
+
+        [$participant, $link, $comparison] = $this->resolveReadyComparison($accessToken);
+
+        if (! $comparison) {
+            return response()->json(['message' => 'Nog niet beschikbaar.'], 409);
+        }
+
+        if ($this->isInFlight($participant)) {
+            return $this->mailResponseFor($participant);
+        }
+
+        $participant->update([
+            'email' => $data['email'],
+            'mail_status' => 'queued',
+            'mail_requested_at' => now(),
+            'mail_error' => null,
+        ]);
+
+        try {
+            if (! $comparison->pdf_path || ! Storage::disk(config('filesystems.quiz_pdfs_disk'))->exists($comparison->pdf_path)) {
+                $pdfPath = app(PartnerReportPdfService::class)->generate($link, $comparison);
+                $comparison->update(['pdf_path' => $pdfPath]);
             }
 
-            return $fact;
-        };
+            Mail::to($data['email'])->send(new PartnerReportMail($link, $comparison->pdf_path));
 
-        return [
-            'similarities' => array_map($mapFact, $facts['similarities'] ?? []),
-            'differences' => array_map($mapFact, $facts['differences'] ?? []),
-        ];
+            $participant->update(['mail_status' => 'sent']);
+            \App\Models\PartnerEvent::record('report_requested', $link->id);
+        } catch (\Throwable $e) {
+            $participant->update(['mail_status' => 'failed', 'mail_error' => $e->getMessage()]);
+        }
+
+        return $this->mailResponseFor($participant->fresh());
+    }
+
+    /** @see class-docblock voor de "vastgelopen"-uitzondering. */
+    private function isInFlight(PartnerParticipant $participant): bool
+    {
+        if ($participant->mail_status === 'sent') {
+            return true;
+        }
+
+        if ($participant->mail_status === 'queued') {
+            return $participant->mail_requested_at?->gt(now()->subMinutes(self::STALE_QUEUE_AFTER_MINUTES)) ?? false;
+        }
+
+        return false;
+    }
+
+    private function mailResponseFor(PartnerParticipant $participant): JsonResponse
+    {
+        return match ($participant->mail_status) {
+            'sent' => response()->json(['status' => 'sent', 'message' => 'Verstuurd naar je e-mailadres.']),
+            'failed' => response()->json(['status' => 'failed', 'message' => 'Het versturen is niet gelukt.'], 200),
+            default => response()->json(['status' => 'queued', 'message' => 'Wordt verstuurd...']),
+        };
+    }
+
+    /** @return array{0: PartnerParticipant, 1: PartnerLink, 2: ?PartnerComparison} */
+    private function resolveReadyComparison(string $accessToken): array
+    {
+        $participant = PartnerAccessGuard::resolve($accessToken);
+
+        if (! $participant) {
+            abort(404);
+        }
+
+        $link = $participant->partnerLink;
+
+        if ($link->status !== PartnerLink::STATUS_COMPLETED) {
+            return [$participant, $link, null];
+        }
+
+        $comparison = PartnerComparison::where('partner_link_id', $link->id)
+            ->where('status', PartnerComparison::STATUS_READY)
+            ->first();
+
+        return [$participant, $link, $comparison];
     }
 }
