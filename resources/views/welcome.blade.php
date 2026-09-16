@@ -68,11 +68,18 @@
         <section class="card quiz-step-card" id="quizSteps" hidden>
             <div id="quizProgressMount"></div>
 
-            <div id="quizStepMount"></div>
+            {{-- Blijft buiten de schuifovergang: quiz.js schuift alleen #quizStepPanel (vraag +
+                 knoppen samen als één kaart), nooit de voortgangsbalk erboven — zie
+                 swapStepPanel() in quiz.js. --}}
+            <div id="quizStepViewport">
+                <div id="quizStepPanel">
+                    <div id="quizStepMount"></div>
 
-            <div class="actions quiz-nav">
-                <button type="button" class="btn btn-secondary" id="quizBackBtn">Terug</button>
-                <button type="button" class="btn btn-primary" id="quizNextBtn" disabled>Volgende</button>
+                    <div class="actions quiz-nav">
+                        <button type="button" class="btn btn-secondary" id="quizBackBtn">Terug</button>
+                        <button type="button" class="btn btn-primary" id="quizNextBtn" disabled>Volgende</button>
+                    </div>
+                </div>
             </div>
         </section>
     </section>

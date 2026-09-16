@@ -79,10 +79,10 @@ const STAGE_HEIGHT_FLOOR = 400;
 // browservenster (bv. laptop) groter wordt dan wat sowieso al zichtbaar/scrollbaar is.
 const STAGE_HEIGHT_VIEWPORT_MARGIN = 40;
 
-// Duur van de schuifovergang tussen twee vragen (zie swapStepContent()) — bewust kort zodat snel
-// doorklikken vlot blijft aanvoelen. Moet gelijk blijven aan de transition-duur van
-// .quiz-step-transitioning in app.css.
-const STEP_TRANSITION_MS = 220;
+// Duur van de schuifovergang tussen twee vragen (zie swapStepPanel()) — rustig (~350ms), geen
+// stuiter/rotatie. Moet gelijk blijven aan de transition-duur van .quiz-step-transitioning in
+// app.css.
+const STEP_TRANSITION_MS = 350;
 
 function initQuiz(root) {
   const els = {
@@ -97,6 +97,8 @@ function initQuiz(root) {
     transition: root.querySelector("#quizTransition"),
     steps: root.querySelector("#quizSteps"),
     progressMount: root.querySelector("#quizProgressMount"),
+    stepViewport: root.querySelector("#quizStepViewport"),
+    stepPanel: root.querySelector("#quizStepPanel"),
     stepMount: root.querySelector("#quizStepMount"),
     backBtn: root.querySelector("#quizBackBtn"),
     nextBtn: root.querySelector("#quizNextBtn"),
@@ -114,8 +116,8 @@ function initQuiz(root) {
   // Voorkomt dat meerdere klikken op de startknop de test meerdere keren starten — de knop wordt
   // ook meteen uitgeschakeld, maar deze vlag dekt ook een eventuele dubbele event-afvuring af.
   let starting = false;
-  // Volgt de lopende vraagovergang (zie swapStepContent()) zodat razendsnel doorklikken die
-  // netjes afrondt i.p.v. twee overlappende overgangen tegelijk te laten lopen.
+  // Volgt de lopende vraagovergang (zie swapStepPanel()) zodat razendsnel doorklikken die netjes
+  // afrondt i.p.v. twee overlappende overgangen tegelijk te laten lopen.
   let stepTransitionTimer = null;
   // De stepper toont, naast de echte vraag-onderdelen, ook "Jouw woonstijl" als afsluitende
   // stap — die licht pas op zodra de resultaatpagina wordt getoond (zie renderResult()).
@@ -231,66 +233,89 @@ function initQuiz(root) {
   }
 
   /**
-   * Wisselt de inhoud van #quizStepMount, met een korte schuif+fade-overgang wanneer `direction`
-   * is meegegeven ("forward" voor Volgende, "back" voor Terug): de oude vraag schuift/vervaagt
-   * naar de ene kant terwijl de nieuwe tegelijk vanaf de andere kant verschijnt. Zonder richting
-   * (eerste vraag van een sectie, of opnieuw renderen na het kiezen van een optie) wisselt de
-   * inhoud instant — dat is geen "vraagovergang" maar een directe weergave.
+   * Ruimt een eventueel nog lopende (of onafgemaakte) kaartovergang direct op: verwijdert een
+   * achtergebleven "geest" (zie hieronder) en zet #quizStepViewport/#quizStepPanel terug in hun
+   * normale, niet-animerende staat. Wordt aan het begin van élke overgang aangeroepen (ook de
+   * instante variant) zodat razendsnel doorklikken nooit twee overlappende overgangen tegelijk
+   * laat lopen.
    */
-  function swapStepContent(newContent, direction) {
-    const mount = els.stepMount;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    // Rondt een eventueel nog lopende overgang direct af (bv. bij razendsnel doorklikken), zodat
-    // er nooit meer dan één "vorige" vraag tegelijk in de mount hangt.
+  function finishStepTransition() {
     if (stepTransitionTimer) {
       clearTimeout(stepTransitionTimer);
       stepTransitionTimer = null;
     }
-    while (mount.children.length > 1) {
-      mount.firstElementChild.remove();
-    }
-    const previous = mount.firstElementChild;
+    els.stepViewport.querySelectorAll(".quiz-step-ghost").forEach((ghost) => ghost.remove());
+    els.stepViewport.classList.remove("is-animating-step");
+    els.stepViewport.style.height = "";
+    els.stepPanel.classList.remove("quiz-step-transitioning", "quiz-step-offset-left", "quiz-step-offset-right");
+  }
 
-    if (!direction || !previous || reducedMotion) {
-      mount.classList.remove("is-animating-step");
-      mount.style.height = "";
-      mount.innerHTML = "";
-      mount.appendChild(newContent);
+  /**
+   * Wisselt de inhoud van #quizStepMount, met een schuif+fade-overgang van de hele kaart (vraag,
+   * afbeeldingen én de Terug-/Volgende-knoppen samen) wanneer `direction` is meegegeven ("forward"
+   * voor Volgende, "back" voor Terug). Zonder richting (eerste vraag van een sectie, of opnieuw
+   * renderen na het kiezen van een optie) wisselt de inhoud instant — dat is geen "vraagovergang"
+   * maar een directe weergave.
+   *
+   * De Terug-/Volgende-knoppen zelf (#quizBackBtn/#quizNextBtn) blijven altijd exact dezelfde,
+   * al bestaande DOM-elementen met hun al gekoppelde click-handlers — nooit gedupliceerd. Wat
+   * wegschuift is een niet-interactieve "geest": een `cloneNode(true)` van de kaart zoals die er
+   * vóór de wissel uitzag (dus met de oude vraag én de toen geldende knopstatus), met
+   * `pointer-events: none`/`inert` zodat hij nooit aan te klikken is. Zo is er tijdens de overgang
+   * altijd precies één klikbare knoppenset (nooit dubbele navigatie), terwijl het toch oogt alsof
+   * de hele kaart naar links/rechts wegschuift.
+   */
+  function swapStepPanel(newContent, direction) {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    finishStepTransition();
+
+    if (!direction || reducedMotion) {
+      els.stepMount.innerHTML = "";
+      els.stepMount.appendChild(newContent);
       return;
     }
 
-    // Meet de hoogte van de huidige vraag terwijl die nog normaal in de flow staat (nog geen
-    // .is-animating-step) — anders klapt de mount in zodra beide vragen zo meteen absoluut
+    // Meet de hoogte van de huidige kaart terwijl die nog normaal in de flow staat (nog geen
+    // .is-animating-step) — anders klapt de viewport in zodra geest en kaart zo meteen absoluut
     // gepositioneerd over elkaar staan.
-    const previousHeight = previous.getBoundingClientRect().height;
+    const previousHeight = els.stepPanel.getBoundingClientRect().height;
 
-    mount.classList.add("is-animating-step");
-    mount.style.height = `${previousHeight}px`;
+    const ghost = els.stepPanel.cloneNode(true);
+    ghost.classList.add("quiz-step-ghost");
+    ghost.removeAttribute("id");
+    ghost.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.setAttribute("inert", "");
+
+    els.stepViewport.classList.add("is-animating-step");
+    els.stepViewport.style.height = `${previousHeight}px`;
+    els.stepViewport.appendChild(ghost);
+
+    // Echte inhoud wisselt instant, ín hetzelfde, altijd-klikbare paneel — zie docblok hierboven.
+    // De knopstatus (zie updateNextButton()) wordt door de aanroeper (renderStep()) direct hierna
+    // bijgewerkt; de geest hierboven is dan al gemaakt en toont dus terecht nog de oude staat.
+    els.stepMount.innerHTML = "";
+    els.stepMount.appendChild(newContent);
 
     const exitClass = direction === "back" ? "quiz-step-offset-right" : "quiz-step-offset-left";
     const enterFromClass = direction === "back" ? "quiz-step-offset-left" : "quiz-step-offset-right";
 
-    newContent.classList.add(enterFromClass);
-    mount.appendChild(newContent);
+    els.stepPanel.classList.add(enterFromClass);
 
-    // Nu newContent absoluut gepositioneerd is (via .is-animating-step > *) geeft dit alsnog de
+    // Nu de kaart absoluut gepositioneerd is (via .is-animating-step > *) geeft dit alsnog de
     // natuurlijke inhoudshoogte terug, én forceert de reflow die nodig is om de beginstaat
     // hierboven (nog zonder transition) daadwerkelijk te laten "vastklikken" vóórdat de overgang
     // hieronder start — anders wordt de sprong naar de eindstaat niet als animatie gezien.
-    const newHeight = newContent.getBoundingClientRect().height;
-    mount.style.height = `${Math.max(previousHeight, newHeight)}px`;
+    const newHeight = els.stepPanel.getBoundingClientRect().height;
+    els.stepViewport.style.height = `${Math.max(previousHeight, newHeight)}px`;
 
-    previous.classList.add("quiz-step-transitioning", exitClass);
-    newContent.classList.add("quiz-step-transitioning");
-    newContent.classList.remove(enterFromClass);
+    ghost.classList.add("quiz-step-transitioning", exitClass);
+    els.stepPanel.classList.add("quiz-step-transitioning");
+    els.stepPanel.classList.remove(enterFromClass);
 
     stepTransitionTimer = setTimeout(() => {
-      previous.remove();
-      mount.classList.remove("is-animating-step");
-      newContent.classList.remove("quiz-step-transitioning");
-      mount.style.height = "";
-      stepTransitionTimer = null;
+      finishStepTransition();
     }, STEP_TRANSITION_MS);
   }
 
@@ -308,7 +333,7 @@ function initQuiz(root) {
       state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
       renderStep();
     });
-    swapStepContent(stepContent, direction);
+    swapStepPanel(stepContent, direction);
     updateNextButton();
     if (scroll) scrollToTop();
 
