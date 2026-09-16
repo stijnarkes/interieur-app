@@ -169,7 +169,7 @@ function renderAccentColorStep(container, { options, resultUuid, basePaletteColo
     // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze.
     const skipBtn = document.createElement("button");
     skipBtn.type = "button";
-    skipBtn.className = "btn btn-secondary";
+    skipBtn.className = "btn btn-outline";
     skipBtn.textContent = ACCENT_COLOR_STEP_COPY.skipLabel;
     skipBtn.disabled = submitting;
     skipBtn.addEventListener("click", async () => {

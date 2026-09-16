@@ -930,6 +930,8 @@ a.btn-primary:hover {
   font-weight: 600;
   font-size: 0.9rem;
   text-align: center;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .accent-color-grid--summary {
@@ -949,7 +951,7 @@ a.btn-primary:hover {
 
 .base-palette-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 14px;
   margin: 0 0 20px;
 }
@@ -1040,15 +1042,15 @@ a.btn-primary:hover {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  width: 68px;
+  width: 80px;
 }
 
 /* Zichtbare rand nodig, anders verdwijnt een wit/heel licht kleurvlak tegen de kaartachtergrond. */
 .base-palette-swatch-color {
   display: block;
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
   border: 1px solid rgba(45, 38, 32, 0.15);
 }
 
@@ -1057,6 +1059,8 @@ a.btn-primary:hover {
   color: var(--muted);
   text-align: center;
   line-height: 1.25;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 /* Stijltest: resultaat */
@@ -1701,10 +1705,10 @@ a.btn-primary:hover {
     grid-template-columns: 1fr;
   }
 
-  /* 3 kolommen i.p.v. een enkele kolom: de swatch zelf is klein genoeg om ook op mobiel meerdere
-     naast elkaar te tonen, terwijl 56px ruim boven een comfortabele tapgrootte blijft. */
+  /* 2 kolommen i.p.v. 3: bij 3 smalle kolommen viel een langere kleurnaam (bv. "Smaragdgroen",
+     "Licht pistachegroen") buiten de kaart i.p.v. netjes onder de swatch te blijven staan. */
   .accent-color-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
 
