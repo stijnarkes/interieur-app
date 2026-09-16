@@ -7,13 +7,15 @@
  * Geen eigen kaart-achtergrond/rand/schaduw: de aanroeper bepaalt de omlijsting, want de ene
  * plek heeft een eigen kaart nodig en de andere hergebruikt een al bestaande kaart-wrapper.
  *
- * start() geeft een promise terug die resolvet zodra de eenmalige opbouw klaar is (daarna gaat de
- * component vanzelf over in een subtiele, oneindige "nog bezig"-toestand — een puls op het lampje
- * plus drie kleine, na elkaar pulserende stipjes onder de tekst, zodat een langere wachttijd
- * duidelijk aanvoelt als "nog actief bezig" i.p.v. vastgelopen — zonder de opbouw te herhalen) —
- * zo hoeft geen enkele aanroeper de opbouwduur zelf te kennen of te timen.
+ * De opbouw (vloer -> bank -> lamp -> plant, samen ~1,35s) speelt telkens opnieuw af zolang de
+ * component zichtbaar is — met een rustige pauze van de volledig opgebouwde kamer erna, in één
+ * doorlopende cyclus van 4 seconden — zodat een langere wachttijd duidelijk aanvoelt als "nog
+ * actief bezig" i.p.v. een eenmalig afgespeeld filmpje dat daarna stilvalt. start() geeft een
+ * promise terug die resolvet zodra de eerste opbouw klaar is; de cyclus blijft daarna gewoon
+ * doorlopen, zonder dat de aanroeper daar iets voor hoeft te doen.
+ *
  * Bij prefers-reduced-motion: reduce toont de component meteen de kamer in eindstaat, zonder
- * opbouw-animatie en zonder puls; de promise resolvet dan vrijwel direct.
+ * herhalende animatie; de promise resolvet dan vrijwel direct.
  */
 function createLoadingScene({ heading, subtext = "" }) {
   const element = document.createElement("div");
@@ -44,7 +46,6 @@ function createLoadingScene({ heading, subtext = "" }) {
     </svg>
     <h2 class="loading-scene-heading"></h2>
     ${subtext ? '<p class="loading-scene-subtext"></p>' : ""}
-    <p class="loading-scene-waiting-dots" aria-hidden="true"><span></span><span></span><span></span></p>
   `;
 
   element.querySelector(".loading-scene-heading").textContent = heading;
@@ -52,39 +53,29 @@ function createLoadingScene({ heading, subtext = "" }) {
     element.querySelector(".loading-scene-subtext").textContent = subtext;
   }
 
-  const plant = element.querySelector(".loading-scene-plant");
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  let fallbackTimer = null;
+  // Moet exact overeenkomen met de duur van de opbouwfase binnen de CSS-cyclus (zie
+  // .loading-scene-loop-* in app.css) — er is geen animationend om op te wachten omdat de
+  // animatie oneindig doorloopt.
+  const BUILD_DURATION_MS = 1350;
+
+  let buildTimer = null;
 
   function start() {
     element.classList.add("is-building");
 
     if (prefersReducedMotion) {
-      element.classList.add("is-waiting");
       return Promise.resolve();
     }
 
     return new Promise((resolve) => {
-      let done = false;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        plant.removeEventListener("animationend", finish);
-        clearTimeout(fallbackTimer);
-        element.classList.add("is-waiting");
-        resolve();
-      };
-
-      plant.addEventListener("animationend", finish, { once: true });
-      // Ruime fallback (opbouw duurt ~1.35s) voor het geval animationend om wat voor reden dan
-      // ook nooit vuurt — de component moet nooit voor altijd in "is-building" blijven hangen.
-      fallbackTimer = setTimeout(finish, 2500);
+      buildTimer = setTimeout(resolve, BUILD_DURATION_MS);
     });
   }
 
   function destroy() {
-    clearTimeout(fallbackTimer);
+    clearTimeout(buildTimer);
   }
 
   return { element, start, destroy };

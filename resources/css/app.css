@@ -530,107 +530,85 @@ a.btn-primary:hover {
   line-height: 1.55;
 }
 
-/* Onder de tekst, pas zichtbaar zodra de opbouw klaar is (.is-waiting) — laat een langere
-   wachttijd duidelijk aanvoelen als "nog actief bezig" i.p.v. vastgelopen. Vaste hoogte
-   gereserveerd zodat er niets verspringt op het moment dat de stipjes verschijnen. */
-.loading-scene-waiting-dots {
-  display: flex;
-  gap: 7px;
-  justify-content: center;
-  height: 8px;
-  margin: 16px 0 0;
-  opacity: 0;
-}
-
-.loading-scene.is-waiting .loading-scene-waiting-dots {
-  opacity: 1;
-}
-
-.loading-scene-waiting-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.3;
-}
-
 @media (prefers-reduced-motion: no-preference) {
+  /*
+   * Eén doorlopende cyclus van 4s per element (zelfde duur voor alle vier, anders lopen ze na de
+   * eerste cyclus uit elkaar): vloer/bank/lamp/plant verschijnen na elkaar binnen de eerste
+   * ~1,35s, blijven daarna volledig zichtbaar tot vlak vóór het einde van de cyclus, en
+   * verdwijnen dan in één keer weer om meteen opnieuw te beginnen. loadingScene.js's
+   * BUILD_DURATION_MS moet gelijk blijven aan de duur van dat eerste stukje (1350ms).
+   */
   .loading-scene.is-building .loading-scene-floor {
-    stroke-dashoffset: 1;
-    animation: loading-scene-draw-floor 0.5s ease-out forwards;
+    animation: loading-scene-loop-floor 4s ease-out infinite;
   }
 
   .loading-scene.is-building .loading-scene-sofa {
-    opacity: 0;
-    transform: translateY(10px);
-    animation: loading-scene-rise 0.5s ease-out 0.35s forwards;
+    animation: loading-scene-loop-sofa 4s ease-out infinite;
   }
 
   .loading-scene.is-building .loading-scene-lamp {
-    opacity: 0;
-    animation: loading-scene-fade 0.4s ease-out 0.75s forwards;
+    animation: loading-scene-loop-lamp 4s ease-out infinite;
   }
 
   .loading-scene.is-building .loading-scene-plant {
-    opacity: 0;
-    animation: loading-scene-fade 0.4s ease-out 0.95s forwards;
+    animation: loading-scene-loop-plant 4s ease-out infinite;
   }
 
-  .loading-scene.is-waiting .loading-scene-lamp-bulb {
-    animation: loading-scene-pulse 1.8s ease-in-out infinite;
-  }
-
-  .loading-scene.is-waiting .loading-scene-waiting-dots span {
-    animation: loading-scene-dot-pulse 1.4s ease-in-out infinite;
-  }
-
-  .loading-scene.is-waiting .loading-scene-waiting-dots span:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  .loading-scene.is-waiting .loading-scene-waiting-dots span:nth-child(3) {
-    animation-delay: 0.4s;
-  }
-
-  @keyframes loading-scene-draw-floor {
-    to {
+  @keyframes loading-scene-loop-floor {
+    0% {
+      stroke-dashoffset: 1;
+    }
+    12.5%,
+    99.9% {
       stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: 1;
     }
   }
 
-  @keyframes loading-scene-rise {
-    to {
+  @keyframes loading-scene-loop-sofa {
+    0%,
+    8.75% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    21.25%,
+    99.9% {
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  @keyframes loading-scene-fade {
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes loading-scene-pulse {
-    0%,
     100% {
-      opacity: 0.35;
-    }
-    50% {
-      opacity: 1;
+      opacity: 0;
+      transform: translateY(10px);
     }
   }
 
-  @keyframes loading-scene-dot-pulse {
+  @keyframes loading-scene-loop-lamp {
     0%,
-    80%,
-    100% {
-      opacity: 0.3;
-      transform: scale(0.85);
+    18.75% {
+      opacity: 0;
     }
-    40% {
+    28.75%,
+    99.9% {
       opacity: 1;
-      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes loading-scene-loop-plant {
+    0%,
+    23.75% {
+      opacity: 0;
+    }
+    33.75%,
+    99.9% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
     }
   }
 }
