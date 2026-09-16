@@ -135,6 +135,39 @@ function renderAccentColorStep(container, { options, resultUuid, basePaletteColo
 
     container.appendChild(grid);
 
+    // Alternatief voor 1-2 accentkleuren kiezen: altijd beschikbaar, ook als er nog niets
+    // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze. Bewust
+    // géén tweede volwaardige knop naast "Doorgaan": op mobiel (waar knoppen de volle breedte
+    // krijgen, zie .actions .btn) stapelde dat tot twee even grote, losstaande pillen onder
+    // elkaar — een kleinere link, vóór "Doorgaan" geplaatst, leest duidelijker als een
+    // "of"-alternatief bij diezelfde keuze i.p.v. een aparte actie erna.
+    const skipWrap = document.createElement("p");
+    skipWrap.className = "accent-color-skip";
+
+    const skipBtn = document.createElement("button");
+    skipBtn.type = "button";
+    skipBtn.className = "btn-link accent-color-skip-btn";
+    skipBtn.textContent = ACCENT_COLOR_STEP_COPY.skipLabel;
+    skipBtn.disabled = submitting;
+    skipBtn.addEventListener("click", async () => {
+      if (previewMode) {
+        renderSkippedSummary();
+        onDone([]);
+        return;
+      }
+
+      renderChoice({ submitting: true });
+      try {
+        const response = await saveAccentColors(resultUuid, []);
+        renderSkippedSummary();
+        onDone(response.accentColors);
+      } catch {
+        renderChoice({ statusMessage: ACCENT_COLOR_STEP_COPY.errorMessage });
+      }
+    });
+    skipWrap.appendChild(skipBtn);
+    container.appendChild(skipWrap);
+
     const actions = document.createElement("div");
     actions.className = "actions";
 
@@ -165,39 +198,6 @@ function renderAccentColorStep(container, { options, resultUuid, basePaletteColo
     });
     actions.appendChild(continueBtn);
     container.appendChild(actions);
-
-    // Alternatief voor 1-2 accentkleuren kiezen: altijd beschikbaar, ook als er nog niets
-    // geselecteerd is — het basispalet hierboven is zelf al de rustige/neutrale keuze. Bewust
-    // géén tweede volwaardige knop naast "Doorgaan": op mobiel (waar knoppen de volle breedte
-    // krijgen, zie .actions .btn) stapelde dat tot twee even grote, losstaande pillen onder
-    // elkaar — een directe, iets kleinere link vlak onder "Doorgaan" leest duidelijker als een
-    // "of"-alternatief bij diezelfde keuze i.p.v. een aparte actie verderop.
-    const skipWrap = document.createElement("p");
-    skipWrap.className = "accent-color-skip";
-
-    const skipBtn = document.createElement("button");
-    skipBtn.type = "button";
-    skipBtn.className = "btn-link accent-color-skip-btn";
-    skipBtn.textContent = ACCENT_COLOR_STEP_COPY.skipLabel;
-    skipBtn.disabled = submitting;
-    skipBtn.addEventListener("click", async () => {
-      if (previewMode) {
-        renderSkippedSummary();
-        onDone([]);
-        return;
-      }
-
-      renderChoice({ submitting: true });
-      try {
-        const response = await saveAccentColors(resultUuid, []);
-        renderSkippedSummary();
-        onDone(response.accentColors);
-      } catch {
-        renderChoice({ statusMessage: ACCENT_COLOR_STEP_COPY.errorMessage });
-      }
-    });
-    skipWrap.appendChild(skipBtn);
-    container.appendChild(skipWrap);
 
     const status = document.createElement("p");
     status.className = "error";
