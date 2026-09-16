@@ -152,6 +152,8 @@ class TekstenPage extends Page implements HasActions, HasForms
                     ->schema([
                         TextInput::make('lead_success_title')->label('Titel')->required()->maxLength(255),
                         Textarea::make('lead_success_body')->label('Tekst')->helperText('Gebruik {name} en {email} — die worden automatisch vervangen door de ingevulde naam en het e-mailadres.')->rows(2)->required(),
+                        TextInput::make('lead_queued_title')->label('Titel (aanvraag ontvangen, nog niet bevestigd verstuurd)')->helperText('Verschijnt zodra de aanvraag in behandeling is genomen maar het versturen zelf nog niet bevestigd is.')->required()->maxLength(255),
+                        Textarea::make('lead_queued_body')->label('Tekst (aanvraag ontvangen)')->rows(2)->required(),
                         TextInput::make('lead_spam_hint')->label('Spam-hint')->required()->maxLength(255),
                         TextInput::make('lead_expect_title')->label('Tekst boven het lijstje')->required()->maxLength(255),
                         TagsInput::make('lead_expect_items')->label('Lijstje met wat de bezoeker kan verwachten')->helperText('Enter om een regel toe te voegen.'),

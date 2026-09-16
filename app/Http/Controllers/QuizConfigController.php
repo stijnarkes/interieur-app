@@ -134,6 +134,8 @@ class QuizConfigController extends Controller
                 'reassurance' => $siteContent->lead_reassurance,
                 'successTitle' => $siteContent->lead_success_title,
                 'successBody' => $siteContent->lead_success_body,
+                'queuedTitle' => $siteContent->lead_queued_title,
+                'queuedBody' => $siteContent->lead_queued_body,
                 'spamHint' => $siteContent->lead_spam_hint,
                 'expectTitle' => $siteContent->lead_expect_title,
                 'expectItems' => $siteContent->lead_expect_items,

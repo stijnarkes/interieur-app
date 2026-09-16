@@ -18,17 +18,19 @@ function renderLeadForm(container, { result }) {
    * Gedeeld met de "Opnieuw versturen"-knop in de successtatus. Stuurt alleen de verwijzing naar
    * het al server-side berekende resultaat (resultUuid) mee — de PDF-inhoud zelf bouwt
    * QuizLeadController op uit QuizResult/StyleProfile, niet meer uit client-aangeleverde velden.
-   * Idempotent aan de serverkant (zelfde resultUuid + al verstuurd = geen dubbele mail, maar een
-   * eerder mislukte poging wordt bij een retry wél opnieuw geprobeerd — zie QuizLeadController),
-   * dus een timeout hier mag gerust een nieuwe poging suggereren i.p.v. een definitieve
-   * foutmelding: in het ergste geval had de eerste poging toch al succes, en de tweede verandert
-   * daar dan niets meer aan. Ruime timeout (45s): de server genereert de PDF en verstuurt de mail
-   * synchroon, en de UI is bewust ontworpen om dat geduldig af te wachten (zie de laadscene
-   * hieronder) i.p.v. een verzending af te breken die anders wél was gelukt.
+   * PDF-generatie + mailverzending gebeuren op de achtergrond (zie GenerateAndSendQuizResultPdfJob)
+   * — dit antwoord bevestigt dus meestal alleen dat de aanvraag in behandeling is genomen
+   * (`status: 'queued'`), niet dat de e-mail al onderweg is. Ruime timeout (45s) als extra marge
+   * voor een trage verbinding, al hoeft deze aanroep zelf niet meer op de PDF/mail te wachten.
+   * Idempotent aan de serverkant (zelfde resultUuid + al verstuurd/nog vers in behandeling = geen
+   * dubbele mail, maar een eerder mislukte of vastgelopen poging wordt bij een retry wél opnieuw
+   * geprobeerd — zie QuizLeadController), dus een timeout hier mag gerust een nieuwe poging
+   * suggereren i.p.v. een definitieve foutmelding.
    *
-   * Geeft altijd het geparste antwoord terug (incl. een `status`-veld, 'sent' of 'failed') zodat
-   * de aanroeper nooit alleen op de HTTP-status hoeft te vertrouwen — die is bewust ook 200 bij
-   * een mislukte verzending, want de gegevens van de bezoeker zijn dan wél degelijk opgeslagen.
+   * Geeft altijd het geparste antwoord terug (incl. een `status`-veld: 'sent', 'queued' of
+   * 'failed') zodat de aanroeper nooit alleen op de HTTP-status hoeft te vertrouwen — die is
+   * bewust ook 200 bij een mislukte verzending, want de gegevens van de bezoeker zijn dan wél
+   * degelijk opgeslagen.
    */
   async function submitLead({ name, email, marketingOptIn }) {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
@@ -167,22 +169,78 @@ function renderLeadForm(container, { result }) {
         subtext: "Een momentje, we bereiden je persoonlijke PDF voor en sturen deze naar je e-mailadres.",
       });
       container.appendChild(scene.element);
-      scene.start();
 
-      try {
-        const response = await submitLead({ name, email, marketingOptIn });
-        if (response.status === "sent") {
-          renderSuccess({ name, email, marketingOptIn });
-        } else {
-          // De server bevestigt hier expliciet geen geslaagde verzending (bv. email_status
-          // 'failed') — nooit een succesmelding tonen die de app niet kan waarmaken. Gegevens
-          // blijven behouden: het formulier verschijnt opnieuw, voorgevuld, met de reden erbij.
-          renderForm({ name, email, marketingOptIn, statusMessage: response.message });
-        }
-      } catch (error) {
-        renderForm({ name, email, marketingOptIn, statusMessage: error.message });
+      // De aanvraag zelf komt nu meestal razendsnel terug (alleen opslaan + een taak inplannen,
+      // zie QuizLeadController) — Promise.allSettled zorgt dat de rustige opbouw-animatie altijd
+      // haar volledige, eigen duur afspeelt i.p.v. halverwege abrupt te worden vervangen, ook als
+      // de aanvraag mislukt.
+      const [, leadResult] = await Promise.allSettled([scene.start(), submitLead({ name, email, marketingOptIn })]);
+
+      if (leadResult.status === "rejected") {
+        renderForm({ name, email, marketingOptIn, statusMessage: leadResult.reason.message });
+        return;
+      }
+
+      const response = leadResult.value;
+      if (response.status === "sent") {
+        renderSuccess({ name, email, marketingOptIn });
+      } else if (response.status === "queued") {
+        // De aanvraag is ontvangen en wordt op de achtergrond verwerkt (zie
+        // GenerateAndSendQuizResultPdfJob) — nooit al claimen dat de e-mail verstuurd is, dat
+        // weten we op dit moment nog niet.
+        renderQueued();
+      } else {
+        // De server bevestigt hier expliciet geen geslaagde verzending (bv. email_status
+        // 'failed') — nooit een succesmelding tonen die de app niet kan waarmaken. Gegevens
+        // blijven behouden: het formulier verschijnt opnieuw, voorgevuld, met de reden erbij.
+        renderForm({ name, email, marketingOptIn, statusMessage: response.message });
       }
     });
+  }
+
+  /**
+   * Bevestigt alleen dat de aanvraag ontvangen is — geen "opnieuw versturen"-knop hier, want er is
+   * nog niets verstuurd om opnieuw te proberen (en de server zou een nieuwe poging binnen enkele
+   * minuten toch als dubbele aanvraag negeren, zie QuizLeadController).
+   */
+  function renderQueued() {
+    container.innerHTML = "";
+
+    const queued = document.createElement("div");
+    queued.className = "lead-form-success";
+    queued.setAttribute("role", "status");
+    queued.setAttribute("aria-live", "polite");
+
+    queued.appendChild(createCheckIcon("lead-form-success-icon", 26));
+
+    const title = document.createElement("p");
+    title.className = "lead-form-success-title";
+    title.textContent = LEAD_FORM_COPY.queuedTitle;
+    queued.appendChild(title);
+
+    const body = document.createElement("p");
+    body.className = "section-intro";
+    body.textContent = LEAD_FORM_COPY.queuedBody;
+    queued.appendChild(body);
+
+    const expectTitle = document.createElement("p");
+    expectTitle.className = "report-checklist-intro";
+    expectTitle.textContent = LEAD_FORM_COPY.expectTitle;
+    queued.appendChild(expectTitle);
+
+    const expectList = document.createElement("ul");
+    expectList.className = "report-checklist";
+    LEAD_FORM_COPY.expectItems.forEach((item) => {
+      const li = document.createElement("li");
+      li.appendChild(createCheckIcon());
+      const text = document.createElement("span");
+      text.textContent = item;
+      li.appendChild(text);
+      expectList.appendChild(li);
+    });
+    queued.appendChild(expectList);
+
+    container.appendChild(queued);
   }
 
   /** Losstaande bevestigingsweergave — vervangt het hele formulier, geen restje ervan blijft staan. */

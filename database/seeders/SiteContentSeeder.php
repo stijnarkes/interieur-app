@@ -54,6 +54,8 @@ class SiteContentSeeder extends Seeder
 
             'lead_success_title' => 'Je woonstijlrapport is verzonden',
             'lead_success_body' => 'Bedankt, {name}. We hebben jouw persoonlijke woonstijlrapport verstuurd naar {email}.',
+            'lead_queued_title' => 'Je aanvraag is ontvangen',
+            'lead_queued_body' => 'Je ontvangt je rapport binnenkort per e-mail.',
             'lead_spam_hint' => 'Nog geen e-mail? Kijk voor de zekerheid even in je spam.',
             'lead_expect_title' => 'Wat kun je verwachten?',
             'lead_expect_items' => [

@@ -38,6 +38,11 @@ const LEAD_FORM_COPY = {
   // {name}/{email} worden door lead.js met .replace() ingevuld — zelfde plekhouders als de
   // admin-helptekst op TekstenPage laat zien.
   successBody: "Bedankt, {name}. We hebben jouw persoonlijke woonstijlrapport verstuurd naar {email}.",
+  // Getoond zodra de aanvraag in de wachtrij staat maar het versturen zelf nog niet is bevestigd
+  // (zie GenerateAndSendQuizResultPdfJob) — nooit een succesmelding claimen die de app nog niet
+  // kan waarmaken.
+  queuedTitle: "Je aanvraag is ontvangen",
+  queuedBody: "Je ontvangt je rapport binnenkort per e-mail.",
   spamHint: "Nog geen e-mail? Kijk voor de zekerheid even in je spam.",
   expectTitle: "Wat kun je verwachten?",
   expectItems: [

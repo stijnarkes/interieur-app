@@ -2,33 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\QuizResultMail;
+use App\Jobs\GenerateAndSendQuizResultPdfJob;
 use App\Models\QuizOption;
 use App\Models\QuizResult;
+use App\Models\SiteContent;
 use App\Models\StyleProfile;
 use App\Models\Submission;
 use App\Services\QuizResultTextComposer;
-use App\Services\QuizResultPdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 /**
  * Verwerkt het leadformulier. Bouwt de PDF-/e-mailinhoud zelf op uit het al server-side
  * berekende QuizResult (zie QuizResultController/QuizScoringService) + StyleProfile, i.p.v. een
  * kant-en-klare resultaat-JSON van de client te vertrouwen.
  *
- * Idempotent per quiz_result_id, maar alleen zolang een eerdere poging daadwerkelijk slaagde: een
- * herhaalde inzending voor hetzelfde resultaat (dubbelklik, of een bevestigde "opnieuw
- * proberen"-klik na een echte mislukking — zie resources/js/quiz/components/lead.js) genereert
- * nooit een tweede PDF of e-mail zodra `email_status` al 'sent' is. Was de vorige poging
- * `'failed'` (of bestaat er nog geen rij), dan wordt er juist wél een nieuwe PDF-/mailpoging
- * gedaan — op dezelfde Submission-rij (nooit een tweede), zodat "opnieuw proberen" ook echt iets
- * doet i.p.v. voor altijd dezelfde gecachte mislukking terug te geven.
+ * PDF-generatie + mailverzending gebeuren op de achtergrond (zie GenerateAndSendQuizResultPdfJob)
+ * i.p.v. synchroon binnen deze aanvraag — dat voorkwam eerder een "verzenden mislukt"-melding
+ * terwijl de mail bij een trage aanvraag (bv. meerdere moodboard-/materialenfoto's verwerken)
+ * eigenlijk gewoon iets later alsnog aankwam, omdat de verbinding tussen browser en server dan kon
+ * verbreken vóórdat het antwoord terugkwam. De bezoeker krijgt nu altijd meteen een bevestiging.
+ *
+ * Idempotent per quiz_result_id, maar alleen zolang een eerdere poging daadwerkelijk slaagde of nog
+ * loopt: een herhaalde inzending voor hetzelfde resultaat (dubbelklik, of een bevestigde "opnieuw
+ * proberen"-klik na een echte mislukking — zie resources/js/quiz/components/lead.js) start nooit
+ * een tweede taak zolang `email_status` `'sent'` of (nog vers) `'queued'` is. Een taak die al
+ * langer dan 2 minuten op `'queued'` staat (bv. omdat er geen wachtrij-worker actief was) wordt als
+ * vastgelopen beschouwd en mag opnieuw geprobeerd worden — anders zou een bezoeker daar voor altijd
+ * in vast kunnen zitten.
  */
 class QuizLeadController extends Controller
 {
-    public function handle(Request $request, QuizResultTextComposer $textComposer, QuizResultPdfService $pdfService): JsonResponse
+    private const STALE_QUEUE_AFTER_MINUTES = 2;
+
+    public function handle(Request $request, QuizResultTextComposer $textComposer): JsonResponse
     {
         $data = $request->validate([
             'resultUuid' => 'required|uuid|exists:quiz_results,uuid',
@@ -40,7 +47,7 @@ class QuizLeadController extends Controller
         $quizResult = QuizResult::where('uuid', $data['resultUuid'])->firstOrFail();
 
         $existing = Submission::where('quiz_result_id', $quizResult->id)->first();
-        if ($existing && $existing->email_status === 'sent') {
+        if ($existing && $this->isInFlight($existing)) {
             return $this->responseFor($existing);
         }
 
@@ -55,41 +62,52 @@ class QuizLeadController extends Controller
                 'email_opt_in' => $request->boolean('marketingOptIn', false),
                 'result_id' => $quizResult->uuid,
                 'result_generated' => true,
+                'email_status' => 'queued',
+                'email_error' => null,
             ]
         );
 
-        try {
-            $pdfPath = $pdfService->generate($submission);
-            $submission->update(['pdf_path' => $pdfPath]);
+        GenerateAndSendQuizResultPdfJob::dispatch($submission->id);
 
-            Mail::to($submission->email)->send(new QuizResultMail($submission, $pdfPath));
+        return $this->responseFor($submission);
+    }
 
-            $submission->update(['email_status' => 'sent', 'email_sent_at' => now(), 'email_error' => null]);
-        } catch (\Throwable $e) {
-            $submission->update(['email_status' => 'failed', 'email_error' => $e->getMessage()]);
+    /** @see class-docblock voor de "vastgelopen wachtrij"-uitzondering. */
+    private function isInFlight(Submission $submission): bool
+    {
+        if ($submission->email_status === 'sent') {
+            return true;
         }
 
-        return $this->responseFor($submission->fresh());
+        if ($submission->email_status === 'queued') {
+            return $submission->updated_at?->gt(now()->subMinutes(self::STALE_QUEUE_AFTER_MINUTES)) ?? false;
+        }
+
+        return false;
     }
 
     /**
      * `status` (naast de mensleesbare `message`) laat de frontend betrouwbaar vertakken op de
-     * werkelijke uitkomst i.p.v. op de HTTP-statuscode, die bewust ook 200 is bij een mislukte
-     * verzending — de gegevens van de bezoeker zijn dan namelijk wél degelijk opgeslagen.
+     * werkelijke uitkomst i.p.v. op de HTTP-statuscode. `'queued'` bevestigt bewust alleen dat de
+     * aanvraag ontvangen is, nooit dat de e-mail al verstuurd is — dat weten we op dit moment
+     * simpelweg nog niet.
      */
     private function responseFor(Submission $submission): JsonResponse
     {
-        if ($submission->email_status === 'failed') {
-            return response()->json([
+        return match ($submission->email_status) {
+            'sent' => response()->json([
+                'status' => 'sent',
+                'message' => 'Je advies is verstuurd naar je e-mailadres.',
+            ]),
+            'failed' => response()->json([
                 'status' => 'failed',
                 'message' => 'Je gegevens zijn opgeslagen, maar het versturen van de e-mail is niet gelukt.',
-            ], 200);
-        }
-
-        return response()->json([
-            'status' => 'sent',
-            'message' => 'Je advies is verstuurd naar je e-mailadres.',
-        ]);
+            ], 200),
+            default => response()->json([
+                'status' => 'queued',
+                'message' => SiteContent::current()->lead_queued_body,
+            ]),
+        };
     }
 
     /**

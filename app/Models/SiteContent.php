@@ -39,6 +39,8 @@ class SiteContent extends Model
 
         'lead_success_title',
         'lead_success_body',
+        'lead_queued_title',
+        'lead_queued_body',
         'lead_spam_hint',
         'lead_expect_title',
         'lead_expect_items',

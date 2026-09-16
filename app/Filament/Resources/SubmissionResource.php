@@ -81,6 +81,7 @@ class SubmissionResource extends Resource
                     ->color(fn (?string $state): string => match ($state) {
                         'sent' => 'success',
                         'failed' => 'danger',
+                        'queued' => 'warning',
                         default => 'gray',
                     })
                     ->placeholder('—'),
@@ -118,6 +119,7 @@ class SubmissionResource extends Resource
                     ->label('E-mail status')
                     ->options([
                         'sent' => 'Verstuurd',
+                        'queued' => 'In behandeling',
                         'failed' => 'Mislukt',
                     ]),
             ])
@@ -170,6 +172,7 @@ class SubmissionResource extends Resource
                             ->color(fn (?string $state): string => match ($state) {
                                 'sent' => 'success',
                                 'failed' => 'danger',
+                                'queued' => 'warning',
                                 default => 'gray',
                             })
                             ->placeholder('—'),

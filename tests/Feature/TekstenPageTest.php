@@ -91,6 +91,8 @@ class TekstenPageTest extends TestCase
                 'lead_reassurance' => 'Geruststelling',
                 'lead_success_title' => 'Gelukt',
                 'lead_success_body' => 'Bedankt {name}, naar {email}.',
+                'lead_queued_title' => 'Ontvangen',
+                'lead_queued_body' => 'Komt eraan.',
                 'lead_spam_hint' => 'Spam-hint',
                 'lead_expect_title' => 'Verwacht-titel',
                 'lead_expect_items' => ['A', 'B'],
