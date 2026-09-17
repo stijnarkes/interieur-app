@@ -132,6 +132,48 @@ class PartnerReportTest extends TestCase
         Mail::assertSent(PartnerReportMail::class, 1);
     }
 
+    /**
+     * De initiator kan bij het aanmaken van de uitnodiging al een e-mailadres opgeven — dat is
+     * zijn/haar enige garantie op het rapport, want het toegangstoken/de link kan daarna nooit
+     * opnieuw opgevraagd worden (zie App\Support\PartnerToken). Zodra de partner de test afrondt,
+     * moet die mail automatisch verstuurd worden, zonder dat de initiator er zelf om hoeft te vragen.
+     */
+    #[Test]
+    public function een_initiator_die_bij_het_aanmaken_een_adres_opgaf_krijgt_het_rapport_automatisch_zodra_de_partner_klaar_is(): void
+    {
+        Mail::fake();
+
+        $result = QuizResult::create([
+            'uuid' => (string) Str::uuid(), 'answers' => ['vloer' => ['eiken']],
+            'style_scores' => ['japandi' => 1], 'primary_style' => 'japandi',
+        ]);
+
+        $create = $this->postJson('/api/partner-links', [
+            'resultUuid' => $result->uuid,
+            'email' => 'anna@example.com',
+            'shareConfirmationTextVersion' => 'v1',
+        ])->assertOk();
+        $inviteToken = Str::afterLast($create->json('inviteUrl'), '/');
+
+        Mail::assertNothingSent();
+
+        $claim = $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertOk();
+        $partnerAccessToken = $claim->json('accessToken');
+
+        $partnerResult = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['beton']]])->assertOk();
+        $this->patchJson("/api/quiz-result/{$partnerResult->json('resultUuid')}/complete-partner", [
+            'partnerClaimToken' => $partnerAccessToken,
+        ])->assertOk();
+
+        Mail::assertSent(PartnerReportMail::class, function (PartnerReportMail $mail) {
+            return $mail->hasTo('anna@example.com');
+        });
+        Mail::assertSent(PartnerReportMail::class, 1);
+
+        $initiator = PartnerLink::first()->participants()->where('role', 'initiator')->first();
+        $this->assertSame('sent', $initiator->mail_status);
+    }
+
     #[Test]
     public function beide_deelnemers_kunnen_onafhankelijk_hun_eigen_adres_opgeven(): void
     {

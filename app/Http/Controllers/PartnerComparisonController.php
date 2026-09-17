@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\PartnerReportMail;
 use App\Models\PartnerComparison;
 use App\Models\PartnerLink;
 use App\Models\PartnerParticipant;
 use App\Models\StyleProfile;
+use App\Services\PartnerReportMailer;
 use App\Services\PartnerReportPdfService;
 use App\Support\PartnerAccessGuard;
 use App\Support\PartnerFactPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -23,8 +22,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class PartnerComparisonController extends Controller
 {
-    private const STALE_QUEUE_AFTER_MINUTES = 2;
-
     public function show(string $accessToken): JsonResponse
     {
         $participant = PartnerAccessGuard::resolve($accessToken);
@@ -104,7 +101,7 @@ class PartnerComparisonController extends Controller
      * als QuizLeadController::isInFlight(): een al verzonden of nog verse aanvraag start nooit een
      * tweede verzending, een eerder mislukte of vastgelopen poging mag wél opnieuw.
      */
-    public function mail(Request $request, string $accessToken): JsonResponse
+    public function mail(Request $request, string $accessToken, PartnerReportMailer $mailer): JsonResponse
     {
         $data = $request->validate(['email' => 'required|email|max:255']);
 
@@ -114,46 +111,13 @@ class PartnerComparisonController extends Controller
             return response()->json(['message' => 'Nog niet beschikbaar.'], 409);
         }
 
-        if ($this->isInFlight($participant)) {
+        if ($mailer->isInFlight($participant)) {
             return $this->mailResponseFor($participant);
         }
 
-        $participant->update([
-            'email' => $data['email'],
-            'mail_status' => 'queued',
-            'mail_requested_at' => now(),
-            'mail_error' => null,
-        ]);
-
-        try {
-            if (! $comparison->pdf_path || ! Storage::disk(config('filesystems.quiz_pdfs_disk'))->exists($comparison->pdf_path)) {
-                $pdfPath = app(PartnerReportPdfService::class)->generate($link, $comparison);
-                $comparison->update(['pdf_path' => $pdfPath]);
-            }
-
-            Mail::to($data['email'])->send(new PartnerReportMail($link, $comparison->pdf_path));
-
-            $participant->update(['mail_status' => 'sent']);
-            \App\Models\PartnerEvent::record('report_requested', $link->id);
-        } catch (\Throwable $e) {
-            $participant->update(['mail_status' => 'failed', 'mail_error' => $e->getMessage()]);
-        }
+        $mailer->send($participant, $link, $comparison, $data['email']);
 
         return $this->mailResponseFor($participant->fresh());
-    }
-
-    /** @see class-docblock voor de "vastgelopen"-uitzondering. */
-    private function isInFlight(PartnerParticipant $participant): bool
-    {
-        if ($participant->mail_status === 'sent') {
-            return true;
-        }
-
-        if ($participant->mail_status === 'queued') {
-            return $participant->mail_requested_at?->gt(now()->subMinutes(self::STALE_QUEUE_AFTER_MINUTES)) ?? false;
-        }
-
-        return false;
     }
 
     private function mailResponseFor(PartnerParticipant $participant): JsonResponse

@@ -31,6 +31,7 @@ class PartnerLinkController extends Controller
         $data = $request->validate([
             'resultUuid' => 'required|uuid|exists:quiz_results,uuid',
             'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
             'shareConfirmationTextVersion' => 'required|string|max:100',
         ]);
 
@@ -65,6 +66,11 @@ class PartnerLinkController extends Controller
                 'role' => PartnerParticipant::ROLE_INITIATOR,
                 'quiz_result_id' => $quizResult->id,
                 'access_token_hash' => PartnerToken::hash($accessToken),
+                // Optioneel: zodra de partner klaar is, mailt QuizResultController::
+                // linkPartnerParticipant() de gezamenlijke PDF hier automatisch naartoe (via
+                // PartnerReportMailer) — anders is de link hieronder de enige toegang, en die kan
+                // (bewust, zie PartnerToken) nooit achteraf opnieuw opgevraagd worden.
+                'email' => $data['email'] ?? null,
             ]);
 
             return $link;
@@ -193,6 +199,13 @@ class PartnerLinkController extends Controller
         return response()->json(['status' => $link->status]);
     }
 
+    /**
+     * `accessToken`/`resultUrl` zijn alleen gezet bij de daadwerkelijke aanmaak (nooit bij de
+     * idempotente herhaling hieronder) — alleen op dát moment is de plaintext bekend, zie
+     * App\Support\PartnerToken. Dit IS dus de enige keer dat de initiator zijn/haar eigen link
+     * naar het gezamenlijke resultaat te zien krijgt; vandaar het optionele e-mailadres bij create()
+     * als extra, latere bezorgroute.
+     */
     private function inviteResponse(PartnerLink $link, string $inviteToken, ?string $accessToken = null): JsonResponse
     {
         return response()->json([
@@ -200,6 +213,7 @@ class PartnerLinkController extends Controller
             'inviteExpiresAt' => $link->invite_expires_at->toIso8601String(),
             'status' => $link->status,
             'accessToken' => $accessToken,
+            'resultUrl' => $accessToken ? url("/gezamenlijk/{$accessToken}") : null,
         ]);
     }
 }

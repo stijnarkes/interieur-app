@@ -59,8 +59,9 @@ class PartnerLinkTest extends TestCase
             'shareConfirmationTextVersion' => 'v1',
         ])->assertOk();
 
-        $response->assertJsonStructure(['inviteUrl', 'inviteExpiresAt', 'status', 'accessToken']);
+        $response->assertJsonStructure(['inviteUrl', 'inviteExpiresAt', 'status', 'accessToken', 'resultUrl']);
         $this->assertNotEmpty($response->json('accessToken'));
+        $this->assertStringContainsString($response->json('accessToken'), $response->json('resultUrl'));
         $this->assertSame('waiting', $response->json('status'));
 
         $link = PartnerLink::first();
@@ -69,6 +70,42 @@ class PartnerLinkTest extends TestCase
         $this->assertSame('japandi', $link->initiator_snapshot['primary_style']);
         $this->assertCount(1, $link->participants);
         $this->assertSame('initiator', $link->participants->first()->role);
+    }
+
+    /**
+     * De initiator krijgt zijn/haar eigen link naar het gezamenlijke resultaat ALLEEN op het
+     * moment van aanmaken — dat toegangstoken kan daarna (bewust) nooit opnieuw opgevraagd worden,
+     * zie App\Support\PartnerToken. Zie PartnerReportTest voor de bijbehorende automatische mail.
+     */
+    #[Test]
+    public function de_resultaatlink_wordt_alleen_bij_de_eerste_aanmaak_teruggegeven_nooit_bij_een_idempotente_herhaling(): void
+    {
+        $result = $this->makeQuizResult();
+
+        $first = $this->postJson('/api/partner-links', [
+            'resultUuid' => $result->uuid, 'shareConfirmationTextVersion' => 'v1',
+        ])->assertOk();
+        $this->assertNotEmpty($first->json('resultUrl'));
+
+        $second = $this->postJson('/api/partner-links', [
+            'resultUuid' => $result->uuid, 'shareConfirmationTextVersion' => 'v1',
+        ])->assertOk();
+        $this->assertNull($second->json('resultUrl'));
+    }
+
+    #[Test]
+    public function een_opgegeven_e_mailadres_wordt_bewaard_op_de_initiator_deelname(): void
+    {
+        $result = $this->makeQuizResult();
+
+        $this->postJson('/api/partner-links', [
+            'resultUuid' => $result->uuid,
+            'email' => 'anna@example.com',
+            'shareConfirmationTextVersion' => 'v1',
+        ])->assertOk();
+
+        $initiator = PartnerLink::first()->participants()->where('role', 'initiator')->first();
+        $this->assertSame('anna@example.com', $initiator->email);
     }
 
     #[Test]

@@ -14,6 +14,7 @@ use App\Models\StyleProfile;
 use App\Repositories\QuizResultRepository;
 use App\Services\AccentColorSelector;
 use App\Services\PartnerComparisonService;
+use App\Services\PartnerReportMailer;
 use App\Services\QuizResultTextComposer;
 use App\Services\QuizScoringService;
 use App\Support\PartnerAccessGuard;
@@ -191,12 +192,13 @@ class QuizResultController extends Controller
         Request $request,
         string $uuid,
         PartnerComparisonService $partnerComparisonService,
+        PartnerReportMailer $partnerReportMailer,
     ): JsonResponse {
         $data = $request->validate(['partnerClaimToken' => 'required|string']);
 
         $result = QuizResult::where('uuid', $uuid)->firstOrFail();
 
-        $this->linkPartnerParticipant($data['partnerClaimToken'], $result, $partnerComparisonService);
+        $this->linkPartnerParticipant($data['partnerClaimToken'], $result, $partnerComparisonService, $partnerReportMailer);
 
         return response()->json(['ok' => true]);
     }
@@ -213,6 +215,7 @@ class QuizResultController extends Controller
         string $partnerClaimToken,
         QuizResult $result,
         PartnerComparisonService $partnerComparisonService,
+        PartnerReportMailer $partnerReportMailer,
     ): void {
         $participant = PartnerAccessGuard::resolve($partnerClaimToken);
 
@@ -235,9 +238,20 @@ class QuizResultController extends Controller
             'completed_at' => now(),
         ]);
 
-        $partnerComparisonService->compareAndStore($link->fresh());
+        $link = $link->fresh();
+        $comparison = $partnerComparisonService->compareAndStore($link);
 
         PartnerEvent::record('partner_completed', $link->id);
+
+        // De initiator kreeg bij het aanmaken van de uitnodiging (PartnerLinkController::create())
+        // de kans om een e-mailadres op te geven — nu de vergelijking klaarstaat, versturen we die
+        // automatisch, zonder dat de initiator terug hoeft te komen om het zelf aan te vragen (die
+        // link/dat toegangstoken is anders zijn/haar enige toegang, en kan nooit opnieuw opgevraagd
+        // worden — zie App\Support\PartnerToken).
+        $initiatorParticipant = $link->participants()->where('role', PartnerParticipant::ROLE_INITIATOR)->first();
+        if ($initiatorParticipant?->email) {
+            $partnerReportMailer->send($initiatorParticipant, $link, $comparison, $initiatorParticipant->email);
+        }
     }
 
     /**
