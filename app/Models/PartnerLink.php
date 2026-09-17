@@ -69,6 +69,13 @@ class PartnerLink extends Model
         return $this->hasMany(PartnerComparison::class);
     }
 
+    /** De (enige) actieve vergelijking — als hasOne/latestOfMany zodat admin-weergaves (zie
+     *  PartnerLinkResource) 'm net als een gewone relatie via dot-notatie kunnen tonen. */
+    public function comparison()
+    {
+        return $this->hasOne(PartnerComparison::class, 'partner_link_id')->latestOfMany();
+    }
+
     public function isExpired(): bool
     {
         return $this->invite_expires_at->isPast();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PartnerLinkPdfController;
 use App\Http\Controllers\PartnerPageController;
 use App\Http\Controllers\QuizPreviewController;
 use App\Http\Controllers\SubmissionPdfController;
@@ -23,6 +24,11 @@ Route::middleware('auth')->group(function () {
         ->name('admin.submissions.pdf');
     Route::get('/admin/submissions/{submission}/pdf/download', [SubmissionPdfController::class, 'download'])
         ->name('admin.submissions.pdf.download');
+
+    Route::get('/admin/partner-links/{partnerLink}/pdf', [PartnerLinkPdfController::class, 'show'])
+        ->name('admin.partner-links.pdf');
+    Route::get('/admin/partner-links/{partnerLink}/pdf/download', [PartnerLinkPdfController::class, 'download'])
+        ->name('admin.partner-links.pdf.download');
 
     // Alleen-lezen voorbeeldweergave voor de admin (Antwoordopties/Teksten) — zie
     // QuizPreviewController voor waarom dit nooit iets opslaat/verstuurt.
