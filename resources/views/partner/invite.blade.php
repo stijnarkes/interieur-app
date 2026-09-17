@@ -12,9 +12,9 @@
 
     {{-- Bevat de volledig geïsoleerde partnertest — pas zichtbaar zodra de uitnodiging
          daadwerkelijk geclaimd is (zie resources/js/partner/invitePage.js). Hergebruikt precies
-         dezelfde quiz-DOM/vragen/scorelogica als de individuele test, alleen met een
-         partnerClaimToken meegestuurd naar /api/quiz-result — zie initQuiz() in
-         resources/js/quiz/quiz.js. --}}
+         dezelfde quiz-DOM/vragen/scorelogica als de individuele test; pas ná de volledige test
+         (incl. een eventueel gekozen basispalet/accentkleuren) koppelt completePartnerResult() dit
+         resultaat aan de partnerkoppeling — zie initQuiz() in resources/js/quiz/quiz.js. --}}
     <div id="partnerInviteQuizWrap" hidden>
         @include('partials.quiz-app')
     </div>

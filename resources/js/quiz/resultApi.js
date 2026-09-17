@@ -5,17 +5,40 @@
  * wat terugkomt. Zelfde timeout-conventie als remoteConfig.js's fetchQuizConfig().
  *
  * @param {Record<string, string[]>} answers  questionId => geselecteerde option-id's
- * @param {string|null} [partnerClaimToken]  alleen gezet tijdens de geïsoleerde partnertest — zie
- *   QuizResultController::store()'s optionele partnerClaimToken-veld.
  * @returns {Promise<object>} de resultaatpayload, of gooit een Error bij een falende/tragere aanvraag
  */
-async function fetchQuizResult(answers, partnerClaimToken = null) {
+async function fetchQuizResult(answers) {
   const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
 
   const response = await fetch("/api/quiz-result", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
-    body: JSON.stringify(partnerClaimToken ? { answers, partnerClaimToken } : { answers }),
+    body: JSON.stringify({ answers }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) throw new Error(`Onverwachte status ${response.status}`);
+
+  return response.json();
+}
+
+/**
+ * Rondt de geïsoleerde partnertest pas écht af — zie QuizResultController::completePartnerResult().
+ * Wordt pas aangeroepen op het moment dat de bezoeker ook de optionele basispalet-/
+ * accentkleurstappen heeft doorlopen (zie quiz.js's renderResult()), nooit al direct na
+ * fetchQuizResult(): pas dan staan chosen_base_palette/chosen_accent_colors vast, en mag de
+ * partnersnapshot bevroren worden.
+ *
+ * @param  string  resultUuid
+ * @param  string  partnerClaimToken
+ */
+async function completePartnerResult(resultUuid, partnerClaimToken) {
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
+
+  const response = await fetch(`/api/quiz-result/${resultUuid}/complete-partner`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
+    body: JSON.stringify({ partnerClaimToken }),
     signal: AbortSignal.timeout(10000),
   });
 
@@ -73,4 +96,4 @@ async function saveBasePalette(resultUuid, basePaletteId) {
   return response.json();
 }
 
-export { fetchQuizResult, saveBasePalette, saveAccentColors };
+export { fetchQuizResult, saveBasePalette, saveAccentColors, completePartnerResult };

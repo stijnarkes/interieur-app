@@ -23,6 +23,7 @@ Route::middleware('partner.feature')->group(function () {
     Route::post('/partner-links/{inviteToken}/claim', [PartnerLinkController::class, 'claim']);
     Route::get('/partner-links/{inviteToken}/status', [PartnerLinkController::class, 'status']);
     Route::patch('/partner-links/{inviteToken}/revoke', [PartnerLinkController::class, 'revoke']);
+    Route::patch('/quiz-result/{uuid}/complete-partner', [QuizResultController::class, 'completePartnerResult']);
     Route::get('/partner-comparisons/{accessToken}', [PartnerComparisonController::class, 'show']);
     Route::get('/partner-comparisons/{accessToken}/report', [PartnerComparisonController::class, 'report']);
     Route::post('/partner-comparisons/{accessToken}/mail', [PartnerComparisonController::class, 'mail']);

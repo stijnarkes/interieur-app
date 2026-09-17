@@ -6,8 +6,9 @@ import { loadPartnerAccess, savePartnerAccess } from "./partnerState.js";
  * GET /gezamenlijk/uitnodiging/{inviteToken} — sectie 4.B van het implementatieplan. Claimt bij
  * de eerste klik atomair een plek als partner (zie PartnerLinkController::claim()), bewaart het
  * toegangstoken lokaal, en start daarna precies dezelfde, geïsoleerde quiz als de individuele
- * test — alleen met dat toegangstoken meegestuurd zodat het resultaat aan deze partnerkoppeling
- * gekoppeld wordt (zie initQuiz()'s partnerClaimToken-optie).
+ * test (inclusief basispalet-/accentkleurstappen en het eigen aanvraagformulier) — pas ná die
+ * volledige test koppelt initQuiz() dit resultaat aan de partnerkoppeling, zie
+ * QuizResultController::completePartnerResult().
  */
 function initInvitePage(root) {
   const inviteToken = root.dataset.inviteToken;
@@ -35,10 +36,48 @@ function initInvitePage(root) {
     startBtn.disabled = false;
     initQuiz(quizRoot, {
       partnerClaimToken: accessToken,
-      onCompleted: () => {
-        window.location.href = `/gezamenlijk/${accessToken}`;
+      // Vuurt pas als het VOLLEDIGE resultaat van deze bezoeker vaststaat (inclusief een eventueel
+      // gekozen basispalet/accentkleuren) — zie quiz.js's showReportAndLead(). Vervangt hier het
+      // (voor de partnertest zinloze) individuele uitnodigingsblok door een duidelijke link naar
+      // het gezamenlijke resultaat, i.p.v. de bezoeker daar meteen naartoe te sturen — zo ziet
+      // de partner ook nog gewoon zijn/haar eigen rapportteaser/aanvraagformulier hierboven.
+      onCompleted: (result, { completed }) => {
+        renderJointResultCta(accessToken, completed);
       },
     });
+  }
+
+  function renderJointResultCta(accessToken, completed) {
+    const mount = quizRoot.querySelector("#partnerInviteMount");
+    if (!mount) return;
+
+    mount.innerHTML = "";
+    const card = document.createElement("div");
+    card.className = "cta card partner-invite";
+
+    const heading = document.createElement("h3");
+    heading.textContent = completed
+      ? "Jullie gezamenlijke woonstijl staat klaar"
+      : "Bijna klaar";
+    card.appendChild(heading);
+
+    const intro = document.createElement("p");
+    intro.className = "section-intro";
+    intro.textContent = completed
+      ? "Bekijk hier het gezamenlijke advies, gebaseerd op jullie beide uitslagen."
+      : "Je eigen resultaat is opgeslagen, maar het koppelen aan jullie gezamenlijke advies is niet gelukt. Probeer de link hieronder over een paar minuten opnieuw.";
+    card.appendChild(intro);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const link = document.createElement("a");
+    link.className = "btn btn-primary";
+    link.href = `/gezamenlijk/${accessToken}`;
+    link.textContent = "Bekijk jullie gezamenlijke woonstijl";
+    actions.appendChild(link);
+    card.appendChild(actions);
+
+    mount.appendChild(card);
   }
 
   function renderInvalid(preview) {

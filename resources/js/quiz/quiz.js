@@ -1,5 +1,5 @@
 import { QUESTIONS, SECTIONS } from "./data.js";
-import { fetchQuizResult } from "./resultApi.js";
+import { fetchQuizResult, completePartnerResult } from "./resultApi.js";
 import { createQuizState } from "./state.js";
 import { createSectionStepper } from "./components/sectionStepper.js";
 import { createQuizProgress } from "./components/quizProgress.js";
@@ -89,13 +89,17 @@ const STEP_TRANSITION_MS = 350;
  * @param {HTMLElement} root
  * @param {object} [options]
  * @param {string|null} [options.partnerClaimToken] — alleen gezet wanneer dit de geïsoleerde
- *   partnertest is (zie resources/js/partner.js): meegestuurd naar /api/quiz-result zodat de
- *   server dit resultaat aan de juiste partner_participants-rij koppelt (zie
- *   QuizResultController::store()). In de normale, individuele quiz altijd null/ongezet.
- * @param {() => void} [options.onCompleted] — vuurt zodra het resultaat is opgehaald, vóór het
- *   uitnodigingsblok gerenderd wordt. De partnertest gebruikt dit om door te schakelen naar de
- *   gezamenlijke resultaatpagina i.p.v. het (voor haar zinloze) individuele uitnodigingsblok te
- *   tonen — zie resources/js/partner.js.
+ *   partnertest is (zie resources/js/partner.js). De bezoeker doorloopt hiermee exact dezelfde
+ *   test/basispalet-/accentkleurstappen als de individuele quiz; pas ná die stappen (op het moment
+ *   dat anders het uitnodigingsblok zou tonen) koppelt completePartnerResult() dit resultaat aan de
+ *   juiste partner_participants-rij (zie QuizResultController). In de normale, individuele quiz
+ *   altijd null/ongezet.
+ * @param {(result: object, info: {completed: boolean}) => void} [options.onCompleted] — vuurt pas
+ *   nadat het VOLLEDIGE resultaat vaststaat (inclusief een eventueel gekozen basispalet/
+ *   accentkleuren) én de server dit aan de partnerkoppeling heeft vastgeplakt — nooit eerder, want
+ *   dan zou de gezamenlijke vergelijking deze deelnemer altijd zonder gekozen kleuren laten zien.
+ *   `info.completed` is `false` als die laatste serverkoppeling onverwacht mislukte. Vervangt hier
+ *   het (voor de partnertest zinloze) individuele uitnodigingsblok — zie resources/js/partner.js.
  */
 function initQuiz(root, options = {}) {
   const { partnerClaimToken = null, onCompleted = null } = options;
@@ -406,7 +410,7 @@ function initQuiz(root, options = {}) {
 
     let result;
     try {
-      result = await fetchQuizResult(answers, partnerClaimToken);
+      result = await fetchQuizResult(answers);
     } catch (error) {
       els.styleResultMount.innerHTML = "";
       const errorMessage = document.createElement("p");
@@ -425,18 +429,27 @@ function initQuiz(root, options = {}) {
 
     renderStyleResult(els.styleResultMount, result);
 
-    if (onCompleted) {
-      onCompleted(result);
-    }
-
-    const showReportAndLead = () => {
+    // Pas hier — nooit direct na fetchQuizResult() hierboven — staat het volledige, definitieve
+    // resultaat van déze bezoeker vast (inclusief een eventueel gekozen basispalet/accentkleuren,
+    // zie renderAccentStep()/onDone() hieronder). Dit is dus ook het juiste moment om de
+    // geïsoleerde partnertest af te ronden: eerder afronden zou de partner_snapshot altijd zonder
+    // gekozen kleuren bevriezen, ongeacht wat de bezoeker daarna nog koos.
+    const showReportAndLead = async () => {
       renderReportTeaser(els.reportTeaserMount, { result });
       renderLeadForm(els.leadMount, { result });
       els.leadCard.hidden = false;
 
-      // Nooit tonen tijdens de geïsoleerde partnertest zelf (onCompleted() hierboven regelt dan
-      // al de doorschakeling naar de gezamenlijke resultaatpagina) — zie resources/js/partner.js.
-      if (!partnerClaimToken && els.partnerInviteMount) {
+      if (partnerClaimToken) {
+        let completed = true;
+        try {
+          await completePartnerResult(result.resultUuid, partnerClaimToken);
+        } catch {
+          completed = false;
+        }
+        if (onCompleted) {
+          onCompleted(result, { completed });
+        }
+      } else if (els.partnerInviteMount) {
         renderPartnerInvite(els.partnerInviteMount, { result });
       }
     };

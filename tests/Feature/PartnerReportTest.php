@@ -66,8 +66,11 @@ class PartnerReportTest extends TestCase
         $claim = $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertOk();
         $partnerAccessToken = $claim->json('accessToken');
 
-        $this->postJson('/api/quiz-result', [
+        $partnerResult = $this->postJson('/api/quiz-result', [
             'answers' => ['vloer' => ['beton']],
+        ])->assertOk();
+
+        $this->patchJson("/api/quiz-result/{$partnerResult->json('resultUuid')}/complete-partner", [
             'partnerClaimToken' => $partnerAccessToken,
         ])->assertOk();
 

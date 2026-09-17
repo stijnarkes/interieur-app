@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AccentColor;
+use App\Models\BasePalette;
 use App\Models\PartnerLink;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
@@ -103,8 +104,11 @@ class PartnerAccessTest extends TestCase
         $claim = $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertOk();
         $partnerAccessToken = $claim->json('accessToken');
 
-        $this->postJson('/api/quiz-result', [
+        $partnerResult = $this->postJson('/api/quiz-result', [
             'answers' => ['vloer' => ['beton']],
+        ])->assertOk();
+
+        $this->patchJson("/api/quiz-result/{$partnerResult->json('resultUuid')}/complete-partner", [
             'partnerClaimToken' => $partnerAccessToken,
         ])->assertOk();
 
@@ -119,6 +123,50 @@ class PartnerAccessTest extends TestCase
             $this->assertIsArray($response->json('facts.similarities'));
             $this->assertIsArray($response->json('facts.differences'));
         }
+    }
+
+    /**
+     * Regressie: de partner_snapshot werd eerder al bevroren zodra /api/quiz-result binnenkwam —
+     * ruim vóórdat de bezoeker de kans kreeg om een basispalet/accentkleur te kiezen, dus die
+     * keuzes stonden nooit in de gezamenlijke uitslag (alleen de primaire stijl). Dit toetst dat de
+     * daadwerkelijk gekozen kleuren er nu wél in staan, doordat completePartnerResult() pas
+     * aangeroepen wordt nádat die keuzes zijn opgeslagen — zie quiz.js's showReportAndLead().
+     */
+    #[Test]
+    public function de_gekozen_basiskleuren_en_accentkleuren_van_de_partner_komen_terug_in_de_gezamenlijke_uitslag(): void
+    {
+        BasePalette::create([
+            'style_key' => 'modern', 'name' => 'Licht en fris',
+            'description' => 'Testomschrijving', 'colors' => [['name' => 'Wit', 'hex' => '#FFFFFF']],
+            'sort_order' => 10, 'is_active' => true,
+        ]);
+        AccentColor::create([
+            'name' => 'Antraciet', 'hex' => '#2B2B2B', 'style_keys' => ['modern'],
+            'sort_order' => 10, 'is_active' => true,
+        ]);
+
+        [$inviteToken] = $this->makeInvite();
+
+        $claim = $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertOk();
+        $partnerAccessToken = $claim->json('accessToken');
+
+        $partnerResult = $this->postJson('/api/quiz-result', [
+            'answers' => ['vloer' => ['beton']],
+        ])->assertOk();
+        $resultUuid = $partnerResult->json('resultUuid');
+        $paletteId = $partnerResult->json('basePaletteOptions.0.id');
+        $accentColorId = $partnerResult->json('accentColorOptions.0.id');
+
+        $this->patchJson("/api/quiz-result/{$resultUuid}/base-palette", ['basePaletteId' => $paletteId])->assertOk();
+        $this->patchJson("/api/quiz-result/{$resultUuid}/accent-colors", ['accentColorIds' => [$accentColorId]])->assertOk();
+
+        $this->patchJson("/api/quiz-result/{$resultUuid}/complete-partner", [
+            'partnerClaimToken' => $partnerAccessToken,
+        ])->assertOk();
+
+        $link = PartnerLink::first()->fresh();
+        $this->assertSame('Licht en fris', $link->partner_snapshot['chosen_base_palette']['name']);
+        $this->assertSame('Antraciet', $link->partner_snapshot['chosen_accent_colors'][0]['name']);
     }
 
     #[Test]

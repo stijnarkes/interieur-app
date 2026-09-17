@@ -36,23 +36,17 @@ class QuizResultController extends Controller
         QuizResultRepository $repository,
         QuizResultTextComposer $textComposer,
         AccentColorSelector $accentColorSelector,
-        PartnerComparisonService $partnerComparisonService,
     ): JsonResponse {
         $data = $request->validate([
             'answers' => 'required|array',
             'answers.*' => 'array',
             'answers.*.*' => 'string',
-            'partnerClaimToken' => 'nullable|string',
         ]);
 
         $answers = $this->onlyValidAnswers($data['answers']);
 
         $computed = $scoring->compute($answers);
         $result = $repository->store($answers, $computed);
-
-        if (! empty($data['partnerClaimToken'])) {
-            $this->linkPartnerParticipant($data['partnerClaimToken'], $result, $partnerComparisonService);
-        }
 
         $advice = $textComposer->build($result);
 
@@ -186,12 +180,34 @@ class QuizResultController extends Controller
     }
 
     /**
-     * Koppelt een net afgeronde, geïsoleerde partnertest aan de bijbehorende
-     * partner_participants-rij (aangemaakt bij PartnerLinkController::claim()) en start meteen,
-     * synchroon, de vergelijking — zelfde synchrone patroon als PDF/mail in QuizLeadController,
-     * geen queue nodig. Een ongeldig/onbekend/reeds-gebruikt token wordt bewust stilzwijgend
-     * genegeerd: de individuele test van déze bezoeker is en blijft dan gewoon geldig, alleen
-     * zonder partnerkoppeling — nooit de hele quizinzending laten mislukken op een kapot token.
+     * Rondt de geïsoleerde partnertest pas écht af nadat de bezoeker ook de optionele basispalet-/
+     * accentkleurstappen heeft doorlopen — quiz.js roept dit expliciet aan op het moment dat het
+     * anders showReportAndLead() zou tonen (zie renderResult()), NOOIT al bij store() zelf. Dat is
+     * bewust: op het moment van store() staan chosen_base_palette/chosen_accent_colors nog niet
+     * vast, en zou de bevroren partner_snapshot (en dus de hele vergelijking) een deelnemer altijd
+     * zonder gekozen kleuren laten zien, ongeacht wat die daarna nog koos.
+     */
+    public function completePartnerResult(
+        Request $request,
+        string $uuid,
+        PartnerComparisonService $partnerComparisonService,
+    ): JsonResponse {
+        $data = $request->validate(['partnerClaimToken' => 'required|string']);
+
+        $result = QuizResult::where('uuid', $uuid)->firstOrFail();
+
+        $this->linkPartnerParticipant($data['partnerClaimToken'], $result, $partnerComparisonService);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Koppelt een afgeronde, geïsoleerde partnertest aan de bijbehorende partner_participants-rij
+     * (aangemaakt bij PartnerLinkController::claim()) en start meteen, synchroon, de vergelijking —
+     * zelfde synchrone patroon als PDF/mail in QuizLeadController, geen queue nodig. Een ongeldig/
+     * onbekend/reeds-gebruikt token wordt bewust stilzwijgend genegeerd: de individuele test van
+     * déze bezoeker is en blijft dan gewoon geldig, alleen zonder partnerkoppeling — nooit de hele
+     * afronding laten mislukken op een kapot token.
      */
     private function linkPartnerParticipant(
         string $partnerClaimToken,
