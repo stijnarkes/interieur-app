@@ -436,8 +436,18 @@ function initQuiz(root, options = {}) {
     // gekozen kleuren bevriezen, ongeacht wat de bezoeker daarna nog koos.
     const showReportAndLead = async () => {
       renderReportTeaser(els.reportTeaserMount, { result });
-      renderLeadForm(els.leadMount, { result });
       els.leadCard.hidden = false;
+
+      renderLeadForm(els.leadMount, {
+        result,
+        // Het uitnodigingsblok biedt een "stuur me een seintje"-vinkje aan dat het e-mailadres
+        // hergebruikt dat de bezoeker hier net invulde (zie partnerInvite.js) — dus pas tonen
+        // zodra dat adres daadwerkelijk is opgeslagen (server-side, via Submission), niet al
+        // ernaast terwijl het formulier nog leeg kan zijn.
+        onSubmitted: !partnerClaimToken && els.partnerInviteMount
+          ? () => renderPartnerInvite(els.partnerInviteMount, { result })
+          : undefined,
+      });
 
       if (partnerClaimToken) {
         let completed = true;
@@ -449,8 +459,6 @@ function initQuiz(root, options = {}) {
         if (onCompleted) {
           onCompleted(result, { completed });
         }
-      } else if (els.partnerInviteMount) {
-        renderPartnerInvite(els.partnerInviteMount, { result });
       }
     };
 

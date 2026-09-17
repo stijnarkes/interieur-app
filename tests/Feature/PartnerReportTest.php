@@ -133,13 +133,14 @@ class PartnerReportTest extends TestCase
     }
 
     /**
-     * De initiator kan bij het aanmaken van de uitnodiging al een e-mailadres opgeven — dat is
-     * zijn/haar enige garantie op het rapport, want het toegangstoken/de link kan daarna nooit
-     * opnieuw opgevraagd worden (zie App\Support\PartnerToken). Zodra de partner de test afrondt,
-     * moet die mail automatisch verstuurd worden, zonder dat de initiator er zelf om hoeft te vragen.
+     * De initiator kan bij het aanmaken van de uitnodiging het "seintje"-vinkje aanzetten, dat het
+     * adres van het eigen aanvraagformulier hergebruikt (zie Submission) — dat is zijn/haar enige
+     * garantie op het rapport, want het toegangstoken/de link kan daarna nooit opnieuw opgevraagd
+     * worden (zie App\Support\PartnerToken). Zodra de partner de test afrondt, moet die mail
+     * automatisch verstuurd worden, zonder dat de initiator er zelf om hoeft te vragen.
      */
     #[Test]
-    public function een_initiator_die_bij_het_aanmaken_een_adres_opgaf_krijgt_het_rapport_automatisch_zodra_de_partner_klaar_is(): void
+    public function een_initiator_die_het_seintje_vinkje_aanzette_krijgt_het_rapport_automatisch_zodra_de_partner_klaar_is(): void
     {
         Mail::fake();
 
@@ -147,10 +148,13 @@ class PartnerReportTest extends TestCase
             'uuid' => (string) Str::uuid(), 'answers' => ['vloer' => ['eiken']],
             'style_scores' => ['japandi' => 1], 'primary_style' => 'japandi',
         ]);
+        \App\Models\Submission::create([
+            'quiz_result_id' => $result->id, 'style' => 'Japandi', 'email' => 'anna@example.com',
+        ]);
 
         $create = $this->postJson('/api/partner-links', [
             'resultUuid' => $result->uuid,
-            'email' => 'anna@example.com',
+            'notifyByEmail' => true,
             'shareConfirmationTextVersion' => 'v1',
         ])->assertOk();
         $inviteToken = Str::afterLast($create->json('inviteUrl'), '/');

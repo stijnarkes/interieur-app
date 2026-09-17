@@ -8,6 +8,12 @@ const SHARE_CONFIRMATION_TEXT_VERSION = "v1";
  * QuizSetting::partner_feature_enabled/EnsurePartnerFeatureEnabled) — dit component doet dan
  * bewust helemaal niets, niet eens een lege kaart, i.p.v. de server een 404 te laten teruggeven.
  *
+ * Wordt pas gerenderd nadat het aanvraagformulier hierboven (lead.js) succesvol is verstuurd — zie
+ * quiz.js's showReportAndLead()/onSubmitted — zodat het "stuur me een seintje"-vinkje hieronder
+ * altijd een al bekend e-mailadres kan hergebruiken (server-side opgezocht via de Submission-rij
+ * die dat formulier aanmaakte, zie PartnerLinkController::create()) i.p.v. dat adres hier nogmaals
+ * uit te vragen.
+ *
  * @param {HTMLElement} container
  * @param {{result: object}} params  result.resultUuid is vereist (zie QuizResultController::store()).
  */
@@ -32,15 +38,15 @@ function renderPartnerInvite(container, { result }) {
   card.appendChild(intro);
 
   // Optioneel: de link naar het gezamenlijke resultaat kan (bewust, zie App\Support\PartnerToken)
-  // nooit achteraf opnieuw opgevraagd worden — wie 'm niet bewaart en geen adres opgeeft, moet dus
-  // zelf de "Kopieer link"-knop hieronder gebruiken vóórdat deze pagina verdwijnt.
-  const emailField = document.createElement("div");
-  emailField.className = "field";
-  emailField.innerHTML = `
-    <label for="partnerNotifyEmail">Wil je een seintje zodra jullie gezamenlijke advies klaarstaat? (optioneel)</label>
-    <input id="partnerNotifyEmail" type="email" autocomplete="email" placeholder="Jouw e-mailadres" />
+  // nooit achteraf opnieuw opgevraagd worden — wie 'm niet bewaart en dit vinkje niet aanzet, moet
+  // dus zelf de "Kopieer link"-knop hieronder gebruiken vóórdat deze pagina verdwijnt.
+  const notifyField = document.createElement("div");
+  notifyField.className = "field checkbox-row";
+  notifyField.innerHTML = `
+    <input id="partnerNotifyByEmail" type="checkbox" checked />
+    <label for="partnerNotifyByEmail">Stuur mij ook een seintje op het e-mailadres hierboven zodra jullie gezamenlijke advies klaarstaat</label>
   `;
-  card.appendChild(emailField);
+  card.appendChild(notifyField);
 
   const actions = document.createElement("div");
   actions.className = "actions";
@@ -59,11 +65,7 @@ function renderPartnerInvite(container, { result }) {
   container.appendChild(card);
 
   inviteBtn.addEventListener("click", async () => {
-    const email = card.querySelector("#partnerNotifyEmail")?.value.trim() || "";
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      status.textContent = "Vul een geldig e-mailadres in, of laat het veld leeg.";
-      return;
-    }
+    const notifyByEmail = card.querySelector("#partnerNotifyByEmail")?.checked ?? false;
 
     inviteBtn.disabled = true;
     status.textContent = "Bezig met aanmaken...";
@@ -75,7 +77,7 @@ function renderPartnerInvite(container, { result }) {
         headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrf },
         body: JSON.stringify({
           resultUuid: result.resultUuid,
-          email: email || undefined,
+          notifyByEmail,
           shareConfirmationTextVersion: SHARE_CONFIRMATION_TEXT_VERSION,
         }),
         signal: AbortSignal.timeout(10000),
@@ -83,7 +85,7 @@ function renderPartnerInvite(container, { result }) {
 
       if (!response.ok) throw new Error();
       const data = await response.json();
-      renderInviteLink(data, email);
+      renderInviteLink(data, notifyByEmail);
     } catch {
       status.textContent = "Het aanmaken van de uitnodiging is niet gelukt. Probeer het nog eens.";
       inviteBtn.disabled = false;
@@ -130,7 +132,7 @@ function renderPartnerInvite(container, { result }) {
     return linkActions;
   }
 
-  function renderInviteLink(data, notifyEmail) {
+  function renderInviteLink(data, notifyByEmail) {
     card.innerHTML = "";
 
     const doneHeading = document.createElement("h3");
@@ -157,16 +159,16 @@ function renderPartnerInvite(container, { result }) {
     shareActions.appendChild(whatsappLink);
 
     // De enige plek waar dit toegangstoken ooit getoond wordt — bewust nooit opnieuw op te vragen
-    // (zie App\Support\PartnerToken). Zonder bewaarde link/opgegeven e-mailadres is deze uitslag
-    // voor de initiator dus onbereikbaar zodra deze pagina verdwijnt.
+    // (zie App\Support\PartnerToken). Zonder bewaarde link/aangevinkt seintje is deze uitslag voor
+    // de initiator dus onbereikbaar zodra deze pagina verdwijnt.
     if (data.resultUrl) {
       const divider = document.createElement("hr");
       card.appendChild(divider);
 
       renderCopyableLink(card, {
-        label: notifyEmail
-          ? `Bewaar ook deze link naar jullie gezamenlijke resultaat — we sturen 'm bovendien naar ${notifyEmail} zodra die klaarstaat.`
-          : "Bewaar deze link — hierop verschijnt straks jullie gezamenlijke resultaat. Zonder deze link (of een opgegeven e-mailadres) kunnen wij 'm niet opnieuw voor je opzoeken.",
+        label: notifyByEmail
+          ? "Bewaar ook deze link naar jullie gezamenlijke resultaat — we sturen 'm bovendien naar je e-mailadres zodra die klaarstaat."
+          : "Bewaar deze link — hierop verschijnt straks jullie gezamenlijke resultaat. Zonder deze link kunnen wij 'm niet opnieuw voor je opzoeken.",
         value: data.resultUrl,
         ariaLabel: 'Link naar jullie gezamenlijke resultaat',
       });

@@ -6,6 +6,7 @@ use App\Models\PartnerEvent;
 use App\Models\PartnerLink;
 use App\Models\PartnerParticipant;
 use App\Models\QuizResult;
+use App\Models\Submission;
 use App\Support\PartnerAccessGuard;
 use App\Support\PartnerSnapshotBuilder;
 use App\Support\PartnerToken;
@@ -31,11 +32,19 @@ class PartnerLinkController extends Controller
         $data = $request->validate([
             'resultUuid' => 'required|uuid|exists:quiz_results,uuid',
             'name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'notifyByEmail' => 'nullable|boolean',
             'shareConfirmationTextVersion' => 'required|string|max:100',
         ]);
 
         $quizResult = QuizResult::where('uuid', $data['resultUuid'])->firstOrFail();
+
+        // Nooit een los e-mailadres van de client aannemen: hergebruikt bewust het adres dat de
+        // bezoeker al invulde bij het aanvraagformulier voor het eigen individuele rapport (zie
+        // QuizLeadController/Submission) — dat scheelt een dubbel veld, en het uitnodigingsblok
+        // toont dit vinkje sowieso pas nadat dat formulier al verstuurd is (zie quiz.js).
+        $notifyEmail = $request->boolean('notifyByEmail')
+            ? Submission::where('quiz_result_id', $quizResult->id)->value('email')
+            : null;
 
         $existing = PartnerLink::where('initiator_quiz_result_id', $quizResult->id)
             ->whereNotIn('status', [PartnerLink::STATUS_REVOKED, PartnerLink::STATUS_EXPIRED])
@@ -49,7 +58,7 @@ class PartnerLinkController extends Controller
         $inviteToken = PartnerToken::generate();
         $accessToken = PartnerToken::generate();
 
-        $link = DB::transaction(function () use ($quizResult, $data, $inviteToken, $accessToken) {
+        $link = DB::transaction(function () use ($quizResult, $data, $inviteToken, $accessToken, $notifyEmail) {
             $link = PartnerLink::create([
                 'initiator_quiz_result_id' => $quizResult->id,
                 'initiator_snapshot' => PartnerSnapshotBuilder::build($quizResult),
@@ -70,7 +79,7 @@ class PartnerLinkController extends Controller
                 // linkPartnerParticipant() de gezamenlijke PDF hier automatisch naartoe (via
                 // PartnerReportMailer) — anders is de link hieronder de enige toegang, en die kan
                 // (bewust, zie PartnerToken) nooit achteraf opnieuw opgevraagd worden.
-                'email' => $data['email'] ?? null,
+                'email' => $notifyEmail,
             ]);
 
             return $link;

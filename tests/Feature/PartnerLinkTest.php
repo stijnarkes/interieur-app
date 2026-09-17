@@ -93,19 +93,42 @@ class PartnerLinkTest extends TestCase
         $this->assertNull($second->json('resultUrl'));
     }
 
+    /**
+     * Nooit een los e-mailadres van de client aannemen: het "seintje"-vinkje hergebruikt het adres
+     * dat de bezoeker al invulde bij het eigen aanvraagformulier (zie Submission/QuizLeadController)
+     * — vandaar dat dit alleen werkt als daar al een Submission voor bestaat.
+     */
     #[Test]
-    public function een_opgegeven_e_mailadres_wordt_bewaard_op_de_initiator_deelname(): void
+    public function het_seintje_vinkje_hergebruikt_het_adres_uit_het_eigen_aanvraagformulier(): void
     {
         $result = $this->makeQuizResult();
+        \App\Models\Submission::create([
+            'quiz_result_id' => $result->id, 'style' => 'Japandi', 'email' => 'anna@example.com',
+        ]);
 
         $this->postJson('/api/partner-links', [
             'resultUuid' => $result->uuid,
-            'email' => 'anna@example.com',
+            'notifyByEmail' => true,
             'shareConfirmationTextVersion' => 'v1',
         ])->assertOk();
 
         $initiator = PartnerLink::first()->participants()->where('role', 'initiator')->first();
         $this->assertSame('anna@example.com', $initiator->email);
+    }
+
+    #[Test]
+    public function zonder_aanvraagformulier_blijft_het_seintje_vinkje_zonder_effect(): void
+    {
+        $result = $this->makeQuizResult();
+
+        $this->postJson('/api/partner-links', [
+            'resultUuid' => $result->uuid,
+            'notifyByEmail' => true,
+            'shareConfirmationTextVersion' => 'v1',
+        ])->assertOk();
+
+        $initiator = PartnerLink::first()->participants()->where('role', 'initiator')->first();
+        $this->assertNull($initiator->email);
     }
 
     #[Test]
