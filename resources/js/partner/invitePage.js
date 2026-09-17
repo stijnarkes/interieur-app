@@ -107,7 +107,7 @@ function initInvitePage(root) {
 
     const intro = document.createElement("p");
     intro.className = "section-intro";
-    intro.textContent = "Doe de test onafhankelijk van je partner, want jullie antwoorden blijven voor elkaar verborgen. Aan het eind krijg je, net als je partner, je eigen persoonlijke woonstijl, plus een gezamenlijk advies over hoe jullie stijlen mooi met elkaar te combineren zijn.";
+    intro.textContent = "Doe de test onafhankelijk van je partner, want jullie antwoorden blijven voor elkaar verborgen. Aan het eind krijg je, net als je partner, je eigen persoonlijke woonstijl, plus een gezamenlijk advies over hoe je jullie stijlen mooi kunt combineren in huis.";
     landingMount.appendChild(intro);
 
     const actions = document.createElement("div");
