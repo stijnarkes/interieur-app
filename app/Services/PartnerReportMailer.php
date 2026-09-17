@@ -44,7 +44,11 @@ class PartnerReportMailer
                 $comparison->update(['pdf_path' => $pdfPath]);
             }
 
-            Mail::to($email)->send(new PartnerReportMail($link, $pdfPath));
+            $recipientName = $participant->role === PartnerParticipant::ROLE_INITIATOR
+                ? $link->initiator_name
+                : $link->partner_name;
+
+            Mail::to($email)->send(new PartnerReportMail($link, $pdfPath, $recipientName));
 
             $participant->update(['mail_status' => 'sent']);
             PartnerEvent::record('report_requested', $link->id);

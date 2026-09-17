@@ -73,7 +73,7 @@ class StyleCombinationAdviceSeeder extends Seeder
             ['hotelLuxe', 'modern', [
                 'title' => 'Hotel luxe & Modern',
                 'intro' => 'Strak en rustig versus rijk en sfeervol: samen vinden jullie een interieur dat er verzorgd en volwassen uitziet, met precies genoeg glans om niet kil te worden.',
-                'basis_tip' => "Ga uit van moderns lichte, neutrale basis (wit, greige, lichtgrijs) en voeg de warmte van hotel luxe toe via hout en textiel — zo blijft het rustig, maar niet steriel.",
+                'basis_tip' => "Ga uit van modern's lichte, neutrale basis (wit, greige, lichtgrijs) en voeg de warmte van hotel luxe toe via hout en textiel — zo blijft het rustig, maar niet steriel.",
                 'materials_tip' => 'Laat de strakke, gladde oppervlakken van modern (glas, metaal) in gesprek gaan met fluweel of marmer uit hotel luxe — precies dat contrast maakt een interieur interessant in plaats van kil of te druk.',
                 'accent_tip' => 'Antraciet of zwart, gecombineerd met één warmere tint zoals champagne of chocoladebruin, geeft de rust van modern en de warmte van hotel luxe tegelijk.',
                 'base_palette_style_key' => 'modern',
@@ -118,7 +118,7 @@ class StyleCombinationAdviceSeeder extends Seeder
             ['japandi', 'modern', [
                 'title' => 'Japandi & Modern',
                 'intro' => 'Allebei houden jullie van rust en eenvoud — het verschil is de temperatuur: warm en zacht tegenover strak en koel.',
-                'basis_tip' => "Neem moderns lichte, neutrale basis en voeg Japandi's warme houttinten toe — dat voorkomt dat het geheel te kil aanvoelt, zonder de rust van modern te verliezen.",
+                'basis_tip' => "Neem modern's lichte, neutrale basis en voeg Japandi's warme houttinten toe — dat voorkomt dat het geheel te kil aanvoelt, zonder de rust van modern te verliezen.",
                 'materials_tip' => "Combineer strakke, gladde oppervlakken uit modern met natuurlijk hout en linnen uit Japandi — precies die balans tussen strak en zacht maakt deze twee stijlen een sterk koppel.",
                 'accent_tip' => "Antraciet of zwart als accent past bij modern; hou de hoeveelheid beperkt zodat Japandi's rust intact blijft.",
                 'base_palette_style_key' => 'japandi',
@@ -156,7 +156,7 @@ class StyleCombinationAdviceSeeder extends Seeder
                 'intro' => 'Strak en rustig tegenover fel en speels — dit koppel vindt elkaar in een interieur waar kleur juist opvalt dóórdat de rest zo rustig is.',
                 'basis_tip' => 'Houd de basis strak en neutraal, zoals modern dat wil — wit, greige, lichtgrijs — zodat er letterlijk ruimte overblijft voor felle kleuraccenten.',
                 'materials_tip' => 'Gladde, strakke materialen als glas en metaal vormen een mooi decor voor glanzend keramiek of gelakte meubels — het contrast maakt beide stijlen sterker.',
-                'accent_tip' => 'Eén heldere kleur, zoals kobaltblauw of felroze, op een verder rustige achtergrond geeft precies de impact die kleur explosie zoekt, zonder moderns rust te verstoren.',
+                'accent_tip' => "Eén heldere kleur, zoals kobaltblauw of felroze, op een verder rustige achtergrond geeft precies de impact die kleur explosie zoekt, zonder modern's rust te verstoren.",
                 'base_palette_style_key' => 'modern',
                 'version' => 1,
             ]],
@@ -181,8 +181,8 @@ class StyleCombinationAdviceSeeder extends Seeder
             ['landelijk', 'modern', [
                 'title' => 'Landelijk & Modern',
                 'intro' => 'Warm en vertrouwd tegenover strak en fris — samen zoeken jullie een huis dat er verzorgd uitziet zonder de gezelligheid te verliezen.',
-                'basis_tip' => 'Neem moderns lichte, rustige basis (wit, greige, lichtgrijs) en voeg landelijke warmte toe via hout en textiel — dat voorkomt dat het geheel kil aanvoelt.',
-                'materials_tip' => 'Combineer moderns strakke oppervlakken met landelijk hout en linnen — het ruwere, natuurlijke materiaal zorgt voor precies de balans die beide stijlen nodig hebben.',
+                'basis_tip' => "Neem modern's lichte, rustige basis (wit, greige, lichtgrijs) en voeg landelijke warmte toe via hout en textiel — dat voorkomt dat het geheel kil aanvoelt.",
+                'materials_tip' => "Combineer modern's strakke oppervlakken met landelijk hout en linnen — het ruwere, natuurlijke materiaal zorgt voor precies de balans die beide stijlen nodig hebben.",
                 'accent_tip' => 'Warm bruin of antraciet werkt bij allebei — hou het bij één duidelijke kleur zodat het rustig en verzorgd blijft.',
                 'base_palette_style_key' => 'modern',
                 'version' => 1,
@@ -208,7 +208,7 @@ class StyleCombinationAdviceSeeder extends Seeder
             ['modern', 'scandinavisch', [
                 'title' => 'Modern & Scandinavisch',
                 'intro' => 'Strak en koel tegenover licht en gezellig — samen vinden jullie een huis dat er verzorgd uitziet, maar wel warm blijft aanvoelen.',
-                'basis_tip' => 'Beide stijlen beginnen met een lichte, neutrale basis — voeg Scandinavisch hout en zachte stoffen toe aan moderns strakkere vormen zodat het geheel niet te koud wordt.',
+                'basis_tip' => "Beide stijlen beginnen met een lichte, neutrale basis — voeg Scandinavisch hout en zachte stoffen toe aan modern's strakkere vormen zodat het geheel niet te koud wordt.",
                 'materials_tip' => 'Gladde oppervlakken uit modern (glas, metaal) in combinatie met licht hout en wol uit Scandinavisch design zorgen voor precies genoeg warmte in een verder strakke ruimte.',
                 'accent_tip' => 'Een zachte pasteltint naast antraciet geeft het beste van beide: de rust van modern, de gezelligheid van Scandinavisch.',
                 'base_palette_style_key' => null,

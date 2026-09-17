@@ -17,12 +17,17 @@ class PartnerReportMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /** @param  string  $pdfPath  storage-key op config('filesystems.quiz_pdfs_disk'), zie PartnerReportPdfService */
-    public function __construct(public PartnerLink $link, public string $pdfPath) {}
+    /**
+     * @param  string  $pdfPath  storage-key op config('filesystems.quiz_pdfs_disk'), zie PartnerReportPdfService
+     * @param  ?string  $recipientName  naam van déze ontvanger (initiator of partner) — de mail gaat
+     *   per deelnemer apart uit (zie PartnerReportMailer), dus de aanhef spreekt bewust alleen
+     *   diegene aan, niet allebei de namen tegelijk.
+     */
+    public function __construct(public PartnerLink $link, public string $pdfPath, public ?string $recipientName = null) {}
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Jullie gezamenlijke woonstijl — Boer Staphorst');
+        return new Envelope(subject: 'Jullie gezamenlijke woonstijl van Boer Staphorst');
     }
 
     public function content(): Content
@@ -30,6 +35,7 @@ class PartnerReportMail extends Mailable
         return new Content(view: 'emails.partner-result', with: [
             'siteContent' => SiteContent::current(),
             'link' => $this->link,
+            'recipientName' => $this->recipientName,
         ]);
     }
 

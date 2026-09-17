@@ -120,6 +120,40 @@ class PartnerReportTest extends TestCase
         $this->assertSame('sent', $participant->mail_status);
     }
 
+    /**
+     * Regressie: de mail ging per deelnemer apart uit, maar sprak altijd beide namen tegelijk aan
+     * ("Beste Anna & Bram,") — ook in Bram's eigen mail. De aanhef moet alleen de daadwerkelijke
+     * ontvanger noemen.
+     */
+    #[Test]
+    public function de_mail_spreekt_alleen_de_daadwerkelijke_ontvanger_aan(): void
+    {
+        Mail::fake();
+        [$initiatorAccessToken, $partnerAccessToken] = $this->completedLink();
+        PartnerLink::first()->update(['initiator_name' => 'Anna', 'partner_name' => 'Bram']);
+
+        $this->postJson("/api/partner-comparisons/{$initiatorAccessToken}/mail", ['email' => 'anna@example.com'])->assertOk();
+        $this->postJson("/api/partner-comparisons/{$partnerAccessToken}/mail", ['email' => 'bram@example.com'])->assertOk();
+
+        Mail::assertSent(PartnerReportMail::class, function (PartnerReportMail $mail) {
+            if (! $mail->hasTo('anna@example.com')) {
+                return true;
+            }
+            $html = $mail->render();
+
+            return str_contains($html, 'Beste Anna,') && ! str_contains($html, 'Bram');
+        });
+
+        Mail::assertSent(PartnerReportMail::class, function (PartnerReportMail $mail) {
+            if (! $mail->hasTo('bram@example.com')) {
+                return true;
+            }
+            $html = $mail->render();
+
+            return str_contains($html, 'Beste Bram,') && ! str_contains($html, 'Anna');
+        });
+    }
+
     #[Test]
     public function een_tweede_mailaanvraag_van_dezelfde_deelnemer_verstuurt_nooit_een_tweede_mail(): void
     {

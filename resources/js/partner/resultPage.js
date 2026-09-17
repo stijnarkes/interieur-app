@@ -69,7 +69,7 @@ function initResultPage(root) {
     mount.innerHTML = "";
     const body = document.createElement("p");
     body.className = "section-intro";
-    body.textContent = "Jullie advies wordt samengesteld, een moment geduld...";
+    body.textContent = "Jullie advies wordt samengesteld. Nog even geduld...";
     mount.appendChild(body);
   }
 

@@ -61,8 +61,8 @@
             <h1>Jullie gezamenlijke woonstijl</h1>
         </div>
         <div class="body">
-            <p>Beste {{ $link->initiator_name }} &amp; {{ $link->partner_name }},</p>
-            <p>Jullie gezamenlijke woonstijladvies staat als PDF bij deze e-mail — met wat jullie delen, waarin jullie verschillen, en een advies dat bij beide stijlen past.</p>
+            <p>Beste{{ $recipientName ? ' '.$recipientName : '' }},</p>
+            <p>Jullie gezamenlijke woonstijladvies staat als PDF bij deze e-mail, met wat jullie delen, waarin jullie verschillen, en een advies dat bij beide stijlen past.</p>
             @if ($siteContent->email_cta_url && $siteContent->email_cta_label)
                 <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener">{{ $siteContent->email_cta_label }}</a>
             @endif
