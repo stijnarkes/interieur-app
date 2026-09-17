@@ -78,6 +78,10 @@ const LEAD_FORM_COPY = {
     "Een persoonlijk moodboard en interieuradvies",
   ],
   resendLabel: "Opnieuw versturen",
+  // Zelfde soort knop als de bevestigingsmail (email_cta_label/email_cta_url) — eigen velden i.p.v.
+  // die hergebruiken, zodat tekst/link voor mail en scherm apart bijgesteld kunnen worden.
+  ctaLabel: "Plan een interieuradvies",
+  ctaUrl: "https://www.boer-staphorst.nl/wonen/interieuradvies",
 };
 
 export { RESULT_HERO_COPY, REPORT_TEASER_COPY, BASE_PALETTE_STEP_COPY, ACCENT_COLOR_STEP_COPY, LEAD_FORM_COPY };

@@ -135,6 +135,8 @@ class QuizConfigController extends Controller
                 'expectTitle' => $siteContent->lead_expect_title,
                 'expectItems' => $siteContent->lead_expect_items,
                 'resendLabel' => $siteContent->lead_resend_label,
+                'ctaLabel' => $siteContent->lead_cta_label,
+                'ctaUrl' => $siteContent->lead_cta_url,
             ],
             'basePaletteStep' => [
                 'title' => $siteContent->base_palette_step_title,

@@ -45,6 +45,8 @@ class SiteContent extends Model
         'lead_expect_title',
         'lead_expect_items',
         'lead_resend_label',
+        'lead_cta_label',
+        'lead_cta_url',
 
         'email_subject',
         'email_header',

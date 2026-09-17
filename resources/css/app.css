@@ -1766,6 +1766,26 @@ a.btn-primary:hover {
   margin-top: 22px;
 }
 
+/* Zelfde soort knop als de bevestigingsmail (zie .cta in emails/quiz-result.blade.php), maar dan
+   op dit scherm — los van .lead-form-success-actions hieronder gezet zodat hij ook op het
+   "aanvraag ontvangen"-scherm (renderQueued() in lead.js, zonder verdere acties) gewoon op
+   zichzelf kan staan. */
+.lead-form-cta {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.lead-form-cta-btn {
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .lead-form-cta-btn {
+    width: auto;
+  }
+}
+
 .lead-form-success-actions {
   display: flex;
   flex-wrap: wrap;

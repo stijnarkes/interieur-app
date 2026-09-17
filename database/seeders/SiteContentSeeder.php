@@ -64,6 +64,8 @@ class SiteContentSeeder extends Seeder
                 'Een persoonlijk moodboard en interieuradvies',
             ],
             'lead_resend_label' => 'Opnieuw versturen',
+            'lead_cta_label' => 'Plan een interieuradvies',
+            'lead_cta_url' => 'https://www.boer-staphorst.nl/wonen/interieuradvies',
 
             'email_subject' => 'Jouw Woonstijl | Boer Staphorst',
             'email_header' => 'Jouw persoonlijke woonstijl',

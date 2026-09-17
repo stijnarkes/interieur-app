@@ -97,6 +97,8 @@ class TekstenPageTest extends TestCase
                 'lead_expect_title' => 'Verwacht-titel',
                 'lead_expect_items' => ['A', 'B'],
                 'lead_resend_label' => 'Opnieuw',
+                'lead_cta_label' => 'Plan advies',
+                'lead_cta_url' => 'https://example.test/advies',
             ])
             ->assertHasNoActionErrors();
 
@@ -104,6 +106,8 @@ class TekstenPageTest extends TestCase
         $this->assertSame('Titel', $content->result_page_title);
         $this->assertSame(['Punt 1', 'Punt 2'], $content->teaser_checklist_items);
         $this->assertSame(['A', 'B'], $content->lead_expect_items);
+        $this->assertSame('Plan advies', $content->lead_cta_label);
+        $this->assertSame('https://example.test/advies', $content->lead_cta_url);
     }
 
     #[Test]

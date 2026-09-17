@@ -263,6 +263,33 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted })
   }
 
   /**
+   * Zelfde soort knop als in de bevestigingsmail (email_cta_label/email_cta_url, zie
+   * QuizResultMail) — hier via lead_cta_label/lead_cta_url (LEAD_FORM_COPY.ctaLabel/ctaUrl), zodat
+   * de tekst/link voor dit scherm apart van de mail bijgesteld kan worden via TekstenPage. Gebruikt
+   * door zowel renderSuccess() als renderQueued(): een bezoeker krijgt bijna altijd de "aanvraag
+   * ontvangen"-variant te zien (het versturen zelf wordt op de achtergrond afgehandeld, zie de
+   * docblock bij submitLead hierboven), dus zonder deze knop ook daar zou de meeste bezoekers 'm
+   * nooit te zien krijgen.
+   */
+  function createCtaBlock() {
+    const cta = document.createElement("div");
+    cta.className = "lead-form-cta";
+
+    const link = document.createElement("a");
+    link.className = "btn btn-primary lead-form-cta-btn";
+    link.href = LEAD_FORM_COPY.ctaUrl;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.innerHTML = `
+      ${LEAD_FORM_COPY.ctaLabel}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    `;
+    cta.appendChild(link);
+
+    return cta;
+  }
+
+  /**
    * Bevestigt alleen dat de aanvraag ontvangen is — geen "opnieuw versturen"-knop hier, want er is
    * nog niets verstuurd om opnieuw te proberen (en de server zou een nieuwe poging binnen enkele
    * minuten toch als dubbele aanvraag negeren, zie QuizLeadController).
@@ -303,6 +330,7 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted })
       expectList.appendChild(li);
     });
     queued.appendChild(expectList);
+    queued.appendChild(createCtaBlock());
 
     container.appendChild(queued);
   }
@@ -347,6 +375,7 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted })
       expectList.appendChild(li);
     });
     success.appendChild(expectList);
+    success.appendChild(createCtaBlock());
 
     const followUp = document.createElement("div");
     followUp.className = "lead-form-success-actions";

@@ -191,6 +191,8 @@ class TekstenPage extends Page implements HasActions, HasForms
                         TextInput::make('lead_expect_title')->label('Tekst boven het lijstje')->required()->maxLength(255),
                         TagsInput::make('lead_expect_items')->label('Lijstje met wat de bezoeker kan verwachten')->helperText('Enter om een regel toe te voegen.'),
                         TextInput::make('lead_resend_label')->label('Knoptekst "opnieuw versturen"')->required()->maxLength(255),
+                        TextInput::make('lead_cta_label')->label('Knoptekst interieuradvies')->helperText('Zelfde soort knop als in de bevestigingsmail — verschijnt op dit scherm zowel direct na verzenden als bij "aanvraag ontvangen".')->required()->maxLength(255),
+                        TextInput::make('lead_cta_url')->label('Knoplink interieuradvies')->url()->required()->maxLength(255),
                     ]),
             ])
             ->action(function (array $data): void {
