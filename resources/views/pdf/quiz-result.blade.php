@@ -256,6 +256,21 @@ body {
     color: #7a5c45;
     font-size: 9pt;
 }
+
+.footer-intro {
+    margin-bottom: 10px;
+}
+
+.cta-button {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: #b7794d;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 9.5pt;
+}
 </style>
 </head>
 <body>
@@ -491,7 +506,12 @@ body {
 @endif
 
 <div class="footer">
-    Wil je jouw woonstijl vertalen naar jouw eigen woonkamer? Plan een interieuradvies bij Boer Staphorst via boer-staphorst.nl/wonen/interieuradvies.
+    @if (!empty($ctaLabel) && !empty($ctaUrl))
+        <div class="footer-intro">Wil je jouw woonstijl vertalen naar jouw eigen woonkamer?</div>
+        <a class="cta-button" href="{{ $ctaUrl }}">{{ $ctaLabel }}</a>
+    @else
+        Wil je jouw woonstijl vertalen naar jouw eigen woonkamer? Plan een interieuradvies bij Boer Staphorst via boer-staphorst.nl/wonen/interieuradvies.
+    @endif
 </div>
 
 </body>

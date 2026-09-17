@@ -94,6 +94,8 @@ body {
     color: #4a3526;
     font-size: 9.5pt;
     margin-top: 10px;
+    /* Voorkomt dat een los adviesblokje halverwege over een paginagrens heen knipt. */
+    page-break-inside: avoid;
 }
 
 .swatch-grid {
@@ -122,14 +124,25 @@ body {
     color: #2d2620;
 }
 
-.page-break {
-    page-break-before: always;
-}
-
 .footer {
     padding: 20px 44px 0;
     color: #7a5c45;
     font-size: 9pt;
+}
+
+.footer-intro {
+    margin-bottom: 10px;
+}
+
+.cta-button {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: #b7794d;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 9.5pt;
 }
 
 .compare-table {
@@ -263,7 +276,7 @@ body {
 @endif
 
 @if (!empty($suggestions['title']))
-<div class="section page-break">
+<div class="section">
     <div class="section-title">{{ $suggestions['title'] }}</div>
     @if (!empty($suggestions['intro']))
         <div class="section-intro">{{ $suggestions['intro'] }}</div>
@@ -282,7 +295,8 @@ body {
 
 <div class="footer">
     @if (!empty($ctaLabel) && !empty($ctaUrl))
-        {{ $ctaLabel }} — {{ $ctaUrl }}
+        <div class="footer-intro">Wil je jullie woonstijl vertalen naar jullie eigen woonkamer?</div>
+        <a class="cta-button" href="{{ $ctaUrl }}">{{ $ctaLabel }}</a>
     @else
         Wil je jullie woonstijl vertalen naar jullie eigen woonkamer? Plan een interieuradvies bij Boer Staphorst via boer-staphorst.nl/wonen/interieuradvies.
     @endif

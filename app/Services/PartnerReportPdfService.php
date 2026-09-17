@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PartnerComparison;
 use App\Models\PartnerLink;
+use App\Models\QuizOption;
 use App\Models\SiteContent;
 use App\Models\StyleProfile;
 use App\Support\PartnerFactPresenter;
@@ -22,7 +23,15 @@ class PartnerReportPdfService
         $styleLabel = fn (?string $key) => $key ? (StyleProfile::forStyle($key)?->label ?? $key) : $key;
         $siteContent = SiteContent::current();
 
-        $resolvedFacts = PartnerFactPresenter::resolveStyleKeys($comparison->facts ?? [], $styleLabel);
+        // Eén keer alle optietitels ophalen i.p.v. per feit/slug een losse query — de tabel is
+        // klein en dit voorkomt N+1 in resolveOptionTitles() hieronder.
+        $optionTitles = QuizOption::query()->pluck('title', 'option_slug');
+        $optionTitle = fn (string $slug): ?string => $optionTitles[$slug] ?? null;
+
+        $resolvedFacts = PartnerFactPresenter::resolveOptionTitles(
+            PartnerFactPresenter::resolveStyleKeys($comparison->facts ?? [], $styleLabel),
+            $optionTitle,
+        );
 
         $pdf = Pdf::loadView('pdf.partner-result', [
             'initiatorName' => $link->initiator_name ?: 'Deelnemer 1',

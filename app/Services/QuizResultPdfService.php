@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\SiteContent;
 use App\Models\Submission;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -18,9 +19,15 @@ class QuizResultPdfService
      */
     public function generate(Submission $submission): string
     {
+        $siteContent = SiteContent::current();
+
         $pdf = Pdf::loadView('pdf.quiz-result', [
             'submission' => $submission,
             'result' => $submission->quiz_result,
+            // Zelfde admin-bewerkbare interieuradvies-CTA als de mail/het bevestigingsscherm (zie
+            // PartnerReportPdfService voor hetzelfde patroon in de gezamenlijke PDF).
+            'ctaLabel' => $siteContent->email_cta_label,
+            'ctaUrl' => $siteContent->email_cta_url,
         ]);
 
         $pdf->setPaper('A4', 'portrait');
