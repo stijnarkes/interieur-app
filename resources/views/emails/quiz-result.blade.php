@@ -86,12 +86,12 @@
 
         .partner-invite .cta {
             margin-top: 0;
+            margin-right: 10px;
         }
 
         .partner-invite .cta-outline {
             display: inline-block;
-            margin-top: 0;
-            margin-left: 10px;
+            margin-top: 10px;
             padding: 11px 20px;
             border-radius: 999px;
             border: 1px solid #b7794d;
