@@ -32,6 +32,9 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            // Losstaand van APP_NAME (die staat op hosting-niveau ingesteld en kan dus per omgeving
+            // afwijken) — dit is de naam die boven in de admin te zien is, ongeacht die instelling.
+            ->brandName('Boer Staphorst Woonstijltest')
             ->login()
             ->colors([
                 'primary' => Color::Amber,
