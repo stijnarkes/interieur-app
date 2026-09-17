@@ -16,8 +16,14 @@ class QuizResultMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /** @param  string  $pdfPath  storage-key op config('filesystems.quiz_pdfs_disk'), zie QuizResultPdfService */
-    public function __construct(public Submission $submission, public string $pdfPath) {}
+    /**
+     * @param  string  $pdfPath  storage-key op config('filesystems.quiz_pdfs_disk'), zie QuizResultPdfService
+     * @param  ?array{inviteUrl: string}  $partnerInvite  gezet zodra GenerateAndSendQuizResultPdfJob
+     *   automatisch een partneruitnodiging aanmaakte (zie PartnerLinkService) — toont dan een extra
+     *   sectie in de mail. Blijft `null` zolang de partnerfunctie uitstaat, dit de partnertest zelf
+     *   is, of het aanmaken onverwacht mislukte (nooit de hoofd-e-mail daarop laten wachten/falen).
+     */
+    public function __construct(public Submission $submission, public string $pdfPath, public ?array $partnerInvite = null) {}
 
     public function envelope(): Envelope
     {
@@ -26,7 +32,10 @@ class QuizResultMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.quiz-result', with: ['siteContent' => SiteContent::current()]);
+        return new Content(view: 'emails.quiz-result', with: [
+            'siteContent' => SiteContent::current(),
+            'partnerInviteUrl' => $this->partnerInvite['inviteUrl'] ?? null,
+        ]);
     }
 
     public function attachments(): array

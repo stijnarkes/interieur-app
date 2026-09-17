@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Jobs\GenerateAndSendQuizResultPdfJob;
 use App\Mail\QuizResultMail;
 use App\Models\Submission;
+use App\Services\PartnerLinkService;
 use App\Services\QuizResultPdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -37,7 +38,7 @@ class GenerateAndSendQuizResultPdfJobTest extends TestCase
         Mail::fake();
         $submission = $this->makeQueuedSubmission();
 
-        (new GenerateAndSendQuizResultPdfJob($submission->id))->handle(app(QuizResultPdfService::class));
+        (new GenerateAndSendQuizResultPdfJob($submission->id))->handle(app(QuizResultPdfService::class), app(PartnerLinkService::class));
 
         Mail::assertSent(QuizResultMail::class, 1);
         $submission->refresh();
@@ -58,7 +59,7 @@ class GenerateAndSendQuizResultPdfJobTest extends TestCase
         $job = new GenerateAndSendQuizResultPdfJob($submission->id);
 
         try {
-            $job->handle(app(QuizResultPdfService::class));
+            $job->handle(app(QuizResultPdfService::class), app(PartnerLinkService::class));
             $this->fail('handle() had een uitzondering moeten gooien.');
         } catch (\RuntimeException $e) {
             // Verwacht: Laravel's wachtrij-worker vangt dit normaal op en probeert het (afhankelijk

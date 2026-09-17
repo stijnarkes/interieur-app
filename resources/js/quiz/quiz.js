@@ -10,7 +10,6 @@ import { renderBasePaletteStep } from "./components/basePaletteStep.js";
 import { renderAccentColorStep } from "./components/accentColorStep.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
-import { renderPartnerInvite } from "./components/partnerInvite.js";
 import { createLoadingScene } from "./components/loadingScene.js";
 
 /**
@@ -440,11 +439,15 @@ function initQuiz(root, options = {}) {
 
       renderLeadForm(els.leadMount, {
         result,
-        // Zowel het uitnodigingsblok (initiator) als het afronden van de partnertest hieronder
-        // hergebruiken naam/e-mailadres van dit formulier (zie partnerInvite.js/
-        // QuizResultController::linkPartnerParticipant()) — dus pas iets doen zodra dat formulier
-        // daadwerkelijk verstuurd is (en dus zeker een Submission-rij bestaat), niet al ernaast
-        // terwijl het nog leeg kan zijn.
+        // Meegestuurd naar /api/quiz-lead zodat de server weet dat dít de geïsoleerde partnertest
+        // is — voorkomt dat GenerateAndSendQuizResultPdfJob voor de partner zelf nog een (zinloze,
+        // want al deelnemer) nieuwe uitnodiging aanmaakt. Voor de initiator zelf maakt die job de
+        // uitnodiging juist automatisch aan en zet 'm direct in de bevestigingsmail — geen knop op
+        // deze pagina meer nodig.
+        partnerClaimToken,
+        // Het afronden van de partnertest hergebruikt naam/e-mailadres van dit formulier (zie
+        // QuizResultController::linkPartnerParticipant()) — dus pas doen zodra dat formulier
+        // daadwerkelijk verstuurd is (en dus zeker een Submission-rij bestaat).
         onSubmitted: async () => {
           if (partnerClaimToken) {
             let completed = true;
@@ -456,8 +459,6 @@ function initQuiz(root, options = {}) {
             if (onCompleted) {
               onCompleted(result, { completed });
             }
-          } else if (els.partnerInviteMount) {
-            renderPartnerInvite(els.partnerInviteMount, { result });
           }
         },
       });

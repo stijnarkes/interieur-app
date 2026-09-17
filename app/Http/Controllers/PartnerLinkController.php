@@ -7,13 +7,12 @@ use App\Models\PartnerLink;
 use App\Models\PartnerParticipant;
 use App\Models\QuizResult;
 use App\Models\Submission;
+use App\Services\PartnerLinkService;
 use App\Support\PartnerAccessGuard;
-use App\Support\PartnerSnapshotBuilder;
 use App\Support\PartnerToken;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,73 +23,41 @@ use Illuminate\Support\Facades\DB;
  */
 class PartnerLinkController extends Controller
 {
-    private const INVITE_LIFETIME_DAYS = 30;
-
-    /** Aanmaken, of idempotent de al bestaande, nog geldige uitnodiging teruggeven. */
-    public function create(Request $request): JsonResponse
+    /**
+     * Aanmaken, of idempotent de al bestaande, nog geldige uitnodiging teruggeven — zie
+     * App\Services\PartnerLinkService, die dit ook automatisch aanroept zodra iemand zijn/haar
+     * eigen aanvraagformulier verstuurt (zie QuizLeadController/GenerateAndSendQuizResultPdfJob).
+     * Deze route zelf wordt door de klant-quiz niet meer aangeroepen (het uitnodigingsblok is
+     * verhuisd naar de bevestigingsmail), maar blijft bestaan voor eventueel toekomstig/handmatig
+     * gebruik.
+     */
+    public function create(Request $request, PartnerLinkService $partnerLinkService): JsonResponse
     {
         $data = $request->validate([
             'resultUuid' => 'required|uuid|exists:quiz_results,uuid',
             'name' => 'nullable|string|max:255',
-            'notifyByEmail' => 'nullable|boolean',
-            'shareConfirmationTextVersion' => 'required|string|max:100',
         ]);
 
         $quizResult = QuizResult::where('uuid', $data['resultUuid'])->firstOrFail();
 
         // Nooit een los naam-/e-mailveld van de client verwachten: hergebruikt bewust wat de
         // bezoeker al invulde bij het aanvraagformulier voor het eigen individuele rapport (zie
-        // QuizLeadController/Submission) — dat scheelt dubbele invoer, en het uitnodigingsblok
-        // toont zich sowieso pas nadat dat formulier al verstuurd is (zie quiz.js), dus deze rij
-        // bestaat op dit moment altijd al. `$data['name']` blijft als expliciete override bestaan
-        // voor het geval een toekomstige aanroeper (bv. de admin-voorbeeldweergave) wél zelf een
-        // naam meegeeft.
+        // QuizLeadController/Submission) — dat scheelt dubbele invoer.
         $submission = Submission::where('quiz_result_id', $quizResult->id)->first();
-        $initiatorName = $data['name'] ?? $submission?->name;
-        $notifyEmail = $request->boolean('notifyByEmail') ? $submission?->email : null;
 
-        $existing = PartnerLink::where('initiator_quiz_result_id', $quizResult->id)
-            ->whereNotIn('status', [PartnerLink::STATUS_REVOKED, PartnerLink::STATUS_EXPIRED])
-            ->where('invite_expires_at', '>', now())
-            ->first();
+        $invite = $partnerLinkService->createOrGetInvite(
+            $quizResult,
+            $data['name'] ?? $submission?->name,
+            $submission?->email,
+        );
 
-        if ($existing) {
-            return $this->inviteResponse($existing, Crypt::decryptString($existing->invite_token_encrypted));
-        }
-
-        $inviteToken = PartnerToken::generate();
-        $accessToken = PartnerToken::generate();
-
-        $link = DB::transaction(function () use ($quizResult, $data, $inviteToken, $accessToken, $notifyEmail, $initiatorName) {
-            $link = PartnerLink::create([
-                'initiator_quiz_result_id' => $quizResult->id,
-                'initiator_snapshot' => PartnerSnapshotBuilder::build($quizResult),
-                'status' => PartnerLink::STATUS_WAITING,
-                'invite_token_hash' => PartnerToken::hash($inviteToken),
-                'invite_token_encrypted' => Crypt::encryptString($inviteToken),
-                'invite_expires_at' => now()->addDays(self::INVITE_LIFETIME_DAYS),
-                'initiator_name' => $initiatorName,
-                'share_confirmed_at' => now(),
-                'share_confirmation_text_version' => $data['shareConfirmationTextVersion'],
-            ]);
-
-            $link->participants()->create([
-                'role' => PartnerParticipant::ROLE_INITIATOR,
-                'quiz_result_id' => $quizResult->id,
-                'access_token_hash' => PartnerToken::hash($accessToken),
-                // Optioneel: zodra de partner klaar is, mailt QuizResultController::
-                // linkPartnerParticipant() de gezamenlijke PDF hier automatisch naartoe (via
-                // PartnerReportMailer) — anders is de link hieronder de enige toegang, en die kan
-                // (bewust, zie PartnerToken) nooit achteraf opnieuw opgevraagd worden.
-                'email' => $notifyEmail,
-            ]);
-
-            return $link;
-        });
-
-        PartnerEvent::record('invite_created', $link->id);
-
-        return $this->inviteResponse($link, $inviteToken, $accessToken);
+        return response()->json([
+            'inviteUrl' => $invite['inviteUrl'],
+            'inviteExpiresAt' => $invite['link']->invite_expires_at->toIso8601String(),
+            'status' => $invite['link']->status,
+            'accessToken' => $invite['accessToken'],
+            'resultUrl' => $invite['resultUrl'],
+        ]);
     }
 
     /**
@@ -209,23 +176,5 @@ class PartnerLinkController extends Controller
         $link->update(['status' => PartnerLink::STATUS_REVOKED, 'revoked_at' => now()]);
 
         return response()->json(['status' => $link->status]);
-    }
-
-    /**
-     * `accessToken`/`resultUrl` zijn alleen gezet bij de daadwerkelijke aanmaak (nooit bij de
-     * idempotente herhaling hieronder) — alleen op dát moment is de plaintext bekend, zie
-     * App\Support\PartnerToken. Dit IS dus de enige keer dat de initiator zijn/haar eigen link
-     * naar het gezamenlijke resultaat te zien krijgt; vandaar het optionele e-mailadres bij create()
-     * als extra, latere bezorgroute.
-     */
-    private function inviteResponse(PartnerLink $link, string $inviteToken, ?string $accessToken = null): JsonResponse
-    {
-        return response()->json([
-            'inviteUrl' => url("/gezamenlijk/uitnodiging/{$inviteToken}"),
-            'inviteExpiresAt' => $link->invite_expires_at->toIso8601String(),
-            'status' => $link->status,
-            'accessToken' => $accessToken,
-            'resultUrl' => $accessToken ? url("/gezamenlijk/{$accessToken}") : null,
-        ]);
     }
 }

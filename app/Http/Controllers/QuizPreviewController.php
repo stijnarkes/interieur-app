@@ -134,6 +134,12 @@ class QuizPreviewController extends Controller
         $emailHtml = view('emails.quiz-result', [
             'siteContent' => SiteContent::current(),
             'submission' => $submission,
+            // Laat het admin-voorbeeld ook de partnerblok-opmaak zien zodra de functie aanstaat —
+            // een neppe, nooit-echt-werkende link, puur voor de weergave (zie GenerateAndSendQuizResultPdfJob
+            // voor de echte, automatische aanmaak).
+            'partnerInviteUrl' => \App\Models\QuizSetting::current()->partner_feature_enabled
+                ? url('/gezamenlijk/uitnodiging/voorbeeld')
+                : null,
         ])->render();
 
         return view('quiz.preview.email', [

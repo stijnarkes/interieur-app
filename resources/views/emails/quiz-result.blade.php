@@ -63,9 +63,34 @@
             text-decoration: none;
             font-weight: bold;
         }
+
+        .partner-invite {
+            margin-top: 28px;
+            padding: 20px 22px;
+            border-radius: 12px;
+            background: #f8f5f1;
+            border: 1px solid #e7ddd1;
+        }
+
+        .partner-invite h2 {
+            margin: 0 0 8px;
+            font-size: 17px;
+            color: #2d2620;
+        }
+
+        .partner-invite p {
+            margin: 0 0 14px;
+            line-height: 1.55;
+            color: #4a3526;
+        }
+
+        .partner-invite .cta {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
+    @php($partnerInviteUrl = $partnerInviteUrl ?? null)
     <div class="wrapper">
         <div class="header">
             <h1>{{ $siteContent->email_header }}</h1>
@@ -77,6 +102,14 @@
             <p>{{ $submission->quiz_result['description'] ?? '' }}</p>
             <p>{{ $siteContent->email_outro }}</p>
             <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener">{{ $siteContent->email_cta_label }}</a>
+
+            @if ($partnerInviteUrl)
+                <div class="partner-invite">
+                    <h2>Ontdek jullie gezamenlijke woonstijl</h2>
+                    <p>Doe je partner mee? Deel onderstaande link — die doet de test onafhankelijk van jou, jullie zien geen antwoorden van elkaar, en samen krijgen jullie een gezamenlijk advies.</p>
+                    <a class="cta" href="{{ $partnerInviteUrl }}" target="_blank" rel="noopener">Nodig je partner uit</a>
+                </div>
+            @endif
         </div>
     </div>
 </body>

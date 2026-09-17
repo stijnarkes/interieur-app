@@ -14,16 +14,20 @@ function escapeHtml(value) {
 }
 
 /**
- * @param {{result: object, previewMode?: boolean, onSubmitted?: () => void}} params
+ * @param {{result: object, previewMode?: boolean, onSubmitted?: () => void, partnerClaimToken?: ?string}} params
  *   `onSubmitted` vuurt precies één keer, zodra de server een definitief antwoord gaf op de EERSTE
  *   inzending (sent/queued/failed maken voor dit doel geen verschil — in alle drie de gevallen
  *   heeft QuizLeadController al een Submission-rij met dit e-mailadres opgeslagen, vóórdat 'ie aan
- *   PDF/mail begint). Gebruikt door quiz.js om het uitnodigingsblok van de partnerfunctie pas te
- *   tonen zodra er zeker een e-mailadres beschikbaar is om te hergebruiken — zie partnerInvite.js.
- *   Vuurt nooit in previewMode (er wordt dan niets echt opgeslagen) en niet opnieuw bij een latere
- *   "Opnieuw versturen"-klik (het blok staat er dan al).
+ *   PDF/mail begint). quiz.js gebruikt dit om pas ná deze inzending de geïsoleerde partnertest af
+ *   te ronden (zie completePartnerResult()) — dat moment heeft ook een gegarandeerd e-mailadres
+ *   nodig, namelijk voor het automatisch versturen van het gezamenlijke resultaat. Vuurt nooit in
+ *   previewMode (er wordt dan niets echt opgeslagen) en niet opnieuw bij een latere "Opnieuw
+ *   versturen"-klik (die stap is dan al gebeurd).
+ *   `partnerClaimToken` wordt, indien gezet, meegestuurd naar /api/quiz-lead zodat de server weet
+ *   dat dit de geïsoleerde partnertest is — zie GenerateAndSendQuizResultPdfJob, dat anders voor
+ *   de partner zelf nog een (zinloze) nieuwe partneruitnodiging zou aanmaken.
  */
-function renderLeadForm(container, { result, previewMode = false, onSubmitted }) {
+function renderLeadForm(container, { result, previewMode = false, onSubmitted, partnerClaimToken = null }) {
   /**
    * Gedeeld met de "Opnieuw versturen"-knop in de successtatus. Stuurt alleen de verwijzing naar
    * het al server-side berekende resultaat (resultUuid) mee — de PDF-inhoud zelf bouwt
@@ -55,6 +59,7 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted })
           name,
           email,
           marketingOptIn,
+          ...(partnerClaimToken ? { partnerClaimToken } : {}),
         }),
         signal: AbortSignal.timeout(45000),
       });

@@ -3,8 +3,13 @@
 namespace App\Jobs;
 
 use App\Mail\QuizResultMail;
+use App\Models\PartnerParticipant;
+use App\Models\QuizResult;
+use App\Models\QuizSetting;
 use App\Models\Submission;
+use App\Services\PartnerLinkService;
 use App\Services\QuizResultPdfService;
+use App\Support\PartnerAccessGuard;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,18 +37,60 @@ class GenerateAndSendQuizResultPdfJob implements ShouldQueue
 
     public int $backoff = 15;
 
-    public function __construct(public int $submissionId) {}
+    /**
+     * @param  ?string  $partnerClaimToken  alleen gezet tijdens de geïsoleerde partnertest (zie
+     *   QuizLeadController) — voorkomt dat resolvePartnerInvite() hieronder voor de partner zelf
+     *   nog een (zinloze, want al deelnemer) nieuwe uitnodiging aanmaakt.
+     */
+    public function __construct(public int $submissionId, public ?string $partnerClaimToken = null) {}
 
-    public function handle(QuizResultPdfService $pdfService): void
+    public function handle(QuizResultPdfService $pdfService, PartnerLinkService $partnerLinkService): void
     {
         $submission = Submission::findOrFail($this->submissionId);
 
         $pdfPath = $pdfService->generate($submission);
         $submission->update(['pdf_path' => $pdfPath]);
 
-        Mail::to($submission->email)->send(new QuizResultMail($submission, $pdfPath));
+        $partnerInvite = $this->resolvePartnerInvite($submission, $partnerLinkService);
+
+        Mail::to($submission->email)->send(new QuizResultMail($submission, $pdfPath, $partnerInvite));
 
         $submission->update(['email_status' => 'sent', 'email_sent_at' => now(), 'email_error' => null]);
+    }
+
+    /**
+     * Maakt (of hergebruikt idempotent) een partneruitnodiging voor dít resultaat, zodat de
+     * bevestigingsmail hierboven de uitnodigingslink meteen kan tonen — geen aparte knop op de
+     * resultatenpagina meer nodig, zie het implementatieplan-vervolg "Partnerfunctie in de mail".
+     * Geeft bewust `null` (en faalt dus nooit de hoofd-e-mail) zolang: de partnerfunctie uitstaat,
+     * dit resultaat geen (bekende) QuizResult heeft, of dit de partnertest zelf is.
+     */
+    private function resolvePartnerInvite(Submission $submission, PartnerLinkService $partnerLinkService): ?array
+    {
+        try {
+            if (! QuizSetting::current()->partner_feature_enabled) {
+                return null;
+            }
+
+            if ($this->partnerClaimToken) {
+                $participant = PartnerAccessGuard::resolve($this->partnerClaimToken);
+                if ($participant?->role === PartnerParticipant::ROLE_PARTNER) {
+                    // Dit IS de partnertest zelf — nooit een eigen uitnodiging aanmaken (max. 2
+                    // deelnemers, zie het implementatieplan).
+                    return null;
+                }
+            }
+
+            $quizResult = $submission->quiz_result_id ? QuizResult::find($submission->quiz_result_id) : null;
+            if (! $quizResult) {
+                return null;
+            }
+
+            return $partnerLinkService->createOrGetInvite($quizResult, $submission->name, $submission->email);
+        } catch (\Throwable) {
+            // Nooit de eigen, individuele PDF-mail laten mislukken op een kapotte partnerkoppeling.
+            return null;
+        }
     }
 
     /** Wordt door Laravel pas aangeroepen nadat alle $tries pogingen zijn mislukt. */

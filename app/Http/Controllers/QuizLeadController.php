@@ -8,6 +8,7 @@ use App\Models\QuizResult;
 use App\Models\SiteContent;
 use App\Models\StyleProfile;
 use App\Models\Submission;
+use App\Services\PartnerLinkService;
 use App\Services\QuizResultPdfService;
 use App\Services\QuizResultTextComposer;
 use Illuminate\Http\JsonResponse;
@@ -43,13 +44,22 @@ class QuizLeadController extends Controller
 {
     private const STALE_QUEUE_AFTER_MINUTES = 2;
 
-    public function handle(Request $request, QuizResultTextComposer $textComposer, QuizResultPdfService $pdfService): JsonResponse
-    {
+    public function handle(
+        Request $request,
+        QuizResultTextComposer $textComposer,
+        QuizResultPdfService $pdfService,
+        PartnerLinkService $partnerLinkService,
+    ): JsonResponse {
         $data = $request->validate([
             'resultUuid' => 'required|uuid|exists:quiz_results,uuid',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'marketingOptIn' => 'nullable|boolean',
+            // Alleen gezet tijdens de geïsoleerde partnertest (zie resources/js/quiz/quiz.js) —
+            // laat GenerateAndSendQuizResultPdfJob weten dat dít geen "gewone" individuele
+            // inzending is, zodat er nooit een (voor de partner zinloze, want al deelnemer)
+            // nieuwe partneruitnodiging voor wordt aangemaakt.
+            'partnerClaimToken' => 'nullable|string',
         ]);
 
         $quizResult = QuizResult::where('uuid', $data['resultUuid'])->firstOrFail();
@@ -75,10 +85,10 @@ class QuizLeadController extends Controller
             ]
         );
 
-        $job = new GenerateAndSendQuizResultPdfJob($submission->id);
+        $job = new GenerateAndSendQuizResultPdfJob($submission->id, $data['partnerClaimToken'] ?? null);
 
         try {
-            $job->handle($pdfService);
+            $job->handle($pdfService, $partnerLinkService);
         } catch (\Throwable $e) {
             $job->failed($e);
         }

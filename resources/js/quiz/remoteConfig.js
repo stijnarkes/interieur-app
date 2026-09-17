@@ -1,6 +1,5 @@
 import { QUESTIONS, SECTIONS } from "./data.js";
 import { RESULT_HERO_COPY, REPORT_TEASER_COPY, LEAD_FORM_COPY, BASE_PALETTE_STEP_COPY, ACCENT_COLOR_STEP_COPY } from "./copy.js";
-import { FEATURE_FLAGS } from "./featureFlags.js";
 
 /**
  * Haalt de admin-bewerkbare inhoud (vragen/opties) op bij /api/quiz-config en muteert de
@@ -56,7 +55,6 @@ async function loadRemoteQuizConfig() {
   applyTransitionPhotos(config.transitionPhotos);
   applySections(config.sections);
   applyCopy(config.copy);
-  FEATURE_FLAGS.partnerFeatureEnabled = Boolean(config.partnerFeatureEnabled);
 
   return true;
 }

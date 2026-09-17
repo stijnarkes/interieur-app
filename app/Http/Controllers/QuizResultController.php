@@ -232,12 +232,13 @@ class QuizResultController extends Controller
 
         $participant->update(['quiz_result_id' => $result->id]);
 
-        // Hergebruikt de naam die de partner al invulde bij het eigen aanvraagformulier (zie
-        // Submission) — dit wordt pas aangeroepen ná dat formulier (zie quiz.js's
+        // Hergebruikt naam/e-mailadres die de partner al invulde bij het eigen aanvraagformulier
+        // (zie Submission) — dit wordt pas aangeroepen ná dat formulier (zie quiz.js's
         // showReportAndLead()'s onSubmitted), dus die rij bestaat op dit moment altijd al. Een
         // eventuele naam die al bij het claimen is opgegeven (PartnerLinkController::claim()'s
         // partnerName) blijft staan als er (nog) geen Submission-naam is.
-        $partnerName = Submission::where('quiz_result_id', $result->id)->value('name');
+        $partnerSubmission = Submission::where('quiz_result_id', $result->id)->first();
+        $partnerName = $partnerSubmission?->name;
 
         $link->update([
             'partner_quiz_result_id' => $result->id,
@@ -252,14 +253,22 @@ class QuizResultController extends Controller
 
         PartnerEvent::record('partner_completed', $link->id);
 
-        // De initiator kreeg bij het aanmaken van de uitnodiging (PartnerLinkController::create())
-        // de kans om een e-mailadres op te geven — nu de vergelijking klaarstaat, versturen we die
-        // automatisch, zonder dat de initiator terug hoeft te komen om het zelf aan te vragen (die
-        // link/dat toegangstoken is anders zijn/haar enige toegang, en kan nooit opnieuw opgevraagd
-        // worden — zie App\Support\PartnerToken).
+        // De initiator kreeg bij het aanmaken van de uitnodiging (via PartnerLinkService, zie
+        // GenerateAndSendQuizResultPdfJob) automatisch zijn/haar eigen e-mailadres gekoppeld — nu
+        // de vergelijking klaarstaat, versturen we die automatisch, zonder dat de initiator terug
+        // hoeft te komen om het zelf aan te vragen (die link/dat toegangstoken is anders zijn/haar
+        // enige toegang, en kan nooit opnieuw opgevraagd worden — zie App\Support\PartnerToken).
         $initiatorParticipant = $link->participants()->where('role', PartnerParticipant::ROLE_INITIATOR)->first();
         if ($initiatorParticipant?->email) {
             $partnerReportMailer->send($initiatorParticipant, $link, $comparison, $initiatorParticipant->email);
+        }
+
+        // Symmetrisch voor de partner: voor hen is het gezamenlijke resultaat juist altíjd meteen
+        // klaar (ze zijn per definitie de laatste van de twee) — dezelfde automatische mail zorgt
+        // dat ook zij de link later gewoon in hun mailbox terugvinden, naast de knop die
+        // resources/js/partner/invitePage.js al direct op de pagina toont.
+        if ($partnerSubmission?->email) {
+            $partnerReportMailer->send($participant, $link, $comparison, $partnerSubmission->email);
         }
     }
 

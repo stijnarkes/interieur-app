@@ -189,4 +189,41 @@ class PartnerReportTest extends TestCase
 
         Mail::assertSent(PartnerReportMail::class, 2);
     }
+
+    /**
+     * Symmetrisch met de initiator: voor de partner is het gezamenlijke resultaat juist altíjd
+     * meteen klaar (ze zijn per definitie de laatste van de twee) — die krijgt het dus automatisch
+     * gemaild op het moment dat de eigen aanvraag (Submission) al bekend is, zonder dat er ooit
+     * expliciet om gevraagd is.
+     */
+    #[Test]
+    public function de_partner_krijgt_het_gezamenlijke_rapport_automatisch_op_het_adres_van_het_eigen_aanvraagformulier(): void
+    {
+        Mail::fake();
+
+        $result = QuizResult::create([
+            'uuid' => (string) Str::uuid(), 'answers' => ['vloer' => ['eiken']],
+            'style_scores' => ['japandi' => 1], 'primary_style' => 'japandi',
+        ]);
+        $create = $this->postJson('/api/partner-links', ['resultUuid' => $result->uuid])->assertOk();
+        $inviteToken = Str::afterLast($create->json('inviteUrl'), '/');
+
+        $claim = $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertOk();
+        $partnerAccessToken = $claim->json('accessToken');
+
+        $partnerResult = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['beton']]])->assertOk();
+        \App\Models\Submission::create([
+            'quiz_result_id' => \App\Models\QuizResult::where('uuid', $partnerResult->json('resultUuid'))->value('id'),
+            'style' => 'Modern', 'name' => 'Bram', 'email' => 'bram@example.com',
+        ]);
+
+        $this->patchJson("/api/quiz-result/{$partnerResult->json('resultUuid')}/complete-partner", [
+            'partnerClaimToken' => $partnerAccessToken,
+        ])->assertOk();
+
+        Mail::assertSent(PartnerReportMail::class, fn (PartnerReportMail $mail) => $mail->hasTo('bram@example.com'));
+
+        $partnerParticipant = PartnerParticipant::where('access_token_hash', hash('sha256', $partnerAccessToken))->first();
+        $this->assertSame('sent', $partnerParticipant->mail_status);
+    }
 }
