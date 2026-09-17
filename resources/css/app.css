@@ -892,14 +892,15 @@ a.btn-primary:hover {
   transform: scale(1);
 }
 
-/* Vergroot-bekijken-knopje, los van het vinkje (top-right) neergezet zodat ze nooit overlappen.
-   Bewust altijd zichtbaar i.p.v. alleen bij :hover — dit is een fotoquiz die minstens zo vaak op
-   telefoon/tablet als met een muis wordt ingevuld, en zonder hover-state zou het knopje daar
-   nooit ontdekt worden. */
+/* Vergroot-bekijken-knopje, in de hoek van de tegel (i.p.v. verder naar binnen, op dezelfde
+   afstand als het vinkje) zodat het duidelijk als los hoekelement leest i.p.v. bovenop de foto te
+   zweven. Vinkje staat rechtsboven, dus geen overlap. Bewust altijd zichtbaar i.p.v. alleen bij
+   :hover — dit is een fotoquiz die minstens zo vaak op telefoon/tablet als met een muis wordt
+   ingevuld, en zonder hover-state zou het knopje daar nooit ontdekt worden. */
 .option-zoom {
   position: absolute;
-  top: 36px;
-  left: 36px;
+  top: 12px;
+  left: 12px;
   width: 26px;
   height: 26px;
   border-radius: 50%;
