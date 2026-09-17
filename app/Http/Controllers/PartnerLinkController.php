@@ -38,13 +38,16 @@ class PartnerLinkController extends Controller
 
         $quizResult = QuizResult::where('uuid', $data['resultUuid'])->firstOrFail();
 
-        // Nooit een los e-mailadres van de client aannemen: hergebruikt bewust het adres dat de
+        // Nooit een los naam-/e-mailveld van de client verwachten: hergebruikt bewust wat de
         // bezoeker al invulde bij het aanvraagformulier voor het eigen individuele rapport (zie
-        // QuizLeadController/Submission) — dat scheelt een dubbel veld, en het uitnodigingsblok
-        // toont dit vinkje sowieso pas nadat dat formulier al verstuurd is (zie quiz.js).
-        $notifyEmail = $request->boolean('notifyByEmail')
-            ? Submission::where('quiz_result_id', $quizResult->id)->value('email')
-            : null;
+        // QuizLeadController/Submission) — dat scheelt dubbele invoer, en het uitnodigingsblok
+        // toont zich sowieso pas nadat dat formulier al verstuurd is (zie quiz.js), dus deze rij
+        // bestaat op dit moment altijd al. `$data['name']` blijft als expliciete override bestaan
+        // voor het geval een toekomstige aanroeper (bv. de admin-voorbeeldweergave) wél zelf een
+        // naam meegeeft.
+        $submission = Submission::where('quiz_result_id', $quizResult->id)->first();
+        $initiatorName = $data['name'] ?? $submission?->name;
+        $notifyEmail = $request->boolean('notifyByEmail') ? $submission?->email : null;
 
         $existing = PartnerLink::where('initiator_quiz_result_id', $quizResult->id)
             ->whereNotIn('status', [PartnerLink::STATUS_REVOKED, PartnerLink::STATUS_EXPIRED])
@@ -58,7 +61,7 @@ class PartnerLinkController extends Controller
         $inviteToken = PartnerToken::generate();
         $accessToken = PartnerToken::generate();
 
-        $link = DB::transaction(function () use ($quizResult, $data, $inviteToken, $accessToken, $notifyEmail) {
+        $link = DB::transaction(function () use ($quizResult, $data, $inviteToken, $accessToken, $notifyEmail, $initiatorName) {
             $link = PartnerLink::create([
                 'initiator_quiz_result_id' => $quizResult->id,
                 'initiator_snapshot' => PartnerSnapshotBuilder::build($quizResult),
@@ -66,7 +69,7 @@ class PartnerLinkController extends Controller
                 'invite_token_hash' => PartnerToken::hash($inviteToken),
                 'invite_token_encrypted' => Crypt::encryptString($inviteToken),
                 'invite_expires_at' => now()->addDays(self::INVITE_LIFETIME_DAYS),
-                'initiator_name' => $data['name'] ?? null,
+                'initiator_name' => $initiatorName,
                 'share_confirmed_at' => now(),
                 'share_confirmation_text_version' => $data['shareConfirmationTextVersion'],
             ]);

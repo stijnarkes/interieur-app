@@ -131,6 +131,27 @@ class PartnerLinkTest extends TestCase
         $this->assertNull($initiator->email);
     }
 
+    /**
+     * Regressie: de naam die de initiator invulde bij het eigen aanvraagformulier kwam nooit bij
+     * de uitnodiging terecht (er werd nooit een naam meegestuurd), waardoor de gezamenlijke
+     * resultaatpagina/PDF altijd op "Deelnemer 1" terugviel, ook als er wél een naam was ingevuld.
+     */
+    #[Test]
+    public function de_naam_uit_het_eigen_aanvraagformulier_wordt_gebruikt_als_initiatornaam(): void
+    {
+        $result = $this->makeQuizResult();
+        \App\Models\Submission::create([
+            'quiz_result_id' => $result->id, 'style' => 'Japandi', 'name' => 'Anna',
+        ]);
+
+        $this->postJson('/api/partner-links', [
+            'resultUuid' => $result->uuid,
+            'shareConfirmationTextVersion' => 'v1',
+        ])->assertOk();
+
+        $this->assertSame('Anna', PartnerLink::first()->initiator_name);
+    }
+
     #[Test]
     public function een_tweede_aanvraag_voor_hetzelfde_resultaat_maakt_geen_nieuwe_koppeling(): void
     {

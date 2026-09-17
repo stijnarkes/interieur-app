@@ -11,6 +11,7 @@ use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
 use App\Models\StyleProfile;
+use App\Models\Submission;
 use App\Repositories\QuizResultRepository;
 use App\Services\AccentColorSelector;
 use App\Services\PartnerComparisonService;
@@ -231,9 +232,17 @@ class QuizResultController extends Controller
 
         $participant->update(['quiz_result_id' => $result->id]);
 
+        // Hergebruikt de naam die de partner al invulde bij het eigen aanvraagformulier (zie
+        // Submission) — dit wordt pas aangeroepen ná dat formulier (zie quiz.js's
+        // showReportAndLead()'s onSubmitted), dus die rij bestaat op dit moment altijd al. Een
+        // eventuele naam die al bij het claimen is opgegeven (PartnerLinkController::claim()'s
+        // partnerName) blijft staan als er (nog) geen Submission-naam is.
+        $partnerName = Submission::where('quiz_result_id', $result->id)->value('name');
+
         $link->update([
             'partner_quiz_result_id' => $result->id,
             'partner_snapshot' => PartnerSnapshotBuilder::build($result),
+            'partner_name' => $partnerName ?? $link->partner_name,
             'status' => PartnerLink::STATUS_COMPLETED,
             'completed_at' => now(),
         ]);

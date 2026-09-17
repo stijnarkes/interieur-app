@@ -440,26 +440,27 @@ function initQuiz(root, options = {}) {
 
       renderLeadForm(els.leadMount, {
         result,
-        // Het uitnodigingsblok biedt een "stuur me een seintje"-vinkje aan dat het e-mailadres
-        // hergebruikt dat de bezoeker hier net invulde (zie partnerInvite.js) — dus pas tonen
-        // zodra dat adres daadwerkelijk is opgeslagen (server-side, via Submission), niet al
-        // ernaast terwijl het formulier nog leeg kan zijn.
-        onSubmitted: !partnerClaimToken && els.partnerInviteMount
-          ? () => renderPartnerInvite(els.partnerInviteMount, { result })
-          : undefined,
+        // Zowel het uitnodigingsblok (initiator) als het afronden van de partnertest hieronder
+        // hergebruiken naam/e-mailadres van dit formulier (zie partnerInvite.js/
+        // QuizResultController::linkPartnerParticipant()) — dus pas iets doen zodra dat formulier
+        // daadwerkelijk verstuurd is (en dus zeker een Submission-rij bestaat), niet al ernaast
+        // terwijl het nog leeg kan zijn.
+        onSubmitted: async () => {
+          if (partnerClaimToken) {
+            let completed = true;
+            try {
+              await completePartnerResult(result.resultUuid, partnerClaimToken);
+            } catch {
+              completed = false;
+            }
+            if (onCompleted) {
+              onCompleted(result, { completed });
+            }
+          } else if (els.partnerInviteMount) {
+            renderPartnerInvite(els.partnerInviteMount, { result });
+          }
+        },
       });
-
-      if (partnerClaimToken) {
-        let completed = true;
-        try {
-          await completePartnerResult(result.resultUuid, partnerClaimToken);
-        } catch {
-          completed = false;
-        }
-        if (onCompleted) {
-          onCompleted(result, { completed });
-        }
-      }
     };
 
     // De accentkleurstap toont een kleur die exact de hex deelt met een kleur uit het gekozen

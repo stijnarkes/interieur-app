@@ -126,6 +126,31 @@ class PartnerAccessTest extends TestCase
     }
 
     /**
+     * Regressie: de naam die de partner invulde bij het eigen aanvraagformulier kwam nooit bij de
+     * gezamenlijke uitslag terecht, waardoor die op "Deelnemer 2" bleef staan.
+     */
+    #[Test]
+    public function de_naam_uit_het_aanvraagformulier_van_de_partner_wordt_gebruikt(): void
+    {
+        [$inviteToken] = $this->makeInvite();
+
+        $claim = $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertOk();
+        $partnerAccessToken = $claim->json('accessToken');
+
+        $partnerResult = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['beton']]])->assertOk();
+        \App\Models\Submission::create([
+            'quiz_result_id' => \App\Models\QuizResult::where('uuid', $partnerResult->json('resultUuid'))->value('id'),
+            'style' => 'Modern', 'name' => 'Bram',
+        ]);
+
+        $this->patchJson("/api/quiz-result/{$partnerResult->json('resultUuid')}/complete-partner", [
+            'partnerClaimToken' => $partnerAccessToken,
+        ])->assertOk();
+
+        $this->assertSame('Bram', PartnerLink::first()->fresh()->partner_name);
+    }
+
+    /**
      * Regressie: de partner_snapshot werd eerder al bevroren zodra /api/quiz-result binnenkwam —
      * ruim vóórdat de bezoeker de kans kreeg om een basispalet/accentkleur te kiezen, dus die
      * keuzes stonden nooit in de gezamenlijke uitslag (alleen de primaire stijl). Dit toetst dat de
