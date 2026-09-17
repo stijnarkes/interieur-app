@@ -24,6 +24,11 @@ class PartnerComparisonServiceTest extends TestCase
     {
         parent::setUp();
         $this->service = new PartnerComparisonService;
+
+        // De migratie die de 21 redactionele stijlcombinatie-adviezen zet
+        // (2026_09_17_090000_seed_style_combination_advices) draait ook hier mee — deze tests
+        // willen een schone catalogus met alleen hun eigen fixtures, dus die eerst weg.
+        StyleCombinationAdvice::query()->delete();
     }
 
     #[Test]

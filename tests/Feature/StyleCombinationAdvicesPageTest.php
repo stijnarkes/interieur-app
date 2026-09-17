@@ -19,14 +19,21 @@ class StyleCombinationAdvicesPageTest extends TestCase
         return User::factory()->create(['is_admin' => true]);
     }
 
+    /**
+     * updateOrCreate i.p.v. create: de migratie 2026_09_17_090000_seed_style_combination_advices
+     * zet dit paar (japandi/modern) al met echte redactionele tekst neer, dus deze test overschrijft
+     * die rij bewust met een eigen, voorspelbare fixture i.p.v. te botsen op de unique-constraint.
+     */
     private function makeAdvice(): StyleCombinationAdvice
     {
-        return StyleCombinationAdvice::create([
-            'style_key_a' => 'japandi', 'style_key_b' => 'modern',
-            'title' => 'Japandi & Modern', 'intro' => 'Redactionele tekst volgt nog.',
-            'basis_tip' => 'Redactionele tekst volgt nog.', 'materials_tip' => 'Redactionele tekst volgt nog.',
-            'accent_tip' => 'Redactionele tekst volgt nog.', 'status' => 'concept', 'version' => 1,
-        ]);
+        return StyleCombinationAdvice::query()->updateOrCreate(
+            ['style_key_a' => 'japandi', 'style_key_b' => 'modern'],
+            [
+                'title' => 'Japandi & Modern', 'intro' => 'Redactionele tekst volgt nog.',
+                'basis_tip' => 'Redactionele tekst volgt nog.', 'materials_tip' => 'Redactionele tekst volgt nog.',
+                'accent_tip' => 'Redactionele tekst volgt nog.', 'status' => 'concept', 'version' => 1,
+            ],
+        );
     }
 
     #[Test]
