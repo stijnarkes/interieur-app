@@ -119,7 +119,7 @@
             @if ($partnerInviteUrl)
                 <div class="partner-invite">
                     <h2>Ontdek jullie gezamenlijke woonstijl</h2>
-                    <p>Doe je partner mee? Deel onderstaande link — die doet de test onafhankelijk van jou, jullie zien geen antwoorden van elkaar, en samen krijgen jullie een gezamenlijk advies.</p>
+                    <p>Deel de link hieronder met je partner. Die doet de test net als jij, helemaal zelfstandig — jullie zien elkaars antwoorden niet. Aan het eind krijgen jullie allebei niet alleen je eigen persoonlijke woonstijl, maar ook een gezamenlijk advies: hoe jullie beider stijlen slim met elkaar te combineren zijn in huis.</p>
                     <a class="cta" href="{{ $partnerInviteUrl }}" target="_blank" rel="noopener">Nodig je partner uit</a>
                     <a
                         class="cta-outline"
