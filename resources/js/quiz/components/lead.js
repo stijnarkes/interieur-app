@@ -290,6 +290,21 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted })
   }
 
   /**
+   * Draaiend rondje i.p.v. het vinkje van renderSuccess() hieronder — een vinkje leest als
+   * "klaar", terwijl hier nog niets verstuurd is (alleen de gegevens zijn opgeslagen, zie
+   * renderQueued() hieronder). Zelfde cirkelvormige achtergrond (.lead-form-success-icon) zodat
+   * beide statussen visueel bij elkaar horen, alleen met een ander icoon erin.
+   */
+  function createPendingIcon() {
+    const wrapper = document.createElement("span");
+    wrapper.className = "lead-form-success-icon";
+    const spinner = document.createElement("span");
+    spinner.className = "lead-form-pending-spinner";
+    wrapper.appendChild(spinner);
+    return wrapper;
+  }
+
+  /**
    * Bevestigt alleen dat de aanvraag ontvangen is — geen "opnieuw versturen"-knop hier, want er is
    * nog niets verstuurd om opnieuw te proberen (en de server zou een nieuwe poging binnen enkele
    * minuten toch als dubbele aanvraag negeren, zie QuizLeadController).
@@ -302,7 +317,7 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted })
     queued.setAttribute("role", "status");
     queued.setAttribute("aria-live", "polite");
 
-    queued.appendChild(createCheckIcon("lead-form-success-icon", 26));
+    queued.appendChild(createPendingIcon());
 
     const title = document.createElement("p");
     title.className = "lead-form-success-title";
