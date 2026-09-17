@@ -892,6 +892,88 @@ a.btn-primary:hover {
   transform: scale(1);
 }
 
+/* Vergroot-bekijken-knopje, los van het vinkje (top-right) neergezet zodat ze nooit overlappen.
+   Bewust altijd zichtbaar i.p.v. alleen bij :hover — dit is een fotoquiz die minstens zo vaak op
+   telefoon/tablet als met een muis wordt ingevuld, en zonder hover-state zou het knopje daar
+   nooit ontdekt worden. */
+.option-zoom {
+  position: absolute;
+  top: 36px;
+  left: 36px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(45, 38, 32, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.option-zoom:hover,
+.option-zoom:focus-visible {
+  background: rgba(45, 38, 32, 0.85);
+  transform: scale(1.08);
+}
+
+.option-card:disabled .option-zoom {
+  pointer-events: none;
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(30, 22, 15, 0.85);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.image-lightbox[hidden] {
+  display: none;
+}
+
+.image-lightbox.is-visible {
+  opacity: 1;
+}
+
+.image-lightbox-img {
+  max-width: min(90vw, 900px);
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fffaf5;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+
+.image-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.image-lightbox-close:hover,
+.image-lightbox-close:focus-visible {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .quiz-nav {
   justify-content: space-between;
   margin-top: 32px;
