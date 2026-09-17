@@ -60,7 +60,7 @@ function initResultPage(root) {
     const body = document.createElement("p");
     body.className = "section-intro";
     body.textContent = role === "initiator"
-      ? "We wachten nog op je partner. Zodra die de test heeft afgerond, verschijnt hier automatisch jullie gezamenlijke advies — deze pagina hoef je niet te verversen."
+      ? "We wachten nog op je partner. Zodra die de test heeft afgerond, verschijnt hier automatisch jullie gezamenlijke advies. Deze pagina hoef je niet te verversen."
       : "Bedankt voor het afronden van je test! Zodra jullie allebei klaar zijn, verschijnt hier automatisch jullie gezamenlijke advies.";
     mount.appendChild(body);
   }
@@ -93,7 +93,7 @@ function initResultPage(root) {
     intro.className = "section-intro";
     const initiatorLabel = data.initiatorName || "Deelnemer 1";
     const partnerLabel = data.partnerName || "Deelnemer 2";
-    intro.textContent = `${initiatorLabel}: ${data.initiatorStyle ?? "onbekend"} — ${partnerLabel}: ${data.partnerStyle ?? "onbekend"}`;
+    intro.textContent = `${initiatorLabel} koos ${data.initiatorStyle ?? "onbekend"} en ${partnerLabel} koos ${data.partnerStyle ?? "onbekend"}.`;
     mount.appendChild(intro);
 
     if ((data.initiatorPalette?.colors?.length || data.partnerPalette?.colors?.length)) {
