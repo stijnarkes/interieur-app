@@ -16,6 +16,12 @@
  *
  * Bij prefers-reduced-motion: reduce toont de component meteen de kamer in eindstaat, zonder
  * herhalende animatie; de promise resolvet dan vrijwel direct.
+ *
+ * Onder de titel staat daarnaast een doorlopend heen-en-weer schuivend balkje
+ * (.loading-scene-progress-bar) — de kamer-illustratie alleen bleek voor bezoekers niet altijd
+ * direct als "nog bezig" te lezen, dit balkje is een ondubbelzinniger, herkenbaarder laadsignaal
+ * ernaast. Geen percentage/voortgang (die kennen we niet), dus bewust indeterminate i.p.v. een
+ * gevulde balk.
  */
 function createLoadingScene({ heading, subtext = "" }) {
   const element = document.createElement("div");
@@ -45,6 +51,9 @@ function createLoadingScene({ heading, subtext = "" }) {
       </g>
     </svg>
     <h2 class="loading-scene-heading"></h2>
+    <div class="loading-scene-progress" aria-hidden="true">
+      <div class="loading-scene-progress-bar"></div>
+    </div>
     ${subtext ? '<p class="loading-scene-subtext"></p>' : ""}
   `;
 
