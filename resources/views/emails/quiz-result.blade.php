@@ -87,6 +87,19 @@
         .partner-invite .cta {
             margin-top: 0;
         }
+
+        .partner-invite .cta-outline {
+            display: inline-block;
+            margin-top: 0;
+            margin-left: 10px;
+            padding: 11px 20px;
+            border-radius: 999px;
+            border: 1px solid #b7794d;
+            color: #9f6239 !important;
+            text-decoration: none;
+            font-weight: bold;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
@@ -108,6 +121,12 @@
                     <h2>Ontdek jullie gezamenlijke woonstijl</h2>
                     <p>Doe je partner mee? Deel onderstaande link — die doet de test onafhankelijk van jou, jullie zien geen antwoorden van elkaar, en samen krijgen jullie een gezamenlijk advies.</p>
                     <a class="cta" href="{{ $partnerInviteUrl }}" target="_blank" rel="noopener">Nodig je partner uit</a>
+                    <a
+                        class="cta-outline"
+                        href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}"
+                        target="_blank"
+                        rel="noopener"
+                    >Deel via WhatsApp</a>
                 </div>
             @endif
         </div>

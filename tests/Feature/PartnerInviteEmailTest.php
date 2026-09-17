@@ -100,6 +100,23 @@ class PartnerInviteEmailTest extends TestCase
     }
 
     #[Test]
+    public function de_mail_bevat_een_whatsapp_deelknop_met_de_uitnodigingslink(): void
+    {
+        Mail::fake();
+        QuizSetting::current()->update(['partner_feature_enabled' => true]);
+        $result = $this->makeQuizResult();
+
+        $this->postLead($result->uuid)->assertOk();
+
+        Mail::assertSent(QuizResultMail::class, function (QuizResultMail $mail) {
+            $html = $mail->render();
+            $expectedHref = 'https://wa.me/?text='.rawurlencode('Doe je mee met mijn woonstijltest? '.$mail->partnerInvite['inviteUrl']);
+
+            return str_contains($html, $expectedHref);
+        });
+    }
+
+    #[Test]
     public function een_tweede_inzending_voor_hetzelfde_resultaat_maakt_geen_tweede_uitnodiging(): void
     {
         Mail::fake();
