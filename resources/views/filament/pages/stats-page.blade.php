@@ -1,6 +1,9 @@
 <x-filament-panels::page>
     <div class="space-y-8">
 
+        {{-- Trechter: waar haken bezoekers af --}}
+        @livewire(\App\Filament\Widgets\QuizFunnelChartWidget::class)
+
         {{-- Top stijlen --}}
         <x-filament::section>
             <x-slot name="heading">Populairste stijlen</x-slot>

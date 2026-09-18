@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\GenerateAndSendQuizResultPdfJob;
+use App\Models\QuizEvent;
 use App\Models\QuizOption;
 use App\Models\QuizResult;
 use App\Models\SiteContent;
@@ -67,6 +68,12 @@ class QuizLeadController extends Controller
         $existing = Submission::where('quiz_result_id', $quizResult->id)->first();
         if ($existing && $this->isInFlight($existing)) {
             return $this->responseFor($existing);
+        }
+
+        // Trechtertelling — alleen bij een écht nieuwe inzending, nooit bij een retry/"opnieuw
+        // versturen" van dezelfde inzending (dat zou dezelfde bezoeker dubbel laten meetellen).
+        if (! $existing) {
+            QuizEvent::record(QuizEvent::LEAD_SUBMITTED);
         }
 
         $submission = Submission::updateOrCreate(

@@ -11,6 +11,7 @@ import { renderAccentColorStep } from "./components/accentColorStep.js";
 import { renderReportTeaser } from "./components/reportTeaser.js";
 import { renderLeadForm } from "./components/lead.js";
 import { createLoadingScene } from "./components/loadingScene.js";
+import { trackQuizEvent } from "./trackEvent.js";
 
 /**
  * Downloadt een foto onopvallend op de achtergrond, zodat de browser 'm al gecachet heeft tegen
@@ -137,6 +138,11 @@ function initQuiz(root, options = {}) {
   // Volgt de lopende vraagovergang (zie swapStepPanel()) zodat razendsnel doorklikken die netjes
   // afrondt i.p.v. twee overlappende overgangen tegelijk te laten lopen.
   let stepTransitionTimer = null;
+  // Trechtertelling (zie App\Models\QuizEvent): renderStep() draait ook opnieuw bij het aanvinken
+  // van een antwoord op dezelfde vraag (niet alleen bij vooruitgaan) — deze set zorgt dat elke
+  // vraag maar één keer als "bereikt" meetelt per bezoek, ongeacht hoe vaak 'm opnieuw gerenderd
+  // wordt.
+  const reachedQuestions = new Set();
   // De stepper toont, naast de echte vraag-onderdelen, ook "Jouw woonstijl" als afsluitende
   // stap — die licht pas op zodra de resultaatpagina wordt getoond (zie renderResult()).
   // Deze extra stap bestaat alleen visueel in de stepper en heeft geen eigen vragen: de
@@ -346,6 +352,11 @@ function initQuiz(root, options = {}) {
     stepper.update(sectionIndex, step);
     progress.update(SECTIONS[sectionIndex].title, index + 1, total);
 
+    if (!reachedQuestions.has(question.id)) {
+      reachedQuestions.add(question.id);
+      trackQuizEvent("question_reached", question.id);
+    }
+
     const stepContent = document.createElement("div");
     renderQuestionStep(stepContent, question, answers[question.id] || [], (optionId) => {
       state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
@@ -520,6 +531,7 @@ function initQuiz(root, options = {}) {
     if (starting) return;
     starting = true;
     els.startBtn.disabled = true;
+    trackQuizEvent("quiz_started");
 
     // Meet de hoogte vóórdat het startscherm iets van zijn lay-out verliest (de is-leaving-klasse
     // hieronder verandert alleen opacity/transform, maar meet voor de zekerheid eerst).

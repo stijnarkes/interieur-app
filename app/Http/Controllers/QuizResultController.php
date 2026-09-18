@@ -7,6 +7,7 @@ use App\Models\BasePalette;
 use App\Models\PartnerEvent;
 use App\Models\PartnerLink;
 use App\Models\PartnerParticipant;
+use App\Models\QuizEvent;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
@@ -49,6 +50,11 @@ class QuizResultController extends Controller
 
         $computed = $scoring->compute($answers);
         $result = $repository->store($answers, $computed);
+
+        // Trechtertelling ("hoeveel bezoekers ronden de test af") — hier en niet vanuit de client
+        // aangeroepen: de server bepaalt dit toch al autoritatief door dit resultaat op te slaan,
+        // dus geen los, door de client aan te sturen event nodig (zie QuizEventController).
+        QuizEvent::record(QuizEvent::COMPLETED);
 
         $advice = $textComposer->build($result);
 
