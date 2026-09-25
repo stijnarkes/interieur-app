@@ -253,6 +253,11 @@ class QuizImageManifest
 
         self::downscale($image, $maxWidth);
 
+        // Zonder dit vult GD een doorzichtige PNG-achtergrond zwart in bij het wegschrijven als
+        // webp (de doorzichtige pixels worden dan tegen een opake zwarte ondergrond "geblend").
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+
         ob_start();
         imagewebp($image, null, 85);
         $webp = ob_get_clean();
@@ -294,6 +299,10 @@ class QuizImageManifest
 
             return;
         }
+
+        // Zie storeAtPath() voor waarom dit nodig is: anders wordt doorzichtigheid zwart.
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
 
         ob_start();
         imagewebp($image, null, 85);
@@ -398,6 +407,10 @@ class QuizImageManifest
         $newHeight = (int) round($height * ($maxWidth / $width));
 
         $resized = imagecreatetruecolor($newWidth, $newHeight);
+        // Nieuw canvas staat standaard op opaak zwart — zonder dit wordt doorzichtigheid uit de
+        // brondafbeelding er bij het verkleinen tegenaan geblend in plaats van overgenomen.
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
         imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
         imagedestroy($image);
         $image = $resized;

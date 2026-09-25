@@ -910,9 +910,8 @@ a.btn-primary:hover {
 
 .option-check {
   position: absolute;
-  /* 16px vanaf de fóto-hoek (dus + de padding van .option-image) — anders zou het vinkje los in
-     de nieuwe witruimte rond de foto komen te hangen. */
-  top: 36px;
+  /* Zelfde top als .option-zoom, zodat vinkje en zoomknopje op één lijn staan. */
+  top: 12px;
   right: 36px;
   width: 26px;
   height: 26px;
