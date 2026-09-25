@@ -35,6 +35,7 @@ class QuizPreviewController extends Controller
         $options = QuizOption::query()
             ->where('question_id', $question->question_key)
             ->where('is_active', true)
+            ->orderBy('sort_order')
             ->get()
             ->filter(fn (QuizOption $option): bool => $option->linkedStyleKeys() !== [])
             ->map(fn (QuizOption $option): array => [

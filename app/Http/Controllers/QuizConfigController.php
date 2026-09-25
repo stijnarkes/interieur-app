@@ -51,6 +51,7 @@ class QuizConfigController extends Controller
 
         $options = QuizOption::query()
             ->where('is_active', true)
+            ->orderBy('sort_order')
             ->get()
             // Een optie zonder gekoppelde stijl is onvolledig (zie QuizOptionsPage) en mag nooit
             // in de klant-quiz verschijnen, ook niet als hij per ongeluk op actief staat — er

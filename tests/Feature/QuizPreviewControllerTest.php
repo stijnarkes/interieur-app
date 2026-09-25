@@ -72,6 +72,34 @@ class QuizPreviewControllerTest extends TestCase
         $response->assertDontSee('Betonvloer');
     }
 
+    /**
+     * Regressie: deze query had geen orderBy('sort_order'), dus het voorbeeld toonde altijd de
+     * aanmaakvolgorde in plaats van de door de admin ingestelde (gesleepte) volgorde.
+     */
+    #[Test]
+    public function het_vraagvoorbeeld_toont_de_opties_in_de_door_de_admin_ingestelde_volgorde(): void
+    {
+        QuizQuestion::create([
+            'question_key' => 'vloer', 'section' => 'materials-colors', 'title' => 'Welke vloer?',
+            'folder' => null, 'sort_order' => 10, 'max_selections' => 1, 'weight' => 1, 'image_display_mode' => 'contain',
+        ]);
+        QuizOption::create([
+            'question_id' => 'vloer', 'style_key' => 'japandi', 'option_slug' => 'eiken',
+            'primary_style' => 'japandi', 'title' => 'Eiken vloer', 'sort_order' => 20, 'is_active' => true, 'has_image' => false,
+        ]);
+        QuizOption::create([
+            'question_id' => 'vloer', 'style_key' => 'japandi', 'option_slug' => 'grenen',
+            'primary_style' => 'japandi', 'title' => 'Grenen vloer', 'sort_order' => 10, 'is_active' => true, 'has_image' => false,
+        ]);
+
+        $response = $this->actingAs($this->admin())->get('/admin/voorbeeld/vraag/vloer');
+
+        $response->assertOk();
+        $positionOfGrenen = strpos($response->getContent(), 'Grenen vloer');
+        $positionOfEiken = strpos($response->getContent(), 'Eiken vloer');
+        $this->assertLessThan($positionOfEiken, $positionOfGrenen, 'Grenen (sort_order 10) moet vóór Eiken (sort_order 20) getoond worden.');
+    }
+
     #[Test]
     public function het_overgangsscherm_voorbeeld_toont_de_admin_teksten(): void
     {
