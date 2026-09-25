@@ -120,6 +120,7 @@ function initQuiz(root, options = {}) {
     stepMount: root.querySelector("#quizStepMount"),
     backBtn: root.querySelector("#quizBackBtn"),
     nextBtn: root.querySelector("#quizNextBtn"),
+    floatingNextBtn: root.querySelector("#quizFloatingNextBtn"),
     result: root.querySelector("#quizResult"),
     styleResultMount: root.querySelector("#styleResultMount"),
     basePaletteMount: root.querySelector("#basePaletteMount"),
@@ -159,17 +160,28 @@ function initQuiz(root, options = {}) {
     window.scrollTo({ top: 0, behavior: "auto" });
   }
 
-  /** Geeft de Volgende-knop een eenmalige, zachte gloed-puls zodra die van uitgeschakeld naar
-   *  bruikbaar gaat — trekt de aandacht zonder dat er iets scrollt of springt. Verwijdert de klasse
-   *  weer na afloop van de animatie, zodat een volgende keer opnieuw kan pulsen. Respecteert
-   *  prefers-reduced-motion via de animatie zelf (zie app.css). */
-  function pulseNextButton() {
-    els.nextBtn.classList.remove("is-ready-pulse");
-    // Forceer een reflow, anders pakt de browser het opnieuw toevoegen van dezelfde klasse niet op
-    // als animatie-herstart wanneer er kort na elkaar twee keer geklikt wordt.
-    void els.nextBtn.offsetWidth;
-    els.nextBtn.classList.add("is-ready-pulse");
+  /**
+   * Zwevende "duplicaat"-Volgende-knop die alleen tijdelijk verschijnt: zodra de échte knop
+   * onderaan de vraag bruikbaar wordt terwijl hij buiten beeld staat (bv. een lange lijst foto's),
+   * duikt deze zachtjes op rechtsonder — en verdwijnt vanzelf weer zodra de échte knop zelf in
+   * beeld komt (gewoon door zelf te scrollen). Geen permanente balk: zolang er nog niets gekozen
+   * is, of de échte knop al zichtbaar is, staat hij er niet.
+   */
+  let nextBtnVisible = true;
+
+  function syncFloatingNextButton() {
+    const shouldShow = !els.nextBtn.disabled && !nextBtnVisible;
+    els.floatingNextBtn.textContent = els.nextBtn.textContent;
+    els.floatingNextBtn.classList.toggle("is-visible", shouldShow);
+    els.floatingNextBtn.toggleAttribute("inert", !shouldShow);
+    els.floatingNextBtn.setAttribute("aria-hidden", String(!shouldShow));
   }
+
+  const floatingNextObserver = new IntersectionObserver(([entry]) => {
+    nextBtnVisible = entry.isIntersecting;
+    syncFloatingNextButton();
+  });
+  floatingNextObserver.observe(els.nextBtn);
 
   /**
    * Meet de daadwerkelijk gerenderde hoogte van het (nog zichtbare) startscherm en zet die als
@@ -371,10 +383,8 @@ function initQuiz(root, options = {}) {
 
     const stepContent = document.createElement("div");
     renderQuestionStep(stepContent, question, answers[question.id] || [], (optionId) => {
-      const wasDisabled = els.nextBtn.disabled;
       state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
       renderStep();
-      if (wasDisabled && !els.nextBtn.disabled) pulseNextButton();
     });
     swapStepPanel(stepContent, direction);
     updateNextButton();
@@ -395,6 +405,7 @@ function initQuiz(root, options = {}) {
     const question = QUESTIONS[step];
     els.nextBtn.disabled = !(answers[question.id]?.length > 0);
     els.nextBtn.textContent = step === QUESTIONS.length - 1 ? "Bekijk mijn resultaat" : "Volgende";
+    syncFloatingNextButton();
   }
 
   function restart() {
@@ -580,6 +591,10 @@ function initQuiz(root, options = {}) {
     } else {
       renderStep({ scroll: true, direction: "forward" });
     }
+  });
+
+  els.floatingNextBtn.addEventListener("click", () => {
+    els.nextBtn.click();
   });
 
   els.backBtn.addEventListener("click", () => {

@@ -80,6 +80,11 @@
     </section>
     </div>
 
+    {{-- Zwevende "duplicaat"-Volgende-knop — bewust buiten .quiz-stage/#quizStepPanel, zie
+         syncFloatingNextButton() in quiz.js voor wanneer die verschijnt/verdwijnt en app.css voor
+         waarom dit niet binnen de schuifanimatie van #quizStepPanel mag hangen. --}}
+    <button type="button" class="btn btn-primary floating-next-btn" id="quizFloatingNextBtn" inert aria-hidden="true">Volgende</button>
+
     {{-- Resultaat --}}
     <section class="card results report" id="quizResult" hidden>
         <div class="results-head">
