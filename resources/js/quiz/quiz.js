@@ -171,7 +171,10 @@ function initQuiz(root, options = {}) {
   let nextBtnVisible = true;
 
   function syncFloatingNextButton() {
-    const shouldShow = !els.nextBtn.disabled && !nextBtnVisible;
+    // Zonder deze check bleef de knop óók verschijnen op het overgangsscherm tussen onderdelen: de
+    // echte #quizNextBtn staat dan verborgen (dus "niet zichtbaar" volgens de observer) maar had
+    // van de laatste vraag nog disabled=false staan, dus leek hij bruikbaar-maar-buiten-beeld.
+    const shouldShow = !els.steps.hidden && !els.nextBtn.disabled && !nextBtnVisible;
     els.floatingNextLabel.textContent = els.nextBtn.textContent;
     els.floatingNextBtn.classList.toggle("is-visible", shouldShow);
     els.floatingNextBtn.toggleAttribute("inert", !shouldShow);
@@ -214,6 +217,7 @@ function initQuiz(root, options = {}) {
     els.transition.hidden = screen !== "transition";
     els.steps.hidden = screen !== "steps";
     els.result.hidden = screen !== "result";
+    syncFloatingNextButton();
     scrollToTop();
   }
 
