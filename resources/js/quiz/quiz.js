@@ -159,6 +159,15 @@ function initQuiz(root, options = {}) {
     window.scrollTo({ top: 0, behavior: "auto" });
   }
 
+  /** Schuift de Volgende-knop rustig in beeld zodra die na een keuze bruikbaar wordt — vooral op
+   *  mobiel kan die anders onder een lange lijst foto's uit beeld blijven. `block: "nearest"` doet
+   *  niets als de knop al zichtbaar is, dus dit springt nooit onnodig (bv. bij een tweede keuze op
+   *  een meerkeuzevraag, of op een breed scherm waar de knop toch al in beeld staat). */
+  function scrollNextButtonIntoView() {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    els.nextBtn.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "nearest" });
+  }
+
   /**
    * Meet de daadwerkelijk gerenderde hoogte van het (nog zichtbare) startscherm en zet die als
    * minimumhoogte op de gedeelde stage — vóórdat het startscherm wegvaagt. Zo blijft de kaart
@@ -361,6 +370,7 @@ function initQuiz(root, options = {}) {
     renderQuestionStep(stepContent, question, answers[question.id] || [], (optionId) => {
       state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
       renderStep();
+      if (!els.nextBtn.disabled) scrollNextButtonIntoView();
     });
     swapStepPanel(stepContent, direction);
     updateNextButton();
