@@ -146,6 +146,24 @@ a.btn-primary:hover {
   background-color: var(--accent-strong) !important;
 }
 
+/* Eenmalige, zachte aandachtstrekker op Volgende zodra die bruikbaar wordt na een keuze — geen
+   scroll/sprong, puur een korte gloed om de knop heen. Klasse wordt door quiz.js (pulseNextButton())
+   direct weer verwijderd na afloop, zodat 'ie bij een volgende keuze opnieuw kan triggeren. */
+@media (prefers-reduced-motion: no-preference) {
+  #quizNextBtn.is-ready-pulse {
+    animation: next-btn-pulse 900ms ease-out;
+  }
+}
+
+@keyframes next-btn-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(183, 121, 77, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(183, 121, 77, 0);
+  }
+}
+
 .btn-secondary {
   background: #f2ebe2;
   color: #47352a;

@@ -159,13 +159,16 @@ function initQuiz(root, options = {}) {
     window.scrollTo({ top: 0, behavior: "auto" });
   }
 
-  /** Schuift de Volgende-knop rustig in beeld zodra die na een keuze bruikbaar wordt — vooral op
-   *  mobiel kan die anders onder een lange lijst foto's uit beeld blijven. `block: "nearest"` doet
-   *  niets als de knop al zichtbaar is, dus dit springt nooit onnodig (bv. bij een tweede keuze op
-   *  een meerkeuzevraag, of op een breed scherm waar de knop toch al in beeld staat). */
-  function scrollNextButtonIntoView() {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    els.nextBtn.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "nearest" });
+  /** Geeft de Volgende-knop een eenmalige, zachte gloed-puls zodra die van uitgeschakeld naar
+   *  bruikbaar gaat — trekt de aandacht zonder dat er iets scrollt of springt. Verwijdert de klasse
+   *  weer na afloop van de animatie, zodat een volgende keer opnieuw kan pulsen. Respecteert
+   *  prefers-reduced-motion via de animatie zelf (zie app.css). */
+  function pulseNextButton() {
+    els.nextBtn.classList.remove("is-ready-pulse");
+    // Forceer een reflow, anders pakt de browser het opnieuw toevoegen van dezelfde klasse niet op
+    // als animatie-herstart wanneer er kort na elkaar twee keer geklikt wordt.
+    void els.nextBtn.offsetWidth;
+    els.nextBtn.classList.add("is-ready-pulse");
   }
 
   /**
@@ -368,9 +371,10 @@ function initQuiz(root, options = {}) {
 
     const stepContent = document.createElement("div");
     renderQuestionStep(stepContent, question, answers[question.id] || [], (optionId) => {
+      const wasDisabled = els.nextBtn.disabled;
       state.toggleAnswer(question.id, optionId, question.maxSelections ?? 1);
       renderStep();
-      if (!els.nextBtn.disabled) scrollNextButtonIntoView();
+      if (wasDisabled && !els.nextBtn.disabled) pulseNextButton();
     });
     swapStepPanel(stepContent, direction);
     updateNextButton();
