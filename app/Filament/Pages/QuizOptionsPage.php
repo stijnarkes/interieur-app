@@ -65,7 +65,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         $sectionOrder = array_flip(array_keys(QuizStructure::SECTIONS));
 
         return QuizQuestion::query()
-            ->with(['options' => fn ($query) => $query->orderBy('id')->with('styleLinks')])
+            ->with(['options' => fn ($query) => $query->orderBy('sort_order')->with('styleLinks')])
             ->get()
             ->sortBy(fn (QuizQuestion $question): string => sprintf('%d-%08d', $sectionOrder[$question->section] ?? 99, $question->sort_order))
             ->values()
@@ -160,9 +160,12 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                 $uploadedImage = $data['image'];
                 unset($data['image']);
 
+                $nextOrder = (QuizOption::where('question_id', $questionId)->max('sort_order') ?? 0) + 10;
+
                 $option = QuizOption::create([
                     ...$data,
                     'question_id' => $questionId,
+                    'sort_order' => $nextOrder,
                     'style_key' => $data['style_keys'][0],
                     'option_slug' => $slug,
                     'image_path' => "/images/interior/extra/{$slug}.webp",
@@ -433,6 +436,21 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
     {
         foreach ($orderedIds as $index => $questionId) {
             QuizQuestion::where('id', (int) $questionId)->update(['sort_order' => ($index + 1) * 10]);
+        }
+    }
+
+    /**
+     * Slaat de nieuwe volgorde van antwoordopties op na slepen — zie x-sortable in de Blade-view.
+     * Elke vraag heeft haar eigen sleepbare optielijst, dus `$orderedIds` bevat altijd alleen
+     * optie-id's uit één vraag; opties kunnen daardoor nooit per ongeluk bij een andere vraag
+     * terechtkomen door te slepen.
+     *
+     * @param  array<int, string>  $orderedIds  optie-id's (als string, zo levert Sortable.js ze aan) in de nieuwe volgorde
+     */
+    public function reorderOptions(array $orderedIds): void
+    {
+        foreach ($orderedIds as $index => $optionId) {
+            QuizOption::where('id', (int) $optionId)->update(['sort_order' => ($index + 1) * 10]);
         }
     }
 }

@@ -72,9 +72,22 @@
                             @if ($options->isEmpty())
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Nog geen antwoordopties voor deze vraag.</p>
                             @else
-                                <div>
+                                <div
+                                    x-sortable
+                                    x-on:end.stop="$wire.reorderOptions($event.target.sortable.toArray())"
+                                >
                                     @foreach ($options as $option)
-                                        <div @class(['flex items-center gap-4 py-3', 'border-t border-gray-200 dark:border-white/10' => ! $loop->first])>
+                                        <div
+                                            x-sortable-item="{{ $option->id }}"
+                                            @class(['flex items-center gap-4 py-3', 'border-t border-gray-200 dark:border-white/10' => ! $loop->first])
+                                        >
+                                            <x-filament::icon-button
+                                                icon="heroicon-m-bars-2"
+                                                label="Sleep om te herordenen"
+                                                x-sortable-handle
+                                                class="shrink-0 cursor-move"
+                                            />
+
                                             <img
                                                 src="{{ $option->thumbnailUrl() }}"
                                                 alt="{{ $option->title }}"

@@ -10,6 +10,7 @@ class QuizOption extends Model
 {
     protected $fillable = [
         'question_id',
+        'sort_order',
         'style_key',
         'option_slug',
         'primary_style',
@@ -32,6 +33,7 @@ class QuizOption extends Model
     ];
 
     protected $casts = [
+        'sort_order' => 'integer',
         'is_active' => 'boolean',
         'showroom_product' => 'boolean',
         'price' => 'decimal:2',
