@@ -121,6 +121,7 @@ function initQuiz(root, options = {}) {
     backBtn: root.querySelector("#quizBackBtn"),
     nextBtn: root.querySelector("#quizNextBtn"),
     floatingNextBtn: root.querySelector("#quizFloatingNextBtn"),
+    floatingNextLabel: root.querySelector("#quizFloatingNextBtnLabel"),
     result: root.querySelector("#quizResult"),
     styleResultMount: root.querySelector("#styleResultMount"),
     basePaletteMount: root.querySelector("#basePaletteMount"),
@@ -171,7 +172,7 @@ function initQuiz(root, options = {}) {
 
   function syncFloatingNextButton() {
     const shouldShow = !els.nextBtn.disabled && !nextBtnVisible;
-    els.floatingNextBtn.textContent = els.nextBtn.textContent;
+    els.floatingNextLabel.textContent = els.nextBtn.textContent;
     els.floatingNextBtn.classList.toggle("is-visible", shouldShow);
     els.floatingNextBtn.toggleAttribute("inert", !shouldShow);
     els.floatingNextBtn.setAttribute("aria-hidden", String(!shouldShow));

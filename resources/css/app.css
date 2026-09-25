@@ -150,26 +150,38 @@ a.btn-primary:hover {
    zodra de échte knop onderaan de vraag bruikbaar is terwijl hij buiten beeld staat, en verdwijnt
    weer zodra je zelf naar de échte knop scrolt. Buiten #quizStepPanel geplaatst in de Blade-view,
    zodat de schuifanimatie tussen vragen (die een transform op dat paneel zet) 'm niet meesleept. */
-.floating-next-btn {
+/* #quizFloatingNextBtn (i.p.v. de .floating-next-btn-klasse) om altijd te winnen van de generieke
+   ".btn { width: 100% }"-mobielregel verderop — anders wordt dit per ongeluk een volle balk i.p.v.
+   een klein zwevend knopje. */
+#quizFloatingNextBtn {
   position: fixed;
   right: 20px;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   z-index: 40;
-  box-shadow: 0 10px 24px rgba(61, 45, 30, 0.25);
+  width: auto;
+  min-height: auto;
+  padding: 13px 22px;
+  gap: 8px;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 24px rgba(61, 45, 30, 0.28);
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(10px) scale(0.96);
   pointer-events: none;
   transition: opacity 220ms ease, transform 220ms ease;
 }
 
-.floating-next-btn.is-visible {
+#quizFloatingNextBtn svg {
+  flex-shrink: 0;
+}
+
+#quizFloatingNextBtn.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
   pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .floating-next-btn {
+  #quizFloatingNextBtn {
     transition: none;
   }
 }
