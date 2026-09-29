@@ -230,6 +230,10 @@ a.btn-primary:hover {
   font-size: clamp(1.4rem, 2vw, 1.8rem);
 }
 
+.results-head-logo {
+  margin: 0;
+}
+
 .result-card {
   border: 1px solid var(--line);
   border-radius: 14px;

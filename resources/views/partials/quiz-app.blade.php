@@ -92,10 +92,12 @@
 
     {{-- Resultaat --}}
     <section class="card results report" id="quizResult" hidden>
-        <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="brand-logo" />
-
+        {{-- Vervangt de eerder losse titel hierboven (die stond dubbel op met de "JOUW
+             PERSOONLIJKE WOONSTIJL"-titel in het heldenblok eronder, zie styleResult.js) —
+             $siteContent->result_page_title blijft wel gewoon admin-bewerkbaar via Teksten, voor
+             als deze plek ooit weer tekst i.p.v. het logo moet tonen. --}}
         <div class="results-head">
-            <h2>{{ $siteContent->result_page_title }}</h2>
+            <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="brand-logo results-head-logo" />
             <button type="button" class="btn btn-link" id="restartQuizBtn">Opnieuw beginnen</button>
         </div>
 
