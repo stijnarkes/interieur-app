@@ -56,12 +56,12 @@ class AccentColorSeeder extends Seeder
             ['name' => 'Roestoranje', 'hex' => '#B86843', 'style_keys' => ['modern']],
             ['name' => 'Chocoladebruin', 'hex' => '#604536', 'style_keys' => ['modern']],
             ['name' => 'Zwart', 'hex' => '#202020', 'style_keys' => ['modern']],
-            ['name' => 'Poederblauw', 'hex' => '#A8C6DB', 'style_keys' => ['scandinavisch']],
-            ['name' => 'Zacht mintgroen', 'hex' => '#B7D4C3', 'style_keys' => ['scandinavisch']],
-            ['name' => 'Botergeel', 'hex' => '#EDDA94', 'style_keys' => ['scandinavisch']],
-            ['name' => 'Poederroze', 'hex' => '#E4BDC5', 'style_keys' => ['scandinavisch']],
-            ['name' => 'Licht pistachegroen', 'hex' => '#CDD7AF', 'style_keys' => ['scandinavisch']],
-            ['name' => 'Zacht lila', 'hex' => '#C8BDD9', 'style_keys' => ['scandinavisch']],
+            ['name' => 'Antraciet', 'hex' => '#33363A', 'style_keys' => ['scandinavisch']],
+            ['name' => 'Dennengroen', 'hex' => '#435446', 'style_keys' => ['scandinavisch']],
+            ['name' => 'Roestbruin', 'hex' => '#A9603F', 'style_keys' => ['scandinavisch']],
+            ['name' => 'Warm taupe', 'hex' => '#B8A488', 'style_keys' => ['scandinavisch']],
+            ['name' => 'Leisteengrijs', 'hex' => '#6B7371', 'style_keys' => ['scandinavisch']],
+            ['name' => 'Amberbruin', 'hex' => '#B8863F', 'style_keys' => ['scandinavisch']],
         ];
     }
 }
