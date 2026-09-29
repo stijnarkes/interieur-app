@@ -20,19 +20,23 @@ use Illuminate\Http\Request;
  * berekende QuizResult (zie QuizResultController/QuizScoringService) + StyleProfile, i.p.v. een
  * kant-en-klare resultaat-JSON van de client te vertrouwen.
  *
- * PDF-generatie + mailverzending lopen synchroon binnen deze aanvraag (via
- * GenerateAndSendQuizResultPdfJob::handle(), rechtstreeks aangeroepen i.p.v. op een wachtrij gezet
- * — er draait geen queue-worker) en mogen best een paar seconden duren (PdfImageResolver cachet
- * de foto's server-side, maar dompdf's eigen verwerking van meerdere ingebedde foto's kost sowieso
- * tijd). Dat op zichzelf is geen probleem — het echte probleem was dat de verbinding tussen
- * browser en server bij zo'n iets langere aanvraag soms verbrak vóórdat het antwoord terugkwam,
- * terwijl de server intussen gewoon doorwerkte en de mail alsnog verstuurde: de bezoeker zag dan
- * ten onrechte "verzenden mislukt". Zie status() hieronder + resources/js/quiz/components/lead.js:
- * bij zo'n afgebroken verbinding vraagt de browser nu gewoon na wat er écht gebeurd is, in plaats
- * van meteen een mislukking te concluderen. `email_status` 'queued' bestaat als kortstondige
- * tussentoestand (voor het geval de aanvraag halverwege afbreekt) — zie isInFlight() hieronder —
- * en wordt in de normale flow binnen dezelfde aanvraag alweer overschreven met 'sent'/'failed'
- * vóórdat het antwoord teruggaat.
+ * PDF-generatie en mailverzending gebeuren nog steeds zonder queue-worker, maar niet langer
+ * vóórdat het antwoord teruggaat: de aanvraag zelf slaat alleen de gegevens op en meldt daarna
+ * meteen `'queued'`. Het daadwerkelijke werk (GenerateAndSendQuizResultPdfJob::handle()) start pas
+ * ná die bevestiging, via app()->terminating() — hetzelfde mechanisme dat Laravel intern gebruikt
+ * voor "terminable middleware": zodra de HTTP-kernel het antwoord al naar de browser heeft
+ * gestuurd (Symfony's Response::send() roept zelf fastcgi_finish_request() aan als de
+ * PHP-omgeving dat ondersteunt), blijft ditzelfde PHP-proces nog even doorwerken zonder dat de
+ * bezoeker daarop wacht. Bestaat die functie niet in de omgeving, dan verandert er niets aan het
+ * resultaat — de callback loopt dan gewoon iets later binnen dezelfde aanvraag, vlak voor het
+ * proces sowieso al afrondt. Kernel::terminate() draait ook in de testomgeving (zie
+ * MakesHttpRequests::call()), dus app()->terminating()-callbacks lopen daar synchroon binnen
+ * dezelfde test-aanroep — de einduitkomst (`email_status`) staat dus al vast zodra een test
+ * verdergaat, ook al meldt de HTTP-respons zelf altijd `'queued'` (zie QuizLeadControllerTest).
+ *
+ * `email_status` 'queued' is dus niet langer een zeldzame tussentoestand maar de normale, eerste
+ * uitkomst van elke aanvraag — zie status() hieronder + resources/js/quiz/components/lead.js voor
+ * hoe de bezoeker alsnog de echte "verzonden"/"mislukt"-uitkomst te zien kan krijgen.
  *
  * Idempotent per quiz_result_id, maar alleen zolang een eerdere poging daadwerkelijk slaagde of nog
  * loopt: een herhaalde inzending voor hetzelfde resultaat (dubbelklik, of een bevestigde "opnieuw
@@ -94,13 +98,32 @@ class QuizLeadController extends Controller
 
         $job = new GenerateAndSendQuizResultPdfJob($submission->id, $data['partnerClaimToken'] ?? null);
 
-        try {
-            $job->handle($pdfService, $partnerLinkService);
-        } catch (\Throwable $e) {
-            $job->failed($e);
-        }
+        // Zie de class-docblock hierboven: dit draait pas nadat het antwoord al onderweg is naar
+        // de browser, dus $submission staat op dit moment nog gewoon op 'queued' — dat is precies
+        // het antwoord dat responseFor() hieronder teruggeeft.
+        //
+        // $hasRun bewaakt dat déze callback zichzelf maar één keer uitvoert: Application::terminate()
+        // (vendor/laravel/framework/.../Application.php) leegt $terminatingCallbacks nooit, dus bij
+        // een volgende aanvraag binnen hetzelfde PHP-proces (bv. meerdere postJson()-aanroepen in
+        // één test, of — als deze omgeving ooit long-running workers zoals Octane zou gebruiken —
+        // een volgend verzoek op diezelfde worker) zou terminate() anders óók déze, allang
+        // afgehandelde job opnieuw uitvoeren en zo een dubbele PDF/mail voor dezelfde inzending
+        // veroorzaken.
+        $hasRun = false;
+        app()->terminating(function () use ($job, $pdfService, $partnerLinkService, &$hasRun): void {
+            if ($hasRun) {
+                return;
+            }
+            $hasRun = true;
 
-        return $this->responseFor($submission->fresh());
+            try {
+                $job->handle($pdfService, $partnerLinkService);
+            } catch (\Throwable $e) {
+                $job->failed($e);
+            }
+        });
+
+        return $this->responseFor($submission);
     }
 
     /**

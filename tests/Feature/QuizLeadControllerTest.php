@@ -18,9 +18,13 @@ use Tests\TestCase;
 /**
  * Dekt de opdracht-vereisten rond de verzendflow: nooit dubbel mailen, exact dezelfde uitslag als
  * op het scherm, en een moodboard met echt gekozen producten. PDF-generatie/mailverzending lopen
- * synchroon binnen de aanvraag (zie QuizLeadController/GenerateAndSendQuizResultPdfJob — er draait
- * geen queue-worker, de eigenlijke snelheidswinst zit in PdfImageResolver). Verzendt nooit een
- * echte mail — altijd Mail::fake().
+ * nog steeds zonder queue-worker, maar pas ná het antwoord (via app()->terminating(), zie
+ * QuizLeadController) — de HTTP-respons van postLead() meldt daarom altijd 'queued', nooit meteen
+ * 'sent'/'failed'. Omdat Kernel::terminate() ook in PHPUnit synchroon binnen dezelfde test-aanroep
+ * draait (zie MakesHttpRequests::call()), staat de einduitkomst (Submission::email_status) op het
+ * moment dat postLead() teruggeeft al wél vast — vandaar dat tests die op de daadwerkelijke
+ * verzenduitkomst willen controleren dat via Submission::first()->email_status doen i.p.v. via de
+ * respons van de aanvraag zelf. Verzendt nooit een echte mail — altijd Mail::fake().
  */
 class QuizLeadControllerTest extends TestCase
 {
@@ -70,10 +74,28 @@ class QuizLeadControllerTest extends TestCase
         $response = $this->postLead($quizResult->uuid);
 
         $response->assertOk();
-        $response->assertJsonFragment(['status' => 'sent']);
+        $response->assertJsonFragment(['status' => 'queued']);
         Mail::assertSent(QuizResultMail::class, 1);
         $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
         $this->assertSame('sent', Submission::first()->email_status);
+    }
+
+    #[Test]
+    public function de_aanvraag_zelf_bevestigt_altijd_alleen_ontvangst_nooit_meteen_verzonden_of_mislukt(): void
+    {
+        // Vast contract, los van of het versturen zelf lukt of mislukt (zie de twee andere tests
+        // hierboven/hieronder die dat aparte staartje wél controleren): de HTTP-respons van de
+        // aanvraag zelf gaat de deur uit vóórdat GenerateAndSendQuizResultPdfJob draait (zie
+        // QuizLeadController::handle()'s app()->terminating()), dus die respons kan de echte
+        // uitkomst nooit al kennen.
+        Mail::fake();
+        $quizResult = $this->makeQuizResult();
+
+        $response = $this->postLead($quizResult->uuid);
+
+        $response->assertJsonFragment(['status' => 'queued']);
+        $response->assertJsonMissing(['status' => 'sent']);
+        $response->assertJsonMissing(['status' => 'failed']);
     }
 
     #[Test]
@@ -121,10 +143,7 @@ class QuizLeadControllerTest extends TestCase
         $response = $this->postLead($quizResult->uuid);
 
         $response->assertOk();
-        $response->assertJsonFragment([
-            'status' => 'failed',
-            'message' => 'Je gegevens zijn opgeslagen, maar het versturen van de e-mail is niet gelukt.',
-        ]);
+        $response->assertJsonFragment(['status' => 'queued']);
         Mail::assertNotSent(QuizResultMail::class);
         $this->assertSame('failed', Submission::first()->email_status);
         $this->assertSame('PDF-generatie mislukt in de test.', Submission::first()->email_error);
@@ -142,10 +161,11 @@ class QuizLeadControllerTest extends TestCase
         $quizResult = $this->makeQuizResult();
 
         $first = $this->postLead($quizResult->uuid);
-        $first->assertJsonFragment(['status' => 'failed']);
+        $first->assertJsonFragment(['status' => 'queued']);
+        $this->assertSame('failed', Submission::first()->email_status);
 
         $second = $this->postLead($quizResult->uuid);
-        $second->assertJsonFragment(['status' => 'sent']);
+        $second->assertJsonFragment(['status' => 'queued']);
 
         Mail::assertSent(QuizResultMail::class, 1);
         $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
@@ -171,9 +191,10 @@ class QuizLeadControllerTest extends TestCase
 
         $response = $this->postLead($quizResult->uuid);
 
-        $response->assertJsonFragment(['status' => 'sent']);
+        $response->assertJsonFragment(['status' => 'queued']);
         Mail::assertSent(QuizResultMail::class, 1);
         $this->assertSame(1, Submission::where('quiz_result_id', $quizResult->id)->count());
+        $this->assertSame('sent', Submission::first()->email_status);
     }
 
     #[Test]
@@ -249,7 +270,7 @@ class QuizLeadControllerTest extends TestCase
 
         $response = $this->postLead($quizResult->uuid);
 
-        $response->assertJsonFragment(['status' => 'sent']);
+        $response->assertJsonFragment(['status' => 'queued']);
         $this->assertSame([], Submission::first()->quiz_result['accentColors']);
     }
 
