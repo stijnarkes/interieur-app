@@ -113,6 +113,33 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted, p
   }
 
   /**
+   * Vervangt het "aanvraag ontvangen"-scherm (renderQueued()) door de echte uitkomst zodra die
+   * bekend is — zonder dit zou de bezoeker voorgoed op dat "nog bezig"-scherm blijven staan, ook
+   * nadat de mail allang verstuurd is (zie QuizLeadController: het antwoord op de aanvraag zelf
+   * bevestigt bewust nooit meer dan "ontvangen", de PDF/mail worden daarna pas gemaakt). Hergebruikt
+   * pollForOutcome() hierboven — dezelfde navraag-functie als bij een afgebroken verbinding, alleen
+   * nu voor het normale pad i.p.v. alleen als noodgreep.
+   *
+   * Bewust stil bij een onbekende uitkomst (pollForOutcome() gaf null terug): het "aanvraag
+   * ontvangen"-scherm blijft dan gewoon staan, dat is al een eerlijke, geen-loze-belofte-tekst
+   * ("je ontvangt je rapport binnenkort per e-mail"). Geen enkele knop op dat scherm kan intussen
+   * een tegenstrijdige actie in gang zetten (renderQueued() toont bewust geen "opnieuw
+   * versturen"-knop — zie die functie), dus er is nooit een race met een bezoekersactie op
+   * dezelfde container.
+   */
+  function watchForRealOutcome({ name, email, marketingOptIn }) {
+    pollForOutcome(result.resultUuid).then((outcome) => {
+      if (!outcome) return;
+
+      if (outcome.status === "sent") {
+        renderSuccess({ name, email, marketingOptIn });
+      } else if (outcome.status === "failed") {
+        renderForm({ name, email, marketingOptIn, statusMessage: outcome.message });
+      }
+    });
+  }
+
+  /**
    * @param {{name?: string, email?: string, marketingOptIn?: boolean, statusMessage?: string}} prefill
    *   Gebruikt om na een mislukte aanvraag of een netwerkfout het formulier opnieuw te tonen met
    *   de al ingevulde gegevens (nooit de bezoeker laten overtypen) en een uitleg wat er misging.
@@ -256,8 +283,13 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted, p
       } else if (response.status === "queued") {
         // De aanvraag is ontvangen en wordt op de achtergrond verwerkt (zie
         // GenerateAndSendQuizResultPdfJob) — nooit al claimen dat de e-mail verstuurd is, dat
-        // weten we op dit moment nog niet.
+        // weten we op dit moment nog niet. Dat werk is intussen meestal al (bijna) klaar tegen de
+        // tijd dat dit scherm verschijnt (zie QuizLeadController: het antwoord gaat al de deur uit
+        // vóórdat de PDF/mail zelf gemaakt wordt) — watchForRealOutcome() vervangt dit scherm
+        // daarom vanzelf door de echte uitkomst zodra die bekend is, i.p.v. de bezoeker voorgoed
+        // op dit "nog bezig"-scherm te laten staan terwijl de mail allang onderweg is.
         renderQueued();
+        watchForRealOutcome({ name, email, marketingOptIn });
       } else {
         // De server bevestigt hier expliciet geen geslaagde verzending (bv. email_status
         // 'failed') — nooit een succesmelding tonen die de app niet kan waarmaken. Gegevens
