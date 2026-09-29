@@ -21,7 +21,7 @@ class QuizQuestion extends Model
     protected $casts = [
         'sort_order' => 'integer',
         'max_selections' => 'integer',
-        'weight' => 'integer',
+        'weight' => 'float',
     ];
 
     public function options()

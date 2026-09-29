@@ -5,14 +5,13 @@ namespace Tests\Feature;
 use App\Models\AccentColor;
 use App\Models\BasePalette;
 use App\Models\PartnerLink;
-use App\Models\QuizOption;
-use App\Models\QuizQuestion;
 use App\Models\QuizResult;
 use App\Models\QuizSetting;
 use App\Models\StyleProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\SeedsRealStyleQuizData;
 use Tests\TestCase;
 
 /**
@@ -23,6 +22,7 @@ use Tests\TestCase;
 class PartnerAccessTest extends TestCase
 {
     use RefreshDatabase;
+    use SeedsRealStyleQuizData;
 
     protected function setUp(): void
     {
@@ -34,27 +34,18 @@ class PartnerAccessTest extends TestCase
         StyleProfile::create(['style_key' => 'japandi', 'label' => 'Japandi', 'slug' => 'japandi']);
         StyleProfile::create(['style_key' => 'modern', 'label' => 'Modern', 'slug' => 'modern']);
 
-        QuizQuestion::create([
-            'question_key' => 'vloer', 'section' => 'materials-colors', 'title' => 'Welke vloer?',
-            'folder' => null, 'sort_order' => 10, 'max_selections' => 1, 'weight' => 1, 'image_display_mode' => 'contain',
-        ]);
-
-        QuizOption::create([
-            'question_id' => 'vloer', 'style_key' => 'japandi', 'option_slug' => 'eiken',
-            'primary_style' => 'japandi', 'title' => 'Eiken vloer', 'is_active' => true, 'has_image' => false,
-        ]);
-
-        QuizOption::create([
-            'question_id' => 'vloer', 'style_key' => 'modern', 'option_slug' => 'beton',
-            'primary_style' => 'modern', 'title' => 'Betonlook vloer', 'is_active' => true, 'has_image' => false,
-        ]);
+        // De echte vragen/opties (i.p.v. de synthetische 'vloer'/'eiken'/'beton'): de
+        // uitslagberekening leunt sinds de nieuwe scoring volledig op QuizAnswerScoreMatrix (zie de
+        // opdracht "scoring woonstijltest Boer Staphorst"), die alleen de echte, geverifieerde
+        // option_slugs herkent.
+        $this->seedRealQuizQuestionsAndOptions();
     }
 
     private function makeInvite(): array
     {
         $result = QuizResult::create([
             'uuid' => (string) Str::uuid(),
-            'answers' => ['vloer' => ['eiken']],
+            'answers' => $this->answersFavoring(self::JAPANDI),
             'style_scores' => ['japandi' => 1],
             'primary_style' => 'japandi',
         ]);
@@ -105,7 +96,7 @@ class PartnerAccessTest extends TestCase
         $partnerAccessToken = $claim->json('accessToken');
 
         $partnerResult = $this->postJson('/api/quiz-result', [
-            'answers' => ['vloer' => ['beton']],
+            'answers' => $this->answersFavoring(self::MODERN),
         ])->assertOk();
 
         $this->patchJson("/api/quiz-result/{$partnerResult->json('resultUuid')}/complete-partner", [
@@ -137,7 +128,7 @@ class PartnerAccessTest extends TestCase
         $claim = $this->postJson("/api/partner-links/{$inviteToken}/claim")->assertOk();
         $partnerAccessToken = $claim->json('accessToken');
 
-        $partnerResult = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['beton']]])->assertOk();
+        $partnerResult = $this->postJson('/api/quiz-result', ['answers' => $this->answersFavoring(self::MODERN)])->assertOk();
         \App\Models\Submission::create([
             'quiz_result_id' => \App\Models\QuizResult::where('uuid', $partnerResult->json('resultUuid'))->value('id'),
             'style' => 'Modern', 'name' => 'Bram',
@@ -176,7 +167,7 @@ class PartnerAccessTest extends TestCase
         $partnerAccessToken = $claim->json('accessToken');
 
         $partnerResult = $this->postJson('/api/quiz-result', [
-            'answers' => ['vloer' => ['beton']],
+            'answers' => $this->answersFavoring(self::MODERN),
         ])->assertOk();
         $resultUuid = $partnerResult->json('resultUuid');
         $paletteId = $partnerResult->json('basePaletteOptions.0.id');

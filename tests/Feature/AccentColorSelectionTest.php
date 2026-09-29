@@ -10,6 +10,7 @@ use App\Models\StyleProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\SeedsRealStyleQuizData;
 use Tests\TestCase;
 
 /**
@@ -20,6 +21,7 @@ use Tests\TestCase;
 class AccentColorSelectionTest extends TestCase
 {
     use RefreshDatabase;
+    use SeedsRealStyleQuizData;
 
     protected function setUp(): void
     {
@@ -63,11 +65,18 @@ class AccentColorSelectionTest extends TestCase
     #[Test]
     public function het_resultaat_bevat_alleen_accentkleuren_die_aan_de_primaire_stijl_gekoppeld_zijn(): void
     {
-        $this->makeQuestionAndOption();
+        StyleProfile::create([
+            'style_key' => 'japandi', 'label' => 'Japandi', 'slug' => 'japandi',
+            'long_description' => 'Rust en warmte passen bij jou.',
+        ]);
+        // De echte vragen/opties (i.p.v. de synthetische 'vloer'/'eiken'): de uitslagberekening
+        // leunt sinds de nieuwe scoring volledig op QuizAnswerScoreMatrix (zie de opdracht "scoring
+        // woonstijltest Boer Staphorst"), die alleen de echte, geverifieerde option_slugs herkent.
+        $this->seedRealQuizQuestionsAndOptions();
         AccentColor::create(['name' => 'Mosgroen', 'hex' => '#6b7a4f', 'style_keys' => ['japandi']]);
         AccentColor::create(['name' => 'Kobaltblauw', 'hex' => '#1d4e89', 'style_keys' => ['modern']]);
 
-        $response = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['eiken']]]);
+        $response = $this->postJson('/api/quiz-result', ['answers' => $this->answersFavoring(self::JAPANDI)]);
 
         $response->assertOk();
         $names = collect($response->json('accentColorOptions'))->pluck('name')->all();

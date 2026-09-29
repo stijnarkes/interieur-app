@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\SeedsRealStyleQuizData;
 use Tests\TestCase;
 
 /**
@@ -29,6 +30,7 @@ use Tests\TestCase;
 class QuizLeadControllerTest extends TestCase
 {
     use RefreshDatabase;
+    use SeedsRealStyleQuizData;
 
     private function makeQuizResult(): QuizResult
     {
@@ -343,9 +345,16 @@ class QuizLeadControllerTest extends TestCase
     public function resultatenpagina_en_pdf_gebruiken_exact_dezelfde_basisstijl(): void
     {
         Mail::fake();
-        $quizResult = $this->makeQuizResult();
+        StyleProfile::create([
+            'style_key' => 'japandi', 'label' => 'Japandi', 'slug' => 'japandi',
+            'long_description' => 'Rust en warmte passen bij jou.',
+        ]);
+        // De echte vragen/opties (i.p.v. de synthetische 'vloer'/'eiken'): de uitslagberekening
+        // leunt sinds de nieuwe scoring volledig op QuizAnswerScoreMatrix (zie de opdracht "scoring
+        // woonstijltest Boer Staphorst"), die alleen de echte, geverifieerde option_slugs herkent.
+        $this->seedRealQuizQuestionsAndOptions();
 
-        $resultResponse = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['eiken']]]);
+        $resultResponse = $this->postJson('/api/quiz-result', ['answers' => $this->answersFavoring(self::JAPANDI)]);
         $resultResponse->assertOk();
         $screenLabel = $resultResponse->json('primaryStyle.label');
 

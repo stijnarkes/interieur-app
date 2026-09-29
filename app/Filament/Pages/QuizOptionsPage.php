@@ -303,10 +303,11 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
 
                 TextInput::make('weight')
                     ->label('Gewicht')
-                    ->helperText('Hoeveel punten heeft deze vraag in totaal te verdelen over de gekozen optie(s)? Standaard 1. Een zwaardere vraag (bv. 2) telt harder mee in de uitslag.')
+                    ->helperText('Hoe zwaar telt deze vraag mee in de uitslag? Standaard 1. Een zwaardere vraag (bv. 1,5) telt harder mee.')
                     ->numeric()
                     ->minValue(1)
                     ->maxValue(10)
+                    ->step(0.1)
                     ->default(1)
                     ->required(),
 
@@ -372,10 +373,11 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
 
                 TextInput::make('weight')
                     ->label('Gewicht')
-                    ->helperText('Hoeveel punten heeft deze vraag in totaal te verdelen over de gekozen optie(s)? Standaard 1. Een zwaardere vraag (bv. 2) telt harder mee in de uitslag.')
+                    ->helperText('Hoe zwaar telt deze vraag mee in de uitslag? Standaard 1. Een zwaardere vraag (bv. 1,5) telt harder mee.')
                     ->numeric()
                     ->minValue(1)
                     ->maxValue(10)
+                    ->step(0.1)
                     ->required(),
 
                 Select::make('image_display_mode')

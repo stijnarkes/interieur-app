@@ -9,8 +9,9 @@ use Illuminate\Support\Collection;
  * Stelt de ~6 accentkleuren samen die de bezoeker mag kiezen, op basis van het al berekende
  * stijlprofiel (QuizScoringService) — raakt de scoreberekening zelf niet aan. Gebruikt bewust
  * alleen primary_style/secondary_style: een secundaire stijl wordt door QuizScoringService al
- * alleen gezet als die significant genoeg is (secondary_influence_ratio + spreiding), dus een
- * losse percentageberekening is hier niet nodig.
+ * alleen gezet als die significant genoeg is (zie QuizSetting::secondary_influence_max_gap en de
+ * overige eisen in QuizScoringService::determineResult()), dus een losse controle is hier niet
+ * nodig.
  */
 class AccentColorSelector
 {

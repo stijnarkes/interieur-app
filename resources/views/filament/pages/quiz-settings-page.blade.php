@@ -3,12 +3,12 @@
 
     <x-filament::section
         heading="Drempel voor de tweede invloed"
-        description="Bepaalt wanneer de op-één-na-hoogste stijl als 'invloed' naast de basisstijl getoond wordt."
+        description="Bepaalt wanneer de op-één-na-hoogste stijl als 'invloed' naast de basisstijl getoond wordt (naast de andere twee, niet-instelbare eisen: een positieve uitslagScore en op minstens 2 vragen boven het vraaggemiddelde van die stijl)."
         :header-actions="[$this->editThresholdAction()]"
     >
         <dl>
-            <dt class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Minimaal percentage van de basisscore</dt>
-            <dd class="text-lg font-bold text-gray-950 dark:text-white">{{ $settings->secondary_influence_ratio }}%</dd>
+            <dt class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Maximaal verschil in uitslagScore met de hoofdstijl</dt>
+            <dd class="text-lg font-bold text-gray-950 dark:text-white">{{ $settings->secondary_influence_max_gap }}</dd>
         </dl>
     </x-filament::section>
 

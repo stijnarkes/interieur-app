@@ -10,6 +10,7 @@ use App\Models\StyleProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\SeedsRealStyleQuizData;
 use Tests\TestCase;
 
 /**
@@ -20,6 +21,7 @@ use Tests\TestCase;
 class BasePaletteSelectionTest extends TestCase
 {
     use RefreshDatabase;
+    use SeedsRealStyleQuizData;
 
     private function makeQuestionAndOption(): QuizOption
     {
@@ -53,11 +55,18 @@ class BasePaletteSelectionTest extends TestCase
     #[Test]
     public function het_resultaat_bevat_alleen_basispaletten_van_de_primaire_stijl(): void
     {
-        $this->makeQuestionAndOption();
+        StyleProfile::create([
+            'style_key' => 'japandi', 'label' => 'Japandi', 'slug' => 'japandi',
+            'long_description' => 'Rust en warmte passen bij jou.',
+        ]);
+        // De echte vragen/opties (i.p.v. de synthetische 'vloer'/'eiken'): de uitslagberekening
+        // leunt sinds de nieuwe scoring volledig op QuizAnswerScoreMatrix (zie de opdracht "scoring
+        // woonstijltest Boer Staphorst"), die alleen de echte, geverifieerde option_slugs herkent.
+        $this->seedRealQuizQuestionsAndOptions();
         BasePalette::create(['style_key' => 'japandi', 'name' => 'Licht en verstild', 'description' => 'Test', 'colors' => [['name' => 'Ecru', 'hex' => '#e4dac6']]]);
         BasePalette::create(['style_key' => 'modern', 'name' => 'Helder en minimalistisch', 'description' => 'Test', 'colors' => [['name' => 'Wit', 'hex' => '#ffffff']]]);
 
-        $response = $this->postJson('/api/quiz-result', ['answers' => ['vloer' => ['eiken']]]);
+        $response = $this->postJson('/api/quiz-result', ['answers' => $this->answersFavoring(self::JAPANDI)]);
 
         $response->assertOk();
         $names = collect($response->json('basePaletteOptions'))->pluck('name')->all();
