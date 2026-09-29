@@ -130,7 +130,6 @@ function initQuiz(root, options = {}) {
     leadCard: root.querySelector("#quizLeadCard"),
     leadMount: root.querySelector("#quizLeadMount"),
     partnerInviteMount: root.querySelector("#partnerInviteMount"),
-    restartBtn: root.querySelector("#restartQuizBtn"),
   };
 
   const state = createQuizState();
@@ -612,8 +611,6 @@ function initQuiz(root, options = {}) {
     state.goToStep(step - 1);
     renderStep({ scroll: true, direction: "back" });
   });
-
-  els.restartBtn.addEventListener("click", restart);
 
   // Landt altijd op het startscherm; "Start de stijltest" begint altijd fris.
   showScreen("start");
