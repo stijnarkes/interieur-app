@@ -37,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Boer Staphorst Woonstijltest')
             ->brandLogo(asset('images/branding/boer-staphorst-mark.png'))
             ->brandLogoHeight('1.75rem')
-            ->favicon(asset('images/branding/boer-staphorst-mark.png'))
+            ->favicon(asset('images/branding/boer-staphorst-favicon.png'))
             ->login()
             ->colors([
                 'primary' => Color::Amber,

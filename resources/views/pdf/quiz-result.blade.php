@@ -21,6 +21,12 @@ body {
     margin-bottom: 24px;
 }
 
+.pdf-logo {
+    display: block;
+    height: 20pt;
+    margin-bottom: 10px;
+}
+
 .brand-label {
     font-size: 7.5pt;
     color: #b7794d;
@@ -285,10 +291,15 @@ body {
     // of bij te snijden — alleen nodig voor tegels met een vaste hoogte in de layout.
     $pdfImageResolver = app(\App\Support\PdfImageResolver::class);
     $resolveImage = fn (?string $path, ?float $containRatio = null) => $pdfImageResolver->resolve($path, $containRatio);
+
+    // Statisch, meegeleverd bestand (geen S3/QuizImageManifest-content), dus gewoon lokaal
+    // inlezen — geen cache nodig, dit is geen door de admin geüploade foto die kan wijzigen.
+    $logoBase64 = base64_encode(file_get_contents(public_path('images/branding/boer-staphorst-logo.png')));
 @endphp
 
 <div class="cover">
-    <div class="brand-label">Boer Staphorst &middot; Interieuradvies</div>
+    <img src="data:image/png;base64,{{ $logoBase64 }}" alt="Boer Staphorst" class="pdf-logo" />
+    <div class="brand-label">Interieuradvies</div>
     <div class="cover-title">{{ $result['resultName'] ?? 'Jouw woonstijl' }}</div>
     @if (!empty($primaryStyle['subtitle']))
     <div class="cover-subtitle">{{ $primaryStyle['subtitle'] }}</div>

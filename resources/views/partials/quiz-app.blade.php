@@ -11,7 +11,7 @@
             $totalQuestions = \App\Models\QuizQuestion::count();
             $siteContent = \App\Models\SiteContent::current();
         @endphp
-        <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="quiz-start-logo" />
+        <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="brand-logo" />
 
         @if ($heroPhotoUrl)
             <div class="quiz-start-photo">
@@ -92,6 +92,8 @@
 
     {{-- Resultaat --}}
     <section class="card results report" id="quizResult" hidden>
+        <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="brand-logo" />
+
         <div class="results-head">
             <h2>{{ $siteContent->result_page_title }}</h2>
             <button type="button" class="btn btn-link" id="restartQuizBtn">Opnieuw beginnen</button>

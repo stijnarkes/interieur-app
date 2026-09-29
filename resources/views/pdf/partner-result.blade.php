@@ -23,6 +23,12 @@ body {
     margin-bottom: 24px;
 }
 
+.pdf-logo {
+    display: block;
+    height: 20pt;
+    margin-bottom: 10px;
+}
+
 .brand-label {
     font-size: 7.5pt;
     color: #b7794d;
@@ -174,8 +180,15 @@ body {
 </head>
 <body>
 
+@php
+    // Statisch, meegeleverd bestand (geen S3/QuizImageManifest-content), dus gewoon lokaal
+    // inlezen — geen cache nodig, dit is geen door de admin geüploade foto die kan wijzigen.
+    $logoBase64 = base64_encode(file_get_contents(public_path('images/branding/boer-staphorst-logo.png')));
+@endphp
+
 <div class="cover">
-    <div class="brand-label">Boer Staphorst — Woonstijltest</div>
+    <img src="data:image/png;base64,{{ $logoBase64 }}" alt="Boer Staphorst" class="pdf-logo" />
+    <div class="brand-label">Woonstijltest</div>
     <div class="cover-title">Jullie gezamenlijke woonstijl</div>
     <div class="cover-subtitle">{{ $initiatorName }} &amp; {{ $partnerName }}</div>
     <div class="cover-description">Een overzicht van wat jullie delen én waarin jullie verschillen, met een advies dat bij beide stijlen past.</div>
