@@ -40,7 +40,10 @@ class QuizStructure
         'kleurExplosie' => ['label' => 'Kleur explosie', 'slug' => 'kleur-explosie'],
         'landelijk' => ['label' => 'Landelijk', 'slug' => 'landelijk'],
         'modern' => ['label' => 'Modern', 'slug' => 'modern'],
-        'scandinavisch' => ['label' => 'Scandinavisch', 'slug' => 'scandinavisch'],
+        // 'slug' blijft bewust 'scandinavisch' (bepaalt bestandsnamen/foto's, zie QuizOption::
+        // storeImage()/QuizImageManifest) — alleen het zichtbare label is hernoemd naar "Modern
+        // Scandinavisch", dat raakt geen enkel opgeslagen bestand of databaserij.
+        'scandinavisch' => ['label' => 'Modern Scandinavisch', 'slug' => 'scandinavisch'],
     ];
 
     /**

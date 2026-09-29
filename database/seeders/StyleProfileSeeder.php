@@ -347,7 +347,7 @@ class StyleProfileSeeder extends Seeder
             ],
             [
                 'style_key' => 'scandinavisch',
-                'label' => 'Scandinavisch',
+                'label' => 'Modern Scandinavisch',
                 'slug' => 'scandinavisch',
                 'subtitle' => 'Licht, fris en gezellig eenvoudig',
                 'long_description' => 'Jij houdt van een licht en rustig interieur waarin eenvoud en gezelligheid samenkomen. Functionele meubels, zachte kleuren en natuurlijke materialen zorgen voor een frisse basis die toch warm en uitnodigend voelt.',

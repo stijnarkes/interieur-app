@@ -41,7 +41,7 @@ class StyleCombinationAdviceMigrationTest extends TestCase
         );
 
         $this->assertSame('editorial', $result['suggestions']['source']);
-        $this->assertSame('Hotel luxe & Scandinavisch', $result['suggestions']['title']);
+        $this->assertSame('Hotel luxe & Modern Scandinavisch', $result['suggestions']['title']);
         $this->assertNotSame('Jullie combinatietip volgt nog', $result['suggestions']['title']);
     }
 }
