@@ -1850,29 +1850,6 @@ a.btn-primary:hover {
   color: var(--accent-strong);
 }
 
-/* Draaiend rondje voor "aanvraag ontvangen, nog niet verstuurd" (zie createPendingIcon() in
-   lead.js) — een vinkje in dezelfde cirkel zou hier ten onrechte "klaar" suggereren. Statisch bij
-   prefers-reduced-motion; de open ring blijft ook dan duidelijk anders dan het vinkje. */
-.lead-form-pending-spinner {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 3px solid rgba(159, 98, 57, 0.25);
-  border-top-color: var(--accent-strong);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .lead-form-pending-spinner {
-    animation: lead-form-pending-spin 0.9s linear infinite;
-  }
-
-  @keyframes lead-form-pending-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-}
-
 .lead-form-success-title {
   margin: 0 0 8px;
   font-family: var(--font-heading);
@@ -1889,9 +1866,8 @@ a.btn-primary:hover {
 }
 
 /* Zelfde soort knop als de bevestigingsmail (zie .cta in emails/quiz-result.blade.php), maar dan
-   op dit scherm — los van .lead-form-success-actions hieronder gezet zodat hij ook op het
-   "aanvraag ontvangen"-scherm (renderQueued() in lead.js, zonder verdere acties) gewoon op
-   zichzelf kan staan. */
+   op dit scherm — los van .lead-form-success-actions hieronder gezet zodat hij ook zonder die
+   verdere acties (bv. in previewMode) gewoon op zichzelf kan staan. */
 .lead-form-cta {
   margin-top: 24px;
   padding-top: 20px;

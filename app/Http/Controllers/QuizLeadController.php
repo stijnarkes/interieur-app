@@ -35,8 +35,10 @@ use Illuminate\Http\Request;
  * verdergaat, ook al meldt de HTTP-respons zelf altijd `'queued'` (zie QuizLeadControllerTest).
  *
  * `email_status` 'queued' is dus niet langer een zeldzame tussentoestand maar de normale, eerste
- * uitkomst van elke aanvraag — zie status() hieronder + resources/js/quiz/components/lead.js voor
- * hoe de bezoeker alsnog de echte "verzonden"/"mislukt"-uitkomst te zien kan krijgen.
+ * uitkomst van elke aanvraag. De bezoeker krijgt dat zelf nooit als aparte status te zien: zie
+ * status() hieronder + resources/js/quiz/components/lead.js's resolveOutcome(), dat na zo'n
+ * 'queued'-antwoord gewoon blijft navragen (de laadscene blijft intussen in beeld) tot de echte
+ * "verzonden"/"mislukt"-uitkomst bekend is, en pas dán iets toont.
  *
  * Idempotent per quiz_result_id, maar alleen zolang een eerdere poging daadwerkelijk slaagde of nog
  * loopt: een herhaalde inzending voor hetzelfde resultaat (dubbelklik, of een bevestigde "opnieuw

@@ -113,30 +113,25 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted, p
   }
 
   /**
-   * Vervangt het "aanvraag ontvangen"-scherm (renderQueued()) door de echte uitkomst zodra die
-   * bekend is — zonder dit zou de bezoeker voorgoed op dat "nog bezig"-scherm blijven staan, ook
-   * nadat de mail allang verstuurd is (zie QuizLeadController: het antwoord op de aanvraag zelf
-   * bevestigt bewust nooit meer dan "ontvangen", de PDF/mail worden daarna pas gemaakt). Hergebruikt
-   * pollForOutcome() hierboven — dezelfde navraag-functie als bij een afgebroken verbinding, alleen
-   * nu voor het normale pad i.p.v. alleen als noodgreep.
+   * Wacht de echte uitkomst af wanneer de aanvraag zelf alleen "queued" teruggaf — zie
+   * QuizLeadController: het antwoord op de aanvraag bevestigt bewust nooit meer dan "ontvangen",
+   * de PDF/mail worden daarna pas gemaakt. In plaats van dat als eigen (tussentijdse) status aan
+   * de bezoeker te tonen, blijft de laadscene gewoon staan en wordt hier nagevraagd wat de
+   * uiteindelijke uitkomst is — de bezoeker krijgt zo altijd meteen de definitieve "verzonden"/
+   * "mislukt"-melding te zien, nooit een tussenstap.
    *
-   * Bewust stil bij een onbekende uitkomst (pollForOutcome() gaf null terug): het "aanvraag
-   * ontvangen"-scherm blijft dan gewoon staan, dat is al een eerlijke, geen-loze-belofte-tekst
-   * ("je ontvangt je rapport binnenkort per e-mail"). Geen enkele knop op dat scherm kan intussen
-   * een tegenstrijdige actie in gang zetten (renderQueued() toont bewust geen "opnieuw
-   * versturen"-knop — zie die functie), dus er is nooit een race met een bezoekersactie op
-   * dezelfde container.
+   * Kortere interval dan pollForOutcome()'s eigen standaard (1s i.p.v. 3s): die achtergrondtaak
+   * start vrijwel meteen na het antwoord hierboven (zie QuizLeadController), dus de uitkomst is
+   * meestal al binnen een paar tellen bekend. Blijft die onverhoopt tóch onbekend (pollForOutcome()
+   * geeft dan null terug), dan valt dit terug op het oorspronkelijke 'queued'-antwoord — de
+   * aanroeper behandelt dat verder hetzelfde als "kon niet bevestigen".
    */
-  function watchForRealOutcome({ name, email, marketingOptIn }) {
-    pollForOutcome(result.resultUuid).then((outcome) => {
-      if (!outcome) return;
+  async function resolveOutcome(response) {
+    if (response.status !== "queued") return response;
 
-      if (outcome.status === "sent") {
-        renderSuccess({ name, email, marketingOptIn });
-      } else if (outcome.status === "failed") {
-        renderForm({ name, email, marketingOptIn, statusMessage: outcome.message });
-      }
-    });
+    const outcome = await pollForOutcome(result.resultUuid, { attempts: 30, intervalMs: 1000 });
+
+    return outcome ?? response;
   }
 
   /**
@@ -278,18 +273,22 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted, p
       // opgeslagen (zie de docblock hierboven) — ongeacht of het versturen zelf lukte.
       onSubmitted?.();
 
+      // De laadscene blijft gewoon staan zolang response.status "queued" is — zie
+      // resolveOutcome() hierboven, dat pas teruggeeft zodra de definitieve uitkomst bekend is
+      // (of, in het zeldzame geval dat dat niet lukt, het oorspronkelijke 'queued'-antwoord).
+      response = await resolveOutcome(response);
+
       if (response.status === "sent") {
         renderSuccess({ name, email, marketingOptIn });
       } else if (response.status === "queued") {
-        // De aanvraag is ontvangen en wordt op de achtergrond verwerkt (zie
-        // GenerateAndSendQuizResultPdfJob) — nooit al claimen dat de e-mail verstuurd is, dat
-        // weten we op dit moment nog niet. Dat werk is intussen meestal al (bijna) klaar tegen de
-        // tijd dat dit scherm verschijnt (zie QuizLeadController: het antwoord gaat al de deur uit
-        // vóórdat de PDF/mail zelf gemaakt wordt) — watchForRealOutcome() vervangt dit scherm
-        // daarom vanzelf door de echte uitkomst zodra die bekend is, i.p.v. de bezoeker voorgoed
-        // op dit "nog bezig"-scherm te laten staan terwijl de mail allang onderweg is.
-        renderQueued();
-        watchForRealOutcome({ name, email, marketingOptIn });
+        // resolveOutcome() kon ook na de extra navraag geen definitief antwoord vinden — nooit
+        // een "mislukt" claimen die niet vaststaat, en ook geen "gelukt" dat we niet kunnen
+        // waarmaken. Gegevens staan al opgeslagen, dus het formulier verschijnt opnieuw met een
+        // eerlijke, neutrale tekst i.p.v. de foutmelding hieronder.
+        renderForm({
+          name, email, marketingOptIn,
+          statusMessage: "We konden nog niet bevestigen of het gelukt is. Je gegevens zijn wel opgeslagen — probeer het gerust opnieuw.",
+        });
       } else {
         // De server bevestigt hier expliciet geen geslaagde verzending (bv. email_status
         // 'failed') — nooit een succesmelding tonen die de app niet kan waarmaken. Gegevens
@@ -302,11 +301,7 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted, p
   /**
    * Zelfde soort knop als in de bevestigingsmail (email_cta_label/email_cta_url, zie
    * QuizResultMail) — hier via lead_cta_label/lead_cta_url (LEAD_FORM_COPY.ctaLabel/ctaUrl), zodat
-   * de tekst/link voor dit scherm apart van de mail bijgesteld kan worden via TekstenPage. Gebruikt
-   * door zowel renderSuccess() als renderQueued(): een bezoeker krijgt bijna altijd de "aanvraag
-   * ontvangen"-variant te zien (het versturen zelf wordt op de achtergrond afgehandeld, zie de
-   * docblock bij submitLead hierboven), dus zonder deze knop ook daar zou de meeste bezoekers 'm
-   * nooit te zien krijgen.
+   * de tekst/link voor dit scherm apart van de mail bijgesteld kan worden via TekstenPage.
    */
   function createCtaBlock() {
     const cta = document.createElement("div");
@@ -324,67 +319,6 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted, p
     cta.appendChild(link);
 
     return cta;
-  }
-
-  /**
-   * Draaiend rondje i.p.v. het vinkje van renderSuccess() hieronder — een vinkje leest als
-   * "klaar", terwijl hier nog niets verstuurd is (alleen de gegevens zijn opgeslagen, zie
-   * renderQueued() hieronder). Zelfde cirkelvormige achtergrond (.lead-form-success-icon) zodat
-   * beide statussen visueel bij elkaar horen, alleen met een ander icoon erin.
-   */
-  function createPendingIcon() {
-    const wrapper = document.createElement("span");
-    wrapper.className = "lead-form-success-icon";
-    const spinner = document.createElement("span");
-    spinner.className = "lead-form-pending-spinner";
-    wrapper.appendChild(spinner);
-    return wrapper;
-  }
-
-  /**
-   * Bevestigt alleen dat de aanvraag ontvangen is — geen "opnieuw versturen"-knop hier, want er is
-   * nog niets verstuurd om opnieuw te proberen (en de server zou een nieuwe poging binnen enkele
-   * minuten toch als dubbele aanvraag negeren, zie QuizLeadController).
-   */
-  function renderQueued() {
-    container.innerHTML = "";
-
-    const queued = document.createElement("div");
-    queued.className = "lead-form-success";
-    queued.setAttribute("role", "status");
-    queued.setAttribute("aria-live", "polite");
-
-    queued.appendChild(createPendingIcon());
-
-    const title = document.createElement("p");
-    title.className = "lead-form-success-title";
-    title.textContent = LEAD_FORM_COPY.queuedTitle;
-    queued.appendChild(title);
-
-    const body = document.createElement("p");
-    body.className = "section-intro";
-    body.textContent = LEAD_FORM_COPY.queuedBody;
-    queued.appendChild(body);
-
-    const expectTitle = document.createElement("p");
-    expectTitle.className = "report-checklist-intro";
-    expectTitle.textContent = LEAD_FORM_COPY.expectTitle;
-    queued.appendChild(expectTitle);
-
-    const expectList = document.createElement("ul");
-    expectList.className = "report-checklist";
-    LEAD_FORM_COPY.expectItems.forEach((item) => {
-      const li = document.createElement("li");
-      li.appendChild(createCheckIcon());
-      const text = document.createElement("span");
-      text.textContent = item;
-      li.appendChild(text);
-      expectList.appendChild(li);
-    });
-    queued.appendChild(expectList);
-    queued.appendChild(createCtaBlock());
-
-    container.appendChild(queued);
   }
 
   /** Losstaande bevestigingsweergave — vervangt het hele formulier, geen restje ervan blijft staan. */
@@ -453,7 +387,7 @@ function renderLeadForm(container, { result, previewMode = false, onSubmitted, p
       resendStatus.textContent = "Bezig met opnieuw versturen...";
 
       try {
-        const response = await submitLead({ name, email, marketingOptIn });
+        const response = await resolveOutcome(await submitLead({ name, email, marketingOptIn }));
         resendStatus.textContent = response.status === "sent"
           ? "Opnieuw verstuurd!"
           : response.message;
