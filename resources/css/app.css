@@ -230,7 +230,10 @@ a.btn-primary:hover {
   font-size: clamp(1.4rem, 2vw, 1.8rem);
 }
 
-.results-head-logo {
+/* Hogere specificiteit dan .brand-logo (i.p.v. bestandsvolgorde) nodig om diens "margin: 0 auto"
+   hier te overschrijven — anders centreert flexbox dit item alsnog binnen .results-head, ondanks
+   diens justify-content: space-between. */
+.results-head .brand-logo {
   margin: 0;
 }
 

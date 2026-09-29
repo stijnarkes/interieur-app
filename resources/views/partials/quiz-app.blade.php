@@ -97,7 +97,7 @@
              $siteContent->result_page_title blijft wel gewoon admin-bewerkbaar via Teksten, voor
              als deze plek ooit weer tekst i.p.v. het logo moet tonen. --}}
         <div class="results-head">
-            <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="brand-logo results-head-logo" />
+            <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="brand-logo" />
             <button type="button" class="btn btn-link" id="restartQuizBtn">Opnieuw beginnen</button>
         </div>
 
