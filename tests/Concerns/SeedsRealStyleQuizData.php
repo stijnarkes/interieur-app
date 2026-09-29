@@ -133,6 +133,11 @@ trait SeedsRealStyleQuizData
             // een insert() seedt) — de admin heeft ze later hernoemd i.p.v. verwijderd/opnieuw
             // aangemaakt. Een kale create() zou daarom op precies deze vier botsen op de unieke
             // question_key-constraint.
+            // Meubelstof en verlichting staan op max_selections = 2 (twee kiezen toegestaan, niet
+            // verplicht — zie QuizScoringService voor de gemiddelde-score-regel bij twee keuzes),
+            // de overige zeven op 1.
+            $maxSelections = in_array($questionKey, ['sofaMaterial', 'lighting'], true) ? 2 : 1;
+
             QuizQuestion::updateOrCreate(
                 ['question_key' => $questionKey],
                 [
@@ -140,7 +145,7 @@ trait SeedsRealStyleQuizData
                     'title' => $questionKey,
                     'folder' => null,
                     'sort_order' => 10,
-                    'max_selections' => 1,
+                    'max_selections' => $maxSelections,
                     'weight' => $config['weight'],
                     'image_display_mode' => 'contain',
                 ],

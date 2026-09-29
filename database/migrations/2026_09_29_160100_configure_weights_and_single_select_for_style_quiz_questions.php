@@ -9,12 +9,11 @@ use Illuminate\Database\Migrations\Migration;
  * gebruikt om punten over meerdere gekozen opties te verdelen, zie de oude QuizScoringService),
  * dus geen nieuwe kolom nodig.
  *
- * Geconstateerde afwijking t.o.v. de opdracht (gemeld in het uitvoeringsverslag): vier van de negen
- * vragen (tegel, behang, meubelstof, verlichting) stonden in de admin op max_selections = 2, terwijl
- * de hele uitslagberekening (per vraag precies één gekozen score, vergeleken met het gemiddelde/de
- * spreiding van de andere opties in diezelfde vraag) uitgaat van exact één gekozen optie per vraag —
- * zie de opdrachttekst "Per beantwoorde vraag wordt exact één optie gekozen." Zet daarom alle negen
- * vragen expliciet op max_selections = 1.
+ * Selectieaantallen: tegel en behang staan op max_selections = 1, meubelstof en verlichting op 2
+ * (twee kiezen is toegestaan, niet verplicht — zie QuizScoringService voor hoe twee gekozen opties
+ * per stijl worden gemiddeld vóór het vraaggewicht wordt toegepast), de overige vijf op 1. Eerst
+ * kortstondig alle negen op 1 gezet (zie de eerdere versie van deze migratie, vóór de correctie in
+ * het uitvoeringsverslag) — dat bleek voor meubelstof/verlichting niet de bedoeling.
  *
  * Zoekt op question_key (stabiel, uniek) i.p.v. op titel/volgorde — bestand tegen een latere
  * titelwijziging in de admin.
@@ -26,23 +25,35 @@ return new class extends Migration
         'welke-badkamer-spreekt-jou-het-meest-aan-E17aH',
     ];
 
-    private const STYLE_QUIZ_QUESTION_KEYS = [
+    private const TWO_SELECTIONS_ALLOWED_QUESTION_KEYS = [
+        'sofaMaterial',
+        'lighting',
+    ];
+
+    private const SINGLE_SELECTION_QUESTION_KEYS = [
         'welke-tegel-spreekt-jou-het-meeste-aan-GhJat',
         'wallColor',
-        'sofaMaterial',
         'sofaModel',
         'welke-keuken-spreekt-jou-het-meeste-aan-hecR6',
         'welk-servies-spreekt-jou-het-meest-aan-W3569',
         'welke-eethoek-zou-jij-kiezen-y50IU',
-        'lighting',
         'welke-badkamer-spreekt-jou-het-meest-aan-E17aH',
+    ];
+
+    private const STYLE_QUIZ_QUESTION_KEYS = [
+        ...self::SINGLE_SELECTION_QUESTION_KEYS,
+        ...self::TWO_SELECTIONS_ALLOWED_QUESTION_KEYS,
     ];
 
     public function up(): void
     {
         QuizQuestion::query()
-            ->whereIn('question_key', self::STYLE_QUIZ_QUESTION_KEYS)
+            ->whereIn('question_key', self::SINGLE_SELECTION_QUESTION_KEYS)
             ->update(['max_selections' => 1]);
+
+        QuizQuestion::query()
+            ->whereIn('question_key', self::TWO_SELECTIONS_ALLOWED_QUESTION_KEYS)
+            ->update(['max_selections' => 2]);
 
         QuizQuestion::query()
             ->whereIn('question_key', self::WEIGHTED_QUESTION_KEYS)

@@ -11,8 +11,12 @@ use App\Support\QuizAnswerScoreMatrix;
  * Servergestuurde, autoritatieve berekening van een quizresultaat — zie de opdracht "scoring
  * woonstijltest Boer Staphorst". Elke antwoordoptie heeft in QuizAnswerScoreMatrix een vaste,
  * onafhankelijke 0-1-matchscore per stijl (niet per se optellend tot 1). Per beantwoorde vraag telt
- * alleen de score van de daadwerkelijk gekozen optie mee, met vraaggewicht (QuizQuestion::weight —
- * 1,5 voor de keuken-/badkamervraag, anders 1,0).
+ * de score van de gekozen optie mee, met vraaggewicht (QuizQuestion::weight — 1,5 voor de keuken-/
+ * badkamervraag, anders 1,0). Bij meubelstof en verlichting mag een bezoeker twee opties kiezen
+ * (niet verplicht, zie QuizQuestion::max_selections); in dat geval is de "gekozen score" per stijl
+ * het gemiddelde van de scores van die twee opties binnen dezelfde vraag, en wordt pas dáárna het
+ * vraaggewicht toegepast — nooit de twee scores los meetellen (dat zou een dubbele keuze
+ * onbedoeld zwaarder laten wegen dan één keuze).
  *
  * Een rechtstreekse vergelijking van de opgetelde ruwe scores bevoordeelt structureel de stijl
  * waarvan de meeste losse afbeeldingen toch al wat "mee scoren" (zie Modern in de brontabel).
@@ -89,13 +93,16 @@ class QuizScoringService
                 continue;
             }
 
-            // Precies één optie per vraag (zie klassedocblok) — bij een onverwachte meervoudige
-            // keuze (legacy data) wordt bewust alleen de eerste meegeteld i.p.v. te crashen of
-            // dubbel te tellen.
-            $chosenOptionId = collect($optionIds)->filter()->first();
-            $chosenOption = $chosenOptionId ? $chosenOptions->get($chosenOptionId) : null;
+            // Eén of twee gekozen opties (zie klassedocblok) — dubbele/onbekende option_slugs eruit
+            // gefilterd i.p.v. te crashen op onverwachte/verouderde invoer.
+            $chosenOptionModels = collect($optionIds)
+                ->filter()
+                ->unique()
+                ->map(fn (string $optionId) => $chosenOptions->get($optionId))
+                ->filter()
+                ->values();
 
-            if (! $chosenOption) {
+            if ($chosenOptionModels->isEmpty()) {
                 continue;
             }
 
@@ -114,8 +121,6 @@ class QuizScoringService
             $weight = (float) $question->weight;
             $answeredQuestionCount++;
 
-            $chosenScores = QuizAnswerScoreMatrix::scoresFor($chosenOption->option_slug);
-
             foreach ($styleKeys as $styleKey) {
                 $scoresForStyle = $optionsInQuestion
                     ->map(fn (QuizOption $option): float => QuizAnswerScoreMatrix::scoresFor($option->option_slug)[$styleKey] ?? 0.0)
@@ -125,7 +130,11 @@ class QuizScoringService
                 $mean = array_sum($scoresForStyle) / $optionCount;
                 $variance = array_sum(array_map(fn (float $v): float => ($v - $mean) ** 2, $scoresForStyle)) / $optionCount;
 
-                $chosenScore = $chosenScores[$styleKey] ?? 0.0;
+                // Bij twee gekozen opties (meubelstof/verlichting): het gemiddelde van hun beider
+                // scores voor deze stijl — bij één gekozen optie is dat gewoon die ene score.
+                $chosenScoresForStyle = $chosenOptionModels
+                    ->map(fn (QuizOption $option): float => QuizAnswerScoreMatrix::scoresFor($option->option_slug)[$styleKey] ?? 0.0);
+                $chosenScore = $chosenScoresForStyle->sum() / $chosenScoresForStyle->count();
 
                 $ruwTotaal[$styleKey] += $weight * $chosenScore;
                 $normaalTotaal[$styleKey] += $weight * $mean;

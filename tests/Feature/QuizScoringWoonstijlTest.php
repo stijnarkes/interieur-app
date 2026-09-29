@@ -247,4 +247,63 @@ class QuizScoringWoonstijlTest extends TestCase
         $this->assertSame(self::JAPANDI, $strakkeMarge['primary_style']);
         $this->assertNull($strakkeMarge['secondary_style'], 'Een vrijwel-nul marge mag geen invloed meer toelaten, ook niet eentje die bij een ruime marge wel getoond werd.');
     }
+
+    #[Test]
+    public function twee_gekozen_opties_geven_het_gemiddelde_van_hun_scores_binnen_de_vraag(): void
+    {
+        $slugsByQuestion = $this->seedRealQuizQuestionsAndOptions();
+        // sofaMaterial staat op max_selections = 2 (zie de migratie) — O1 (Japandi, japandi 0,85/
+        // modern 0,30) + O5 (Modern, japandi 0,30/modern 0,70) uit de brontabel.
+        $slugs = $slugsByQuestion['sofaMaterial'];
+        [$japandiOptie, , , , $modernOptie] = $slugs;
+
+        $computed = app(QuizScoringService::class)->compute(['sofaMaterial' => [$japandiOptie, $modernOptie]]);
+
+        $this->assertSame(0.575, $computed['style_scores'][self::JAPANDI], '(0,85 + 0,30) / 2 = 0,575.');
+        $this->assertSame(0.5, $computed['style_scores'][self::MODERN], '(0,30 + 0,70) / 2 = 0,5.');
+        $this->assertSame(0.3, $computed['style_scores'][self::HOTEL_LUXE], '(0,30 + 0,30) / 2 = 0,3 — allebei toevallig gelijk.');
+    }
+
+    #[Test]
+    public function het_deselecteren_van_een_van_twee_gekozen_opties_telt_weer_als_één_keuze(): void
+    {
+        $slugsByQuestion = $this->seedRealQuizQuestionsAndOptions();
+        $slugs = $slugsByQuestion['sofaMaterial'];
+        [$japandiOptie, , , , $modernOptie] = $slugs;
+
+        $metTweeGekozen = app(QuizScoringService::class)->compute(['sofaMaterial' => [$japandiOptie, $modernOptie]]);
+        $this->assertSame(0.575, $metTweeGekozen['style_scores'][self::JAPANDI]);
+
+        // Bezoeker klikt de Modern-optie weer uit — de client stuurt dan alleen nog de resterende
+        // keuze mee, niet een "verwijder"-instructie apart (zelfde stateloze aanpak als bij
+        // terugnavigeren, zie hieronder).
+        $naDeselecteren = app(QuizScoringService::class)->compute(['sofaMaterial' => [$japandiOptie]]);
+
+        $this->assertSame(0.85, $naDeselecteren['style_scores'][self::JAPANDI], 'Met nog maar één keuze is het "gemiddelde" gewoon die ene score, niet meer de eerdere 0,575.');
+        $this->assertSame(0.3, $naDeselecteren['style_scores'][self::MODERN], 'De Modern-bijdrage van de gedeselecteerde optie mag niet blijven meetellen.');
+    }
+
+    #[Test]
+    public function terugnavigeren_met_een_andere_meerkeuze_telt_niet_dubbel_en_niet_gemengd(): void
+    {
+        $slugsByQuestion = $this->seedRealQuizQuestionsAndOptions();
+        $slugs = $slugsByQuestion['sofaMaterial'];
+        [$japandiOptie, , , $kleurExplosieOptie, $modernOptie, $modernScandinavischOptie] = $slugs;
+
+        // Eerste bezoek aan de vraag: Japandi + Modern gekozen.
+        $eersteKeuze = app(QuizScoringService::class)->compute(['sofaMaterial' => [$japandiOptie, $modernOptie]]);
+        $this->assertSame(0.575, $eersteKeuze['style_scores'][self::JAPANDI]);
+
+        // Terug, en op deze vraag nu een heel ander paar gekozen: Kleur explosie + Modern
+        // Scandinavisch. De client stuurt bij elke aanroep de volledige, actuele antwoordenset mee
+        // (nooit een toevoeging aan de eerder verlaten keuze).
+        $gewijzigdeKeuze = app(QuizScoringService::class)->compute(['sofaMaterial' => [$kleurExplosieOptie, $modernScandinavischOptie]]);
+
+        // Kleur explosie (O4: kleurExplosie 0,85) + Modern Scandinavisch (O6: kleurExplosie 0,00)
+        $this->assertSame(0.425, $gewijzigdeKeuze['style_scores'][self::KLEUR_EXPLOSIE], '(0,85 + 0,00) / 2 = 0,425.');
+        // O4 (japandi 0,30) + O6 (japandi 0,70) = 0,50 — puur op basis van dit nieuwe paar, niet
+        // (deels) de eerdere, inmiddels verlaten keuze O1+O5 (die op 0,575 uitkwam).
+        $this->assertSame(0.5, $gewijzigdeKeuze['style_scores'][self::JAPANDI]);
+        $this->assertNotSame($eersteKeuze['style_scores'][self::JAPANDI], $gewijzigdeKeuze['style_scores'][self::JAPANDI]);
+    }
 }

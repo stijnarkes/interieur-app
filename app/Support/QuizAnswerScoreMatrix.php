@@ -15,9 +15,10 @@ namespace App\Support;
  * QuizOptionsPage) i.p.v. vraagvolgorde of database-id, zodat een interne array-volgorde-wijziging
  * nooit stilzwijgend een verkeerde koppeling veroorzaakt. Elke optie hieronder is één-op-één
  * geverifieerd tegen de zichtbare afbeelding (niet alleen de titel) vóór koppeling — zie het
- * begeleidende verslag voor de volledige V1-V9/O1-O12-naar-option_slug-mapping en de ene gevonden
- * titel/afbeelding-mismatch (V8 O9, "Hanglamp Tivoli, zand" toont een zwarte railspot — inhoudelijk
- * wel juist gekoppeld).
+ * begeleidende verslag voor de volledige V1-V9/O1-O12-naar-option_slug-mapping. De ene gevonden
+ * titel/afbeelding-mismatch (V8 O9 heette "Hanglamp Tivoli, zand" maar toont een zwarte railspot —
+ * altijd al inhoudelijk juist gekoppeld) is inmiddels gecorrigeerd, zie
+ * 2026_09_29_161000_fix_v8_o9_lighting_option_title_mismatch.
  *
  * De kolom "Bedoelde hoofdstijl" uit de brontabel is bewust NERGENS in deze klasse terug te vinden
  * — dat was in de opdracht uitdrukkelijk documentatie, nooit een vaste uitslag of extra bonus.
