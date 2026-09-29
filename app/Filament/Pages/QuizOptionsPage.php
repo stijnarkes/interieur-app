@@ -8,7 +8,6 @@ use App\Support\QuizStructure;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section as FormSection;
@@ -97,29 +96,36 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
         ];
     }
 
-    /**
-     * Vrije lijst van woonstijlen die bij deze optie passen. Telt niet meer mee voor de uitslag van
-     * de negen beeldvragen (zie styleScoreFields() hieronder voor de daadwerkelijke scoring) —
-     * blijft bestaan voor overige doeleinden (bv. sortering in het moodboard, zie
-     * QuizLeadController::moodboardFor()).
-     *
-     * @return array<int, mixed>
-     */
-    private function styleFields(): array
+    /** @return array<int, mixed> */
+    private function internalNoteField(): array
     {
         return [
-            CheckboxList::make('style_keys')
-                ->label('Woonstijlen (algemeen, niet de scoring van de beeldvragen)')
-                ->helperText('Vink alle woonstijlen aan die bij deze optie passen — verplicht minstens 1.')
-                ->options(QuizStructure::styleOptions())
-                ->columns(2)
-                ->required(),
-
             Textarea::make('internal_note')
                 ->label('Interne notitie voor de styliste')
                 ->helperText('Alleen zichtbaar in het interne overzicht, nooit voor de bezoeker.')
                 ->rows(2),
         ];
+    }
+
+    /**
+     * Welke stijlen aan deze optie "gekoppeld" zijn (QuizOption::style_keys/style_key) wordt niet
+     * meer los aangevinkt — dat volgt nu automatisch uit de stijlscores hieronder (styleScoreFields()):
+     * elke stijl met een score hoger dan 0,00 telt als gekoppeld. Dit blijft nodig voor andere
+     * plekken die linkedStyleKeys() gebruiken (QuizConfigController/QuizPreviewController sluiten
+     * een optie zonder gekoppelde stijl helemaal uit van de klant-quiz, QuizLeadController sorteert
+     * het moodboard erop) — vandaar dat de create/edit-actions dit altijd zelf afleiden i.p.v. de
+     * admin twee keer (los aanvinken én scoren) hetzelfde te laten invullen.
+     *
+     * @param  array<string, float>  $styleScores
+     * @return array<int, string>
+     */
+    private function deriveStyleKeysFromScores(array $styleScores): array
+    {
+        return collect($styleScores)
+            ->filter(fn (float $score): bool => $score > 0.0)
+            ->keys()
+            ->values()
+            ->all();
     }
 
     /**
@@ -168,12 +174,11 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->required()
                     ->maxLength(255),
 
-                ...$this->styleFields(),
-
-                FormSection::make('Stijlscores (beeldvragen)')
-                    ->description('Matchscore per stijl voor de uitslagberekening van de woonstijltest — alleen relevant als deze optie bij één van de negen beeldvragen hoort.')
-                    ->collapsed()
+                FormSection::make('Stijlscores')
+                    ->description('Matchscore per stijl (0,00-1,00) — bepaalt zowel de uitslagberekening van de woonstijltest als bij welke stijlen deze optie hoort. Vul minstens één stijl hoger dan 0,00 in, anders verschijnt de optie nergens in de klant-quiz.')
                     ->schema($this->styleScoreFields()),
+
+                ...$this->internalNoteField(),
 
                 FileUpload::make('image')
                     ->label('Afbeelding')
@@ -196,7 +201,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->collapsed()
                     ->schema($this->productFields()),
             ])
-            ->action(function (array $arguments, array $data): void {
+            ->action(function (array $arguments, array $data, Action $action): void {
                 $questionId = $arguments['questionId'];
                 $slug = Str::slug("{$questionId}-{$data['title']}").'-'.Str::random(5);
 
@@ -206,6 +211,17 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                 // Filament geeft de Select-waarden als strings terug (zie STYLE_SCORE_OPTIONS) —
                 // hier expliciet naar float, anders staat er "0.30" (string) i.p.v. 0.3 in de JSON.
                 $data['style_scores'] = array_map('floatval', $data['style_scores'] ?? []);
+                $data['style_keys'] = $this->deriveStyleKeysFromScores($data['style_scores']);
+
+                if ($data['style_keys'] === []) {
+                    Notification::make()
+                        ->title('Vul minstens één stijlscore hoger dan 0,00 in')
+                        ->body('Zonder dat blijft deze optie voor de bezoeker onvindbaar in de klant-quiz.')
+                        ->danger()
+                        ->send();
+
+                    $action->halt();
+                }
 
                 $nextOrder = (QuizOption::where('question_id', $questionId)->max('sort_order') ?? 0) + 10;
 
@@ -234,7 +250,6 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
 
                 return [
                     ...$option->toArray(),
-                    'style_keys' => $option->linkedStyleKeys(),
                     // Terug naar de string-vorm die de Select-opties gebruiken (zie
                     // STYLE_SCORE_OPTIONS) — anders herkent Filament een opgeslagen 0.3 (float)
                     // niet als de geselecteerde "0.30"-optie.
@@ -249,12 +264,11 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->required()
                     ->maxLength(255),
 
-                ...$this->styleFields(),
-
-                FormSection::make('Stijlscores (beeldvragen)')
-                    ->description('Matchscore per stijl voor de uitslagberekening van de woonstijltest — alleen relevant als deze optie bij één van de negen beeldvragen hoort.')
-                    ->collapsed()
+                FormSection::make('Stijlscores')
+                    ->description('Matchscore per stijl (0,00-1,00) — bepaalt zowel de uitslagberekening van de woonstijltest als bij welke stijlen deze optie hoort. Vul minstens één stijl hoger dan 0,00 in, anders verschijnt de optie nergens in de klant-quiz.')
                     ->schema($this->styleScoreFields()),
+
+                ...$this->internalNoteField(),
 
                 Toggle::make('is_active')
                     ->label('Actief')
@@ -278,17 +292,30 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->collapsed()
                     ->schema($this->productFields()),
             ])
-            ->action(function (array $arguments, array $data): void {
+            ->action(function (array $arguments, array $data, Action $action): void {
                 $record = QuizOption::findOrFail($arguments['optionId']);
+
+                // Zie createOptionAction() voor waarom dit nodig is: Filament geeft de
+                // Select-waarden als strings terug.
+                $data['style_scores'] = array_map('floatval', $data['style_scores'] ?? []);
+                $data['style_keys'] = $this->deriveStyleKeysFromScores($data['style_scores']);
+
+                if ($data['style_keys'] === []) {
+                    Notification::make()
+                        ->title('Vul minstens één stijlscore hoger dan 0,00 in')
+                        ->body('Zonder dat blijft deze optie voor de bezoeker onvindbaar in de klant-quiz.')
+                        ->danger()
+                        ->send();
+
+                    $action->halt();
+                }
+
+                $data['style_key'] = $data['style_keys'][0];
 
                 if (! empty($data['image'])) {
                     $record->storeImage($data['image']);
                 }
                 unset($data['image']);
-
-                // Zie createOptionAction() voor waarom dit nodig is: Filament geeft de
-                // Select-waarden als strings terug.
-                $data['style_scores'] = array_map('floatval', $data['style_scores'] ?? []);
 
                 $record->update($data);
 

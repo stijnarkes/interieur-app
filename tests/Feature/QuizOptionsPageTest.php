@@ -71,7 +71,8 @@ class QuizOptionsPageTest extends TestCase
             ->test(QuizOptionsPage::class)
             ->mountAction('createOption', arguments: ['questionId' => 'vloer'])
             ->setActionData([
-                'title' => 'Notenhout', 'style_keys' => ['japandi'],
+                'title' => 'Notenhout',
+                'style_scores' => ['hotelLuxe' => '0.00', 'landelijk' => '0.00', 'japandi' => '0.85', 'kleurExplosie' => '0.00', 'modern' => '0.00', 'scandinavisch' => '0.00'],
                 'image' => \Illuminate\Http\UploadedFile::fake()->image('notenhout.jpg'),
                 'is_active' => true,
             ])
@@ -80,6 +81,7 @@ class QuizOptionsPageTest extends TestCase
 
         $newest = QuizOption::where('option_slug', 'like', 'vloer-notenhout-%')->firstOrFail();
         $this->assertSame(30, $newest->sort_order);
+        $this->assertSame(['japandi'], $newest->linkedStyleKeys(), 'Gekoppelde stijlen moeten nu automatisch uit de scores volgen.');
     }
 
     /**
@@ -103,7 +105,7 @@ class QuizOptionsPageTest extends TestCase
             ->test(QuizOptionsPage::class)
             ->mountAction('createOption', arguments: ['questionId' => 'vloer'])
             ->setActionData([
-                'title' => 'Eiken', 'style_keys' => ['japandi'],
+                'title' => 'Eiken',
                 'style_scores' => [
                     'hotelLuxe' => '0.30', 'landelijk' => '0.50', 'japandi' => '0.85',
                     'kleurExplosie' => '0.00', 'modern' => '0.70', 'scandinavisch' => '0.70',
@@ -139,7 +141,7 @@ class QuizOptionsPageTest extends TestCase
             ->mountAction('editOption', arguments: ['optionId' => $option->id])
             ->assertActionDataSet(['style_scores' => ['hotelLuxe' => '0.00', 'landelijk' => '0.00', 'japandi' => '0.30', 'kleurExplosie' => '0.00', 'modern' => '0.00', 'scandinavisch' => '0.00']])
             ->setActionData([
-                'title' => $option->title, 'style_keys' => ['japandi'],
+                'title' => $option->title,
                 'style_scores' => [
                     'hotelLuxe' => '0.00', 'landelijk' => '0.00', 'japandi' => '1.00',
                     'kleurExplosie' => '0.00', 'modern' => '0.00', 'scandinavisch' => '0.00',
@@ -156,5 +158,30 @@ class QuizOptionsPageTest extends TestCase
 
         $computed = app(QuizScoringService::class)->compute(['vloer' => ['eiken']]);
         $this->assertSame(1.0, $computed['style_scores']['japandi'], 'De aangepaste score in de admin moet meteen meetellen in een nieuwe berekening.');
+    }
+
+    #[Test]
+    public function een_optie_met_alle_stijlscores_op_nul_wordt_geweigerd(): void
+    {
+        Storage::fake('public');
+        Storage::fake('quiz_images');
+
+        QuizQuestion::create([
+            'question_key' => 'vloer', 'section' => 'materials-colors', 'title' => 'Welke vloer?',
+            'folder' => null, 'sort_order' => 10, 'max_selections' => 1, 'weight' => 1, 'image_display_mode' => 'contain',
+        ]);
+
+        Livewire::actingAs($this->admin())
+            ->test(QuizOptionsPage::class)
+            ->mountAction('createOption', arguments: ['questionId' => 'vloer'])
+            ->setActionData([
+                'title' => 'Onbestemd',
+                'style_scores' => ['hotelLuxe' => '0.00', 'landelijk' => '0.00', 'japandi' => '0.00', 'kleurExplosie' => '0.00', 'modern' => '0.00', 'scandinavisch' => '0.00'],
+                'image' => \Illuminate\Http\UploadedFile::fake()->image('onbestemd.jpg'),
+                'is_active' => true,
+            ])
+            ->callMountedAction();
+
+        $this->assertDatabaseMissing('quiz_options', ['title' => 'Onbestemd']);
     }
 }

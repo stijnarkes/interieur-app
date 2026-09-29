@@ -96,18 +96,15 @@
                                                 onerror="this.style.visibility='hidden'"
                                             />
 
-                                            @php $linkedStyleKeys = $option->linkedStyleKeys(); @endphp
-                                            <div class="flex shrink-0 flex-wrap gap-1">
-                                                @forelse ($linkedStyleKeys as $styleKey)
-                                                    <x-filament::badge color="primary">
-                                                        {{ \App\Support\QuizStructure::styleLabel($styleKey) }}
-                                                    </x-filament::badge>
-                                                @empty
-                                                    <x-filament::badge color="danger">
-                                                        Onvolledig — geen stijl gekoppeld
-                                                    </x-filament::badge>
-                                                @endforelse
-                                            </div>
+                                            {{-- De losse stijl-badges zijn vervangen door de scoreregel hieronder
+                                                 (zie QuizOptionsPage::deriveStyleKeysFromScores()) — alleen nog een
+                                                 waarschuwing als een optie écht nergens op scoort (dan is ze onzichtbaar
+                                                 in de klant-quiz, zie QuizConfigController). --}}
+                                            @if ($option->linkedStyleKeys() === [])
+                                                <x-filament::badge color="danger" class="shrink-0">
+                                                    Onvolledig — geen enkele stijlscore hoger dan 0,00
+                                                </x-filament::badge>
+                                            @endif
 
                                             <div class="min-w-0 flex-1">
                                                 <span class="block truncate text-sm font-medium text-gray-950 dark:text-white">
