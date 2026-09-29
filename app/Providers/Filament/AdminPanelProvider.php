@@ -35,6 +35,9 @@ class AdminPanelProvider extends PanelProvider
             // Losstaand van APP_NAME (die staat op hosting-niveau ingesteld en kan dus per omgeving
             // afwijken) — dit is de naam die boven in de admin te zien is, ongeacht die instelling.
             ->brandName('Boer Staphorst Woonstijltest')
+            ->brandLogo(asset('images/branding/boer-staphorst-mark.png'))
+            ->brandLogoHeight('1.75rem')
+            ->favicon(asset('images/branding/boer-staphorst-mark.png'))
             ->login()
             ->colors([
                 'primary' => Color::Amber,

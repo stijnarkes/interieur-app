@@ -305,6 +305,13 @@ a.btn-primary:hover {
   text-align: center;
 }
 
+.quiz-start-logo {
+  display: block;
+  height: 32px;
+  width: auto;
+  margin: 0 auto 24px;
+}
+
 .quiz-start-photo {
   display: flex;
   justify-content: center;

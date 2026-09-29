@@ -11,6 +11,8 @@
             $totalQuestions = \App\Models\QuizQuestion::count();
             $siteContent = \App\Models\SiteContent::current();
         @endphp
+        <img src="{{ asset('images/branding/boer-staphorst-logo.png') }}" alt="Boer Staphorst" class="quiz-start-logo" />
+
         @if ($heroPhotoUrl)
             <div class="quiz-start-photo">
                 <img src="{{ $heroPhotoUrl }}" alt="" />
