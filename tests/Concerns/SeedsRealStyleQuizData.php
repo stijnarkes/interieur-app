@@ -160,6 +160,10 @@ trait SeedsRealStyleQuizData
                     'style_key' => $bedoeldeHoofdstijl,
                     'option_slug' => $optionSlug,
                     'style_keys' => [$bedoeldeHoofdstijl],
+                    // QuizScoringService leest style_scores uit de database (zie QuizOption::
+                    // scoreFor(), sinds 2026_09_29_170000_add_style_scores_to_quiz_options_table) —
+                    // QuizAnswerScoreMatrix hier alleen nog als geverifieerde brondata gebruikt.
+                    'style_scores' => QuizAnswerScoreMatrix::scoresFor($optionSlug),
                     'title' => $optionSlug,
                     'is_active' => true,
                 ]);

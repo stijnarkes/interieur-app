@@ -3,13 +3,13 @@
 namespace App\Support;
 
 /**
- * Eén centraal, onderhoudbaar scoreobject voor de negen beeldvragen (V1-V9) van de woonstijltest —
- * zie de opdracht "scoring woonstijltest Boer Staphorst". Elke optie krijgt hier, onafhankelijk van
- * de andere vijf stijlen, een vaste 0-1-matchscore per stijl (alleen 0,00/0,30/0,50/0,70/0,85/1,00
- * komen voor; de zes waarden van één optie hoeven niet tot 1 op te tellen). Dit vervangt voor de
- * uitslagberekening (zie QuizScoringService) de oude, aan de optie gekoppelde stijl-tags
- * (QuizOption::style_keys) — die blijven verder gewoon bestaan voor andere doeleinden (admin-
- * overzicht, badges), maar tellen hier niet meer mee.
+ * De oorspronkelijke, geverifieerde 0-1-matchscores per stijl voor de negen beeldvragen (V1-V9)
+ * van de woonstijltest — zie de opdracht "scoring woonstijltest Boer Staphorst". Sinds
+ * 2026_09_29_170000_add_style_scores_to_quiz_options_table leeft de daadwerkelijk gebruikte data in
+ * QuizOption::style_scores (admin-bewerkbaar, zie QuizOptionsPage): QuizScoringService leest die
+ * kolom, niet deze klasse. Deze klasse blijft bestaan als de eenmalige, betrouwbare brondata
+ * waarmee die migratie de 60 echte opties backfillt, en als leesbaar naslagwerk van de oorspronkelijke
+ * koppeling — latere admin-aanpassingen aan een score wijzigen dus bewust NIET wat hier staat.
  *
  * Sleutel is `option_slug` (stabiel, uniek, blijft hetzelfde bij een admin-reorder — zie
  * QuizOptionsPage) i.p.v. vraagvolgorde of database-id, zodat een interne array-volgorde-wijziging
@@ -45,6 +45,16 @@ class QuizAnswerScoreMatrix
     public static function scoresFor(string $optionSlug): array
     {
         return self::matrix()[$optionSlug] ?? [];
+    }
+
+    /**
+     * @return array<string, array<string, float>> option_slug => (style_key => score) — gebruikt
+     *   door 2026_09_29_170000_add_style_scores_to_quiz_options_table om QuizOption::style_scores
+     *   eenmalig te backfillen.
+     */
+    public static function all(): array
+    {
+        return self::matrix();
     }
 
     /** @return array<int, string> */

@@ -16,6 +16,7 @@ class QuizOption extends Model
         'primary_style',
         'secondary_style',
         'style_keys',
+        'style_scores',
         'internal_note',
         'title',
         'image_path',
@@ -38,8 +39,19 @@ class QuizOption extends Model
         'showroom_product' => 'boolean',
         'price' => 'decimal:2',
         'style_keys' => 'array',
+        'style_scores' => 'array',
         'tags' => 'array',
     ];
+
+    /**
+     * Matchscore (0-1) van deze optie voor de opgegeven stijl, voor de uitslagberekening van de
+     * woonstijltest (zie QuizScoringService/QuizAnswerScoreMatrix) — 0,0 voor een stijl zonder
+     * ingevulde score (nieuwe optie) of een onbekende $styleKey, nooit een fout.
+     */
+    public function scoreFor(string $styleKey): float
+    {
+        return (float) ($this->style_scores[$styleKey] ?? 0.0);
+    }
 
     /**
      * @return array<int, string> alle gekoppelde stijl-keys — een optie mag bij zoveel stijlen

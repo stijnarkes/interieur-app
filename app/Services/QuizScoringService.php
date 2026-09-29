@@ -9,8 +9,10 @@ use App\Support\QuizAnswerScoreMatrix;
 
 /**
  * Servergestuurde, autoritatieve berekening van een quizresultaat — zie de opdracht "scoring
- * woonstijltest Boer Staphorst". Elke antwoordoptie heeft in QuizAnswerScoreMatrix een vaste,
- * onafhankelijke 0-1-matchscore per stijl (niet per se optellend tot 1). Per beantwoorde vraag telt
+ * woonstijltest Boer Staphorst". Elke antwoordoptie heeft in QuizOption::style_scores (admin-
+ * bewerkbaar, zie QuizOptionsPage) een vaste, onafhankelijke 0-1-matchscore per stijl (niet per se
+ * optellend tot 1) — QuizAnswerScoreMatrix bevat dezelfde data alleen nog als eenmalige, geverifieerde
+ * brondata voor de backfill-migratie, niet als bron voor deze berekening. Per beantwoorde vraag telt
  * de score van de gekozen optie mee, met vraaggewicht (QuizQuestion::weight — 1,5 voor de keuken-/
  * badkamervraag, anders 1,0). Bij meubelstof en verlichting mag een bezoeker twee opties kiezen
  * (niet verplicht, zie QuizQuestion::max_selections); in dat geval is de "gekozen score" per stijl
@@ -123,7 +125,7 @@ class QuizScoringService
 
             foreach ($styleKeys as $styleKey) {
                 $scoresForStyle = $optionsInQuestion
-                    ->map(fn (QuizOption $option): float => QuizAnswerScoreMatrix::scoresFor($option->option_slug)[$styleKey] ?? 0.0)
+                    ->map(fn (QuizOption $option): float => $option->scoreFor($styleKey))
                     ->all();
 
                 $optionCount = count($scoresForStyle);
@@ -133,7 +135,7 @@ class QuizScoringService
                 // Bij twee gekozen opties (meubelstof/verlichting): het gemiddelde van hun beider
                 // scores voor deze stijl — bij één gekozen optie is dat gewoon die ene score.
                 $chosenScoresForStyle = $chosenOptionModels
-                    ->map(fn (QuizOption $option): float => QuizAnswerScoreMatrix::scoresFor($option->option_slug)[$styleKey] ?? 0.0);
+                    ->map(fn (QuizOption $option): float => $option->scoreFor($styleKey));
                 $chosenScore = $chosenScoresForStyle->sum() / $chosenScoresForStyle->count();
 
                 $ruwTotaal[$styleKey] += $weight * $chosenScore;

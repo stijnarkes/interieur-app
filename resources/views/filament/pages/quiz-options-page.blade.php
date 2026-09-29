@@ -109,9 +109,21 @@
                                                 @endforelse
                                             </div>
 
-                                            <span class="flex-1 truncate text-sm font-medium text-gray-950 dark:text-white">
-                                                {{ $option->title }}
-                                            </span>
+                                            <div class="min-w-0 flex-1">
+                                                <span class="block truncate text-sm font-medium text-gray-950 dark:text-white">
+                                                    {{ $option->title }}
+                                                </span>
+                                                {{-- Stijlscores voor de uitslagberekening van de beeldvragen (zie
+                                                     QuizOptionsPage::styleScoreFields()) — alleen zinvol ingevuld voor
+                                                     opties die bij één van de negen beeldvragen horen, maar altijd
+                                                     getoond (0,00 voor de rest) zodat direct zichtbaar is of een optie
+                                                     nog geen scores heeft. --}}
+                                                <span class="block truncate text-xs text-gray-400 dark:text-gray-500" title="Stijlscores (Hotel luxe · Landelijk · Japandi · Kleur explosie · Modern · Modern Scandinavisch)">
+                                                    @foreach (\App\Support\QuizStructure::styleKeys() as $styleKey)
+                                                        {{ ['hotelLuxe' => 'HL', 'landelijk' => 'LA', 'japandi' => 'JA', 'kleurExplosie' => 'KE', 'modern' => 'MO', 'scandinavisch' => 'MS'][$styleKey] }} {{ number_format($option->scoreFor($styleKey), 2, ',', '.') }}{{ ! $loop->last ? ' · ' : '' }}
+                                                    @endforeach
+                                                </span>
+                                            </div>
 
                                             @if ($option->showroom_product)
                                                 <x-heroicon-o-shopping-bag class="h-4 w-4 shrink-0 text-gray-400" title="Showroomproduct" />
