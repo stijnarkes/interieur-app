@@ -28,10 +28,14 @@ class StyleCombinationAdviceTextFixTest extends TestCase
     }
 
     #[Test]
-    public function de_bezittelijke_vorm_staat_nu_correct(): void
+    public function de_bezittelijke_vorm_typefout_is_niet_teruggekeerd_na_latere_herschrijving(): void
     {
+        // De tekst van dit paar is later opnieuw herschreven (zie
+        // 2026_09_29_170000_improve_style_profile_copy) en gebruikt de bezittelijke vorm
+        // "modern's" niet meer — deze test bevestigt alleen dat de oorspronkelijke typefout
+        // ("moderns" zonder apostrof) daarbij niet is teruggeslopen.
         $advice = StyleCombinationAdvice::forPair('hotelLuxe', 'modern');
 
-        $this->assertStringContainsString("modern's lichte", $advice->basis_tip);
+        $this->assertStringNotContainsString('moderns ', $advice->basis_tip);
     }
 }

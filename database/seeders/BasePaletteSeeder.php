@@ -32,7 +32,7 @@ class BasePaletteSeeder extends Seeder
             'hotelLuxe' => [
                 [
                     'name' => 'Licht en elegant',
-                    'description' => 'Een lichte, zachte basis met een verfijnde uitstraling.',
+                    'description' => 'Een lichte basis voor een elegante ruimte.',
                     'colors' => [
                         ['name' => 'Ivoor', 'hex' => '#F3EEE3'],
                         ['name' => 'Crème', 'hex' => '#E9DFC9'],
@@ -41,7 +41,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Warm en geborgen',
-                    'description' => 'Warme tinten voor een comfortabele, luxe sfeer.',
+                    'description' => 'Warme beige- en bruintinten geven de ruimte diepte.',
                     'colors' => [
                         ['name' => 'Crème', 'hex' => '#E9DFC9'],
                         ['name' => 'Taupe', 'hex' => '#A39485'],
@@ -50,7 +50,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Diep en sfeervol',
-                    'description' => 'Rijke bruintinten voor een intieme, uitgesproken sfeer.',
+                    'description' => 'Donkerbruin maakt de sfeer intiem; gebruik de lichte tint om het geheel open te houden.',
                     'colors' => [
                         ['name' => 'Champagnebeige', 'hex' => '#D6C3A5'],
                         ['name' => 'Mokka', 'hex' => '#806554'],
@@ -61,7 +61,7 @@ class BasePaletteSeeder extends Seeder
             'landelijk' => [
                 [
                     'name' => 'Licht en luchtig',
-                    'description' => 'Zachte natuurtinten voor een ontspannen, lichte woning.',
+                    'description' => 'Lichte natuurtinten geven een open en zachte basis.',
                     'colors' => [
                         ['name' => 'Roomwit', 'hex' => '#F5F0E6'],
                         ['name' => 'Linnenbeige', 'hex' => '#DED2BF'],
@@ -70,7 +70,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Warm en huiselijk',
-                    'description' => 'Warme zand- en leemtinten voor een vertrouwd thuisgevoel.',
+                    'description' => 'Zand en leem zorgen voor een warme, huiselijke sfeer.',
                     'colors' => [
                         ['name' => 'Roomwit', 'hex' => '#F5F0E6'],
                         ['name' => 'Zandkleur', 'hex' => '#D5BE9B'],
@@ -79,7 +79,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Rustiek en geborgen',
-                    'description' => 'Natuurlijke bruintinten voor een knusse sfeer met karakter.',
+                    'description' => 'Bruintinten geven diepte; roomwit houdt de ruimte licht.',
                     'colors' => [
                         ['name' => 'Linnenbeige', 'hex' => '#DED2BF'],
                         ['name' => 'Zachte taupe', 'hex' => '#B1A18F'],
@@ -90,7 +90,7 @@ class BasePaletteSeeder extends Seeder
             'japandi' => [
                 [
                     'name' => 'Licht en verstild',
-                    'description' => 'Lichte, natuurlijke tinten voor eenvoud en rust.',
+                    'description' => 'Lichte, natuurlijke tinten voor een rustige ruimte.',
                     'colors' => [
                         ['name' => 'Warm krijtwit', 'hex' => '#F2EFE7'],
                         ['name' => 'Ecru', 'hex' => '#E4DAC6'],
@@ -99,7 +99,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Warm en aards',
-                    'description' => 'Zachte aardetinten voor een natuurlijke, warme uitstraling.',
+                    'description' => 'Zachte aardetinten geven iets meer warmte.',
                     'colors' => [
                         ['name' => 'Ecru', 'hex' => '#E4DAC6'],
                         ['name' => 'Licht leem', 'hex' => '#C2AD93'],
@@ -108,7 +108,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Rustig met diepte',
-                    'description' => 'Gedempte tinten met donkerbruin voor een geborgen geheel.',
+                    'description' => 'Bruin geeft diepte, terwijl zandkleur het geheel rustig houdt.',
                     'colors' => [
                         ['name' => 'Zandkleur', 'hex' => '#D1BD9E'],
                         ['name' => 'Paddenstoeltaupe', 'hex' => '#A39789'],
@@ -119,7 +119,7 @@ class BasePaletteSeeder extends Seeder
             'kleurExplosie' => [
                 [
                     'name' => 'Rustige basis',
-                    'description' => 'Een lichte achtergrond waarop jouw kleuraccenten opvallen.',
+                    'description' => 'Een rustige achtergrond waarop kleur opvalt.',
                     'colors' => [
                         ['name' => 'Warm wit', 'hex' => '#F6F2E9'],
                         ['name' => 'Crème', 'hex' => '#E9DFC9'],
@@ -128,7 +128,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Zacht en zonnig',
-                    'description' => 'Vriendelijke roze- en perziktinten voor een vrolijke basis.',
+                    'description' => 'Zachte roze- en perziktinten als vriendelijke kleurbasis.',
                     'colors' => [
                         ['name' => 'Crème', 'hex' => '#E9DFC9'],
                         ['name' => 'Lichtroze', 'hex' => '#EBC9D1'],
@@ -137,7 +137,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Fris en speels',
-                    'description' => 'Lichte blauwe en groene tinten voor een levendig geheel.',
+                    'description' => 'Lichtblauw en zachtgroen geven een frisse basis voor fellere accenten.',
                     'colors' => [
                         ['name' => 'Warm wit', 'hex' => '#F6F2E9'],
                         ['name' => 'Lichtblauw', 'hex' => '#BDD5E5'],
@@ -148,7 +148,7 @@ class BasePaletteSeeder extends Seeder
             'modern' => [
                 [
                     'name' => 'Helder en minimalistisch',
-                    'description' => 'Wit en lichtgrijs voor een frisse, rustige uitstraling.',
+                    'description' => 'Wit en lichtgrijs geven een helder, rustig geheel.',
                     'colors' => [
                         ['name' => 'Helder wit', 'hex' => '#FFFFFF'],
                         ['name' => 'Zacht wit', 'hex' => '#F3F2EE'],
@@ -157,7 +157,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Warm en rustig',
-                    'description' => 'Zachte neutrale tinten voor een modern interieur met warmte.',
+                    'description' => 'Greige en zandbeige houden de basis strak maar warm.',
                     'colors' => [
                         ['name' => 'Zacht wit', 'hex' => '#F3F2EE'],
                         ['name' => 'Licht greige', 'hex' => '#CEC7BC'],
@@ -166,7 +166,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Strak met contrast',
-                    'description' => 'Een lichte basis met grijs en antraciet voor duidelijke contrasten.',
+                    'description' => 'Grijs en antraciet geven een duidelijk contrast.',
                     'colors' => [
                         ['name' => 'Zacht wit', 'hex' => '#F3F2EE'],
                         ['name' => 'Betongrijs', 'hex' => '#A7A8A5'],
@@ -177,7 +177,7 @@ class BasePaletteSeeder extends Seeder
             'scandinavisch' => [
                 [
                     'name' => 'Licht en mat',
-                    'description' => 'Gebroken wit en een mat, warm grijs voor een rustige, verfijnde basis.',
+                    'description' => 'Gebroken wit en licht hout geven een frisse, warme basis.',
                     'colors' => [
                         ['name' => 'Gebroken wit', 'hex' => '#F5F3EE'],
                         ['name' => 'Mat steengrijs', 'hex' => '#D3CDC1'],
@@ -186,7 +186,7 @@ class BasePaletteSeeder extends Seeder
                 ],
                 [
                     'name' => 'Rustig en geaard',
-                    'description' => 'Zachte, aardse taupetinten voor een kalme, ingetogen sfeer.',
+                    'description' => 'Taupe en greige geven iets meer warmte; combineer ze met licht hout.',
                     'colors' => [
                         ['name' => 'Zacht taupe', 'hex' => '#D8CBB8'],
                         ['name' => 'Warme greige', 'hex' => '#C4B6A0'],
@@ -194,12 +194,12 @@ class BasePaletteSeeder extends Seeder
                     ],
                 ],
                 [
-                    'name' => 'Koel en helder',
-                    'description' => 'Heldere grijstinten met een vleugje kilte voor een strakke, lichte basis.',
+                    'name' => 'Fris met grijs',
+                    'description' => 'Melkwit en grijs houden het licht. Voeg hout en stof toe voor een zachte uitstraling.',
                     'colors' => [
                         ['name' => 'Melkwit', 'hex' => '#F7F5EF'],
                         ['name' => 'Parelgrijs', 'hex' => '#D6D5D0'],
-                        ['name' => 'Zacht antracietgrijs', 'hex' => '#A6A6A2'],
+                        ['name' => 'Middengrijs', 'hex' => '#A6A6A2'],
                     ],
                 ],
             ],
