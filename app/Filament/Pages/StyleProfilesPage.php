@@ -136,7 +136,10 @@ class StyleProfilesPage extends Page implements HasActions, HasForms
                     ->collapsed()
                     ->schema([
                         Textarea::make('advice_primary')->label('Als primaire stijl (basis)')->rows(3),
-                        Textarea::make('advice_secondary')->label('Als secundaire invloed')->rows(3),
+                        Textarea::make('advice_secondary')
+                            ->label('Als secundaire invloed')
+                            ->helperText('Verschijnt ná de omschrijving van de hoofdstijl, op de resultatenpagina, in de e-mail én in de PDF, zodra deze stijl als invloed is vastgesteld (zie QuizResultTextComposer). Leeg laten valt terug op een neutrale standaardzin.')
+                            ->rows(3),
                         Textarea::make('advice_tertiary')->label('Als tertiair accent')->rows(3),
                     ]),
 

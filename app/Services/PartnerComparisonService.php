@@ -52,6 +52,26 @@ class PartnerComparisonService
             $similarities->push(['type' => 'secondary_style_match', 'styleKey' => $initiatorSecondary]);
         }
 
+        // Herkent de situatie waarin de invloed van de één de hoofdstijl van de ander is (of
+        // andersom) — voorheen volledig onzichtbaar, terwijl dit best een betekenisvolle
+        // overeenkomst is. Bij een wederzijdse match (Modern Scandinavisch+Japandi tegenover
+        // Japandi+Modern Scandinavisch) hoort hier precies één feit uit te komen, geen twee losse
+        // meldingen die hetzelfde zeggen — vandaar de aparte if/elseif-tak i.p.v. twee losse pushes.
+        $initiatorSecondaryIsPartnerPrimary = $initiatorSecondary && $partnerPrimary && $initiatorSecondary === $partnerPrimary;
+        $partnerSecondaryIsInitiatorPrimary = $partnerSecondary && $initiatorPrimary && $partnerSecondary === $initiatorPrimary;
+
+        if ($initiatorSecondaryIsPartnerPrimary && $partnerSecondaryIsInitiatorPrimary) {
+            $similarities->push([
+                'type' => 'mutual_secondary_primary_match',
+                'initiatorStyleKey' => $initiatorPrimary,
+                'partnerStyleKey' => $partnerPrimary,
+            ]);
+        } elseif ($initiatorSecondaryIsPartnerPrimary) {
+            $similarities->push(['type' => 'secondary_matches_other_primary', 'styleKey' => $partnerPrimary]);
+        } elseif ($partnerSecondaryIsInitiatorPrimary) {
+            $similarities->push(['type' => 'secondary_matches_other_primary', 'styleKey' => $initiatorPrimary]);
+        }
+
         $sharedPaletteHexes = $this->sharedHexes(
             $initiatorSnapshot['chosen_base_palette']['colors'] ?? [],
             $partnerSnapshot['chosen_base_palette']['colors'] ?? [],

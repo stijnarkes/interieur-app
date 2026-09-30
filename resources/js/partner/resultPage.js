@@ -3,7 +3,9 @@ const POLL_INTERVAL_MS = 5000;
 const FACT_LABELS = {
   primary_style_match: (fact) => `Jullie hebben allebei ${fact.styleKey} als hoofdstijl.`,
   secondary_style_match: (fact) => `Jullie delen ook ${fact.styleKey} als invloed.`,
-  primary_style_difference: (fact) => `Verschillende hoofdstijl: ${fact.initiatorStyleKey} bij de één, ${fact.partnerStyleKey} bij de ander.`,
+  primary_style_difference: (fact) => `Jullie hebben ieder een andere hoofdstijl: de één ${fact.initiatorStyleKey}, de ander ${fact.partnerStyleKey}.`,
+  secondary_matches_other_primary: (fact) => `Bij de één is ${fact.styleKey} de hoofdstijl, bij de ander juist de invloed.`,
+  mutual_secondary_primary_match: (fact) => `Jullie vullen elkaar mooi aan: ${fact.initiatorStyleKey} en ${fact.partnerStyleKey} zijn over en weer elkaars invloed.`,
   base_palette_color_match: () => "Jullie kozen (deels) dezelfde basiskleur.",
   accent_color_match: () => "Jullie kozen dezelfde accentkleur.",
   shared_option_selection: () => "Bij minstens één vraag kozen jullie precies hetzelfde.",
@@ -13,6 +15,37 @@ const FACT_LABELS = {
 function describeFact(fact) {
   const describe = FACT_LABELS[fact.type];
   return describe ? describe(fact) : null;
+}
+
+/**
+ * Toont ieders eigen hoofdstijl + (indien vastgesteld) invloed als klein los kaartje — voorheen
+ * stond hier maar één zin met alleen de twee hoofdstijlen; de invloed van geen van beiden was
+ * ergens in de gezamenlijke uitslag te zien. Bewust twee aparte kaartjes i.p.v. de invloed in die
+ * ene zin te proppen: zo blijft "wat is van wie" duidelijk, ook al staat er straks bij één persoon
+ * wel en bij de ander geen invloed bij.
+ */
+function renderPersonStyleCard(container, name, primaryLabel, secondaryLabel) {
+  const card = document.createElement("div");
+  card.className = "partner-style-card";
+
+  const nameEl = document.createElement("div");
+  nameEl.className = "partner-style-name";
+  nameEl.textContent = name;
+  card.appendChild(nameEl);
+
+  const primaryEl = document.createElement("div");
+  primaryEl.className = "partner-style-primary";
+  primaryEl.textContent = primaryLabel ?? "Onbekend";
+  card.appendChild(primaryEl);
+
+  if (secondaryLabel) {
+    const secondaryEl = document.createElement("div");
+    secondaryEl.className = "partner-style-secondary";
+    secondaryEl.textContent = `Invloed: ${secondaryLabel}`;
+    card.appendChild(secondaryEl);
+  }
+
+  container.appendChild(card);
 }
 
 function renderSwatches(container, colors) {
@@ -89,12 +122,14 @@ function initResultPage(root) {
     heading.textContent = "Jullie gezamenlijke woonstijl";
     mount.appendChild(heading);
 
-    const intro = document.createElement("p");
-    intro.className = "section-intro";
     const initiatorLabel = data.initiatorName || "Deelnemer 1";
     const partnerLabel = data.partnerName || "Deelnemer 2";
-    intro.textContent = `${initiatorLabel} koos ${data.initiatorStyle ?? "onbekend"} en ${partnerLabel} koos ${data.partnerStyle ?? "onbekend"}.`;
-    mount.appendChild(intro);
+
+    const stylesRow = document.createElement("div");
+    stylesRow.className = "partner-styles-row";
+    renderPersonStyleCard(stylesRow, initiatorLabel, data.initiatorStyle, data.initiatorSecondaryStyle);
+    renderPersonStyleCard(stylesRow, partnerLabel, data.partnerStyle, data.partnerSecondaryStyle);
+    mount.appendChild(stylesRow);
 
     if ((data.initiatorPalette?.colors?.length || data.partnerPalette?.colors?.length)) {
       const paletteHeading = document.createElement("h3");

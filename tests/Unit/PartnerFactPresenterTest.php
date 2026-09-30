@@ -61,6 +61,23 @@ class PartnerFactPresenterTest extends TestCase
     }
 
     #[Test]
+    public function verschillende_hoofdstijl_noemt_de_initiator_als_de_een_en_de_partner_als_de_ander(): void
+    {
+        $text = PartnerFactPresenter::describe([
+            'type' => 'primary_style_difference',
+            'initiatorStyleKey' => 'Modern Scandinavisch',
+            'partnerStyleKey' => 'Landelijk',
+        ]);
+
+        // "De één"/"de ander" volgt hier bewust de initiator/partner-volgorde — dezelfde volgorde
+        // waarin beide personen op de webpagina en in de PDF getoond worden (initiator eerst).
+        $this->assertSame(
+            'Jullie hebben ieder een andere hoofdstijl: de één Modern Scandinavisch, de ander Landelijk.',
+            $text,
+        );
+    }
+
+    #[Test]
     public function resolveOptionTitles_vult_optionTitles_in_en_valt_terug_op_de_ruwe_slug(): void
     {
         $resolved = PartnerFactPresenter::resolveOptionTitles(

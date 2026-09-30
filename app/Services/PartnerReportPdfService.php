@@ -38,6 +38,8 @@ class PartnerReportPdfService
             'partnerName' => $link->partner_name ?: 'Deelnemer 2',
             'initiatorStyleLabel' => $styleLabel($link->initiator_snapshot['primary_style'] ?? null),
             'partnerStyleLabel' => $styleLabel($link->partner_snapshot['primary_style'] ?? null),
+            'initiatorSecondaryStyleLabel' => $styleLabel($link->initiator_snapshot['secondary_style'] ?? null),
+            'partnerSecondaryStyleLabel' => $styleLabel($link->partner_snapshot['secondary_style'] ?? null),
             'initiatorPalette' => $link->initiator_snapshot['chosen_base_palette']['colors'] ?? [],
             'partnerPalette' => $link->partner_snapshot['chosen_base_palette']['colors'] ?? [],
             'initiatorAccentColors' => $link->initiator_snapshot['chosen_accent_colors'] ?? [],

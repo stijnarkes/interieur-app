@@ -57,6 +57,8 @@ class PartnerComparisonController extends Controller
             'partnerName' => $link->partner_name,
             'initiatorStyle' => $styleLabel($link->initiator_snapshot['primary_style'] ?? null),
             'partnerStyle' => $styleLabel($link->partner_snapshot['primary_style'] ?? null),
+            'initiatorSecondaryStyle' => $styleLabel($link->initiator_snapshot['secondary_style'] ?? null),
+            'partnerSecondaryStyle' => $styleLabel($link->partner_snapshot['secondary_style'] ?? null),
             'initiatorPalette' => $link->initiator_snapshot['chosen_base_palette'] ?? null,
             'partnerPalette' => $link->partner_snapshot['chosen_base_palette'] ?? null,
             'initiatorAccentColors' => $link->initiator_snapshot['chosen_accent_colors'] ?? [],

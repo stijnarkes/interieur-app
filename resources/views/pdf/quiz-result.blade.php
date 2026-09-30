@@ -57,16 +57,6 @@ body {
     color: #4a3526;
 }
 
-.cover-secondary {
-    margin-top: 14px;
-    font-size: 9pt;
-    color: #6b4225;
-}
-
-.cover-secondary strong {
-    color: #2d2620;
-}
-
 .section {
     padding: 0 44px;
     margin-bottom: 26px;
@@ -304,11 +294,16 @@ body {
     @if (!empty($primaryStyle['subtitle']))
     <div class="cover-subtitle">{{ $primaryStyle['subtitle'] }}</div>
     @endif
-    <div class="cover-description">{{ $primaryStyle['longDescription'] ?? ($result['description'] ?? '') }}</div>
-
-    @if (!empty($result['secondaryStyleLabel']))
-    <div class="cover-secondary">Past ook goed bij jou: <strong>{{ $result['secondaryStyleLabel'] }}</strong></div>
-    @endif
+    {{--
+        $result['description'] is de door QuizResultTextComposer samengestelde tekst — bij een
+        secundaire stijl inclusief de invloed-zin (StyleProfile::advice_secondary, of de generieke
+        terugvalzin), exact dezelfde tekst als op de resultatenpagina en in de e-mail. Vroeger stond
+        hier $primaryStyle['longDescription'] (de kale stijltekst zonder invloed-zin) met een losse
+        "Past ook goed bij jou"-regel eronder — dat noemde de invloedstijl dus twee keer. Bij geen
+        primaire stijl (zie QuizResultTextComposer::build()) is er geen $primaryStyle, dan valt dit
+        terug op longDescription (leeg) resp. description (de "nog niet genoeg keuzes"-tekst).
+    --}}
+    <div class="cover-description">{{ $result['description'] ?? ($primaryStyle['longDescription'] ?? '') }}</div>
 </div>
 
 @if ($primaryStyle)

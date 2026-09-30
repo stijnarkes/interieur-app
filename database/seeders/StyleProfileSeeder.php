@@ -14,9 +14,12 @@ use Illuminate\Database\Seeder;
  * specifieke accentkleur claimt die we niet per se weten (zie klantfeedback: bv. Japandi toonde
  * olijfgroen als leek het een vaste basiskleur, terwijl het één van meerdere mogelijke accenten
  * is). Voor Kleur explosie is zo'n splitsing niet zinvol — de hele stijl draait om levendige
- * kleuren, er is geen apart "neutraal" basispalet. `advice_secondary`/`advice_tertiary`/
- * `lighting`/`accessories`/`wat_past_goed` bestonden niet in de oude, statische content — die
- * blijven hier bewust leeg, in te vullen door een admin.
+ * kleuren, er is geen apart "neutraal" basispalet. `advice_tertiary`/`lighting`/`accessories`/
+ * `wat_past_goed` bestonden niet in de oude, statische content — die blijven hier bewust leeg, in
+ * te vullen door een admin. `advice_secondary` is dat inmiddels niet meer: zie
+ * QuizResultTextComposer::secondaryInfluenceSentence(), dat dit veld gebruikt als deze stijl als
+ * "invloed" is vastgesteld bij een ándere hoofdstijl — hieronder dus wél gevuld voor de zes actief
+ * gebruikte stijlen (niet voor modernLuxe/natuurlijk, die verder ook nog nergens content hebben).
  */
 class StyleProfileSeeder extends Seeder
 {
@@ -74,7 +77,7 @@ class StyleProfileSeeder extends Seeder
                 'lighting' => null,
                 'accessories' => null,
                 'advice_primary' => 'Kies comfortabele meubels met rustige, elegante vormen. Eén opvallend meubel is vaak genoeg om de toon te zetten.',
-                'advice_secondary' => null,
+                'advice_secondary' => 'Ook Hotel luxe komt in je keuzes naar voren. Met een rijke stof, sfeervolle verlichting of een verfijnd detail kun je de ruimte extra luxe geven.',
                 'advice_tertiary' => null,
                 'wat_past_goed' => null,
                 'wat_past_minder_goed' => ['Veel losse accessoires en allerlei verschillende glanzende materialen kunnen de ruimte druk maken. Herhaal liever een paar materialen en kies één of twee blikvangers.'],
@@ -117,7 +120,7 @@ class StyleProfileSeeder extends Seeder
                 'lighting' => null,
                 'accessories' => null,
                 'advice_primary' => 'Kies enkele meubels die goed bij elkaar passen en laat er ruimte omheen. Comfort blijft belangrijk.',
-                'advice_secondary' => null,
+                'advice_secondary' => 'Ook Japandi komt in je keuzes naar voren. Natuurlijke materialen en eenvoudige vormen kunnen voor meer rust en warmte zorgen.',
                 'advice_tertiary' => null,
                 'wat_past_goed' => null,
                 'wat_past_minder_goed' => ['Felle kleuren, hoogglans en veel kleine accessoires halen de aandacht weg van de rustige basis. Kies liever voor enkele grotere, natuurlijke objecten.'],
@@ -160,7 +163,7 @@ class StyleProfileSeeder extends Seeder
                 'lighting' => null,
                 'accessories' => null,
                 'advice_primary' => 'Een meubel mag opvallen door kleur, vorm of patroon. Kies welke stukken de hoofdrol krijgen en geef ze ruimte.',
-                'advice_secondary' => null,
+                'advice_secondary' => 'Ook Kleur explosie komt in je keuzes naar voren. Een uitgesproken kleur of opvallend object kan de ruimte een speels accent geven.',
                 'advice_tertiary' => null,
                 'wat_past_goed' => null,
                 'wat_past_minder_goed' => ['Als elke kleur en elk meubel evenveel aandacht vraagt, kan de ruimte rommelig voelen. Laat twee of drie kleuren terugkomen en zorg voor rustige vlakken ertussen.'],
@@ -203,7 +206,7 @@ class StyleProfileSeeder extends Seeder
                 'lighting' => null,
                 'accessories' => null,
                 'advice_primary' => 'Kies meubels die prettig zitten en een natuurlijke uitstraling hebben. Een royale vorm mag, zolang de ruimte overzichtelijk blijft.',
-                'advice_secondary' => null,
+                'advice_secondary' => 'Ook Landelijk komt in je keuzes naar voren. Natuurlijk hout en comfortabele stoffen kunnen de ruimte warm en huiselijk maken.',
                 'advice_tertiary' => null,
                 'wat_past_goed' => null,
                 'wat_past_minder_goed' => ['Heel strakke, glanzende meubels en harde zwart-witcontrasten kunnen de warme sfeer verzwakken. Voeg liever natuurlijke texturen en zachte overgangen toe.'],
@@ -246,7 +249,7 @@ class StyleProfileSeeder extends Seeder
                 'lighting' => null,
                 'accessories' => null,
                 'advice_primary' => 'Kies meubels met heldere lijnen en weinig versiering. De vorm en afwerking bepalen hier de uitstraling.',
-                'advice_secondary' => null,
+                'advice_secondary' => 'Ook Modern komt in je keuzes naar voren. Strakke lijnen en rustige vlakken kunnen voor een heldere, verzorgde uitstraling zorgen.',
                 'advice_tertiary' => null,
                 'wat_past_goed' => null,
                 'wat_past_minder_goed' => ['Veel verschillende patronen, decoratiestijlen en kleine accessoires maken de heldere lijnen minder zichtbaar. Kies liever een paar duidelijke accenten.'],
@@ -375,7 +378,7 @@ class StyleProfileSeeder extends Seeder
                 'lighting' => null,
                 'accessories' => null,
                 'advice_primary' => 'Kies eenvoudige meubels die prettig werken in het dagelijks leven. Lichte houttinten en zachte stoffen houden de vormen vriendelijk.',
-                'advice_secondary' => null,
+                'advice_secondary' => 'Ook Modern Scandinavisch komt in je keuzes naar voren. Licht hout, zachte stoffen en eenvoudige meubels kunnen het geheel fris en warm maken.',
                 'advice_tertiary' => null,
                 'wat_past_goed' => null,
                 'wat_past_minder_goed' => ['Een volledig grijs palet, veel zwart metaal of glanzende oppervlakken kan het natuurlijke karakter minder zichtbaar maken. Gebruik licht hout en zachte stoffen als vaste basis.'],

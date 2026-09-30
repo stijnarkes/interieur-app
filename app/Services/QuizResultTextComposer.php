@@ -42,6 +42,18 @@ class QuizResultTextComposer
             return $base;
         }
 
-        return trim($base.' Daarnaast zien we bij jou ook duidelijk iets van '.$secondary->label.' terug.');
+        return trim($base.' '.$this->secondaryInfluenceSentence($secondary));
+    }
+
+    /**
+     * Eigen, per-stijl tekst (StyleProfile::advice_secondary, beheerd via StijlprofielenPage) i.p.v.
+     * altijd dezelfde generieke zin — sluit zo aan op de omschrijving van de hoofdstijl in plaats
+     * van los ervan te staan. Nog geen tekst ingevuld voor deze stijl (bv. Modern luxe/Natuurlijk,
+     * of het veld is later weer leeggemaakt) -> nette generieke terugvalzin, nooit een lege regel.
+     */
+    private function secondaryInfluenceSentence(StyleProfile $secondary): string
+    {
+        return $secondary->advice_secondary
+            ?? "Daarnaast zien we bij jou ook duidelijk iets van {$secondary->label} terug.";
     }
 }

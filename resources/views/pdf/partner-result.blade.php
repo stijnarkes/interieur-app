@@ -176,6 +176,12 @@ body {
     color: #9f6239;
     font-size: 9.5pt;
 }
+
+.compare-secondary {
+    color: #6b4225;
+    font-size: 8.5pt;
+    margin-top: 2px;
+}
 </style>
 </head>
 <body>
@@ -201,10 +207,16 @@ body {
             <td class="compare-cell">
                 <div class="compare-name">{{ $initiatorName }}</div>
                 <div class="compare-style">{{ $initiatorStyleLabel ?? 'Onbekend' }}</div>
+                @if (!empty($initiatorSecondaryStyleLabel))
+                <div class="compare-secondary">Invloed: {{ $initiatorSecondaryStyleLabel }}</div>
+                @endif
             </td>
             <td class="compare-cell">
                 <div class="compare-name">{{ $partnerName }}</div>
                 <div class="compare-style">{{ $partnerStyleLabel ?? 'Onbekend' }}</div>
+                @if (!empty($partnerSecondaryStyleLabel))
+                <div class="compare-secondary">Invloed: {{ $partnerSecondaryStyleLabel }}</div>
+                @endif
             </td>
         </tr>
     </table>

@@ -76,6 +76,72 @@ class PartnerComparisonServiceTest extends TestCase
     }
 
     #[Test]
+    public function invloed_van_de_een_die_de_hoofdstijl_van_de_ander_is_telt_als_overeenkomst(): void
+    {
+        // A: Modern Scandinavisch met Japandi-invloed. B: Japandi als hoofdstijl (geen eigen
+        // invloed, of in elk geval niet Modern Scandinavisch) — alleen A -> B loopt hier, niet
+        // wederzijds.
+        $result = $this->service->compare(
+            ['primary_style' => 'scandinavisch', 'secondary_style' => 'japandi', 'answers' => []],
+            ['primary_style' => 'japandi', 'secondary_style' => 'landelijk', 'answers' => []],
+        );
+
+        $this->assertContains(
+            ['type' => 'secondary_matches_other_primary', 'styleKey' => 'japandi'],
+            $result['facts']['similarities']
+        );
+        $this->assertNotContains(
+            ['type' => 'mutual_secondary_primary_match', 'initiatorStyleKey' => 'scandinavisch', 'partnerStyleKey' => 'japandi'],
+            $result['facts']['similarities']
+        );
+    }
+
+    #[Test]
+    public function een_wederzijds_kruisverband_levert_precies_één_gezamenlijk_feit_op_geen_twee_losse(): void
+    {
+        // A: Modern Scandinavisch met Japandi-invloed. B: Japandi met Modern Scandinavische
+        // invloed — de spiegelbeeld-situatie uit de opdracht.
+        $result = $this->service->compare(
+            ['primary_style' => 'scandinavisch', 'secondary_style' => 'japandi', 'answers' => []],
+            ['primary_style' => 'japandi', 'secondary_style' => 'scandinavisch', 'answers' => []],
+        );
+
+        $this->assertContains(
+            ['type' => 'mutual_secondary_primary_match', 'initiatorStyleKey' => 'scandinavisch', 'partnerStyleKey' => 'japandi'],
+            $result['facts']['similarities']
+        );
+        // Nooit óók nog de losse eenrichtings-variant ernaast — dat zou hetzelfde twee keer zeggen.
+        $this->assertNotContains(
+            ['type' => 'secondary_matches_other_primary', 'styleKey' => 'japandi'],
+            $result['facts']['similarities']
+        );
+        $this->assertNotContains(
+            ['type' => 'secondary_matches_other_primary', 'styleKey' => 'scandinavisch'],
+            $result['facts']['similarities']
+        );
+        $this->assertSame(
+            1,
+            collect($result['facts']['similarities'])->where('type', 'mutual_secondary_primary_match')->count(),
+        );
+    }
+
+    #[Test]
+    public function twee_verschillende_invloeden_zonder_kruisverband_leveren_geen_gezamenlijke_conclusie_op(): void
+    {
+        // A: Modern Scandinavisch met Japandi-invloed. B: Landelijk met Hotel luxe-invloed — geen
+        // van beide invloeden is de hoofdstijl van de ander, dus puur individueel, geen gedeeld feit.
+        $result = $this->service->compare(
+            ['primary_style' => 'scandinavisch', 'secondary_style' => 'japandi', 'answers' => []],
+            ['primary_style' => 'landelijk', 'secondary_style' => 'hotelLuxe', 'answers' => []],
+        );
+
+        $types = array_column($result['facts']['similarities'], 'type');
+        $this->assertNotContains('secondary_matches_other_primary', $types);
+        $this->assertNotContains('mutual_secondary_primary_match', $types);
+        $this->assertNotContains('secondary_style_match', $types);
+    }
+
+    #[Test]
     public function exact_dezelfde_basispaletkleur_telt_als_overeenkomst_kleurfamilies_worden_niet_verzonnen(): void
     {
         $result = $this->service->compare(

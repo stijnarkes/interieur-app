@@ -74,7 +74,9 @@ class PartnerFactPresenter
         return match ($fact['type'] ?? null) {
             'primary_style_match' => "Jullie hebben allebei {$fact['styleKey']} als hoofdstijl.",
             'secondary_style_match' => "Jullie delen ook {$fact['styleKey']} als invloed.",
-            'primary_style_difference' => "Verschillende hoofdstijl: {$fact['initiatorStyleKey']} bij de één, {$fact['partnerStyleKey']} bij de ander.",
+            'primary_style_difference' => "Jullie hebben ieder een andere hoofdstijl: de één {$fact['initiatorStyleKey']}, de ander {$fact['partnerStyleKey']}.",
+            'secondary_matches_other_primary' => "Bij de één is {$fact['styleKey']} de hoofdstijl, bij de ander juist de invloed.",
+            'mutual_secondary_primary_match' => "Jullie vullen elkaar mooi aan: {$fact['initiatorStyleKey']} en {$fact['partnerStyleKey']} zijn over en weer elkaars invloed.",
             'base_palette_color_match' => 'Jullie kozen (deels) dezelfde basiskleur.',
             'accent_color_match' => 'Jullie kozen dezelfde accentkleur.',
             'shared_option_selection' => self::describeSharedOptions($fact['optionTitles'] ?? []),
