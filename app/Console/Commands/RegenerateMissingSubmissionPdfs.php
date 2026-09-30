@@ -15,10 +15,18 @@ use Throwable;
  * Genereert de PDF gewoon opnieuw uit de al opgeslagen quiz_result-data (QuizResultPdfService
  * leunt uitsluitend op dat veld, zie daar) — geen dataverlies, en verstuurt bewust geen nieuwe
  * bevestigingsmail, dit repareert alleen het bestand.
+ *
+ * --limit begrenst het aantal PDF's per run: op het hostingplatform bleek een enkele run met
+ * tientallen PDF's achteraf hard afgebroken te worden (geen foutmelding, gewoon een abrupt einde
+ * halverwege) — vermoedelijk een tijd- of geheugenlimiet op dit soort opdrachten. Het commando is
+ * door de filter hierboven vanzelf idempotent (een al herstelde inzending wordt de volgende run
+ * overgeslagen), dus gewoon meerdere keren opnieuw draaien werkt de resterende lijst gewoon af.
  */
 class RegenerateMissingSubmissionPdfs extends Command
 {
-    protected $signature = 'quiz:regenerate-missing-pdfs {--dry-run : Alleen tonen welke inzendingen het zou raken, niets genereren}';
+    protected $signature = 'quiz:regenerate-missing-pdfs
+        {--dry-run : Alleen tonen welke inzendingen het zou raken, niets genereren}
+        {--limit=15 : Maximaal aantal PDF-bestanden in deze run (draai het commando gewoon opnieuw voor de rest)}';
 
     protected $description = 'Genereert de PDF opnieuw voor inzendingen waarvan het PDF-bestand niet meer op de geconfigureerde disk staat';
 
@@ -26,19 +34,26 @@ class RegenerateMissingSubmissionPdfs extends Command
     {
         $disk = Storage::disk(config('filesystems.quiz_pdfs_disk'));
         $dryRun = (bool) $this->option('dry-run');
+        $limit = (int) $this->option('limit');
 
-        $submissions = Submission::query()
+        $missing = Submission::query()
             ->whereNotNull('quiz_result')
             ->get()
             ->filter(fn (Submission $submission): bool => ! $submission->pdf_path || ! $disk->exists($submission->pdf_path));
 
-        if ($submissions->isEmpty()) {
+        if ($missing->isEmpty()) {
             $this->info('Geen inzendingen gevonden met een ontbrekende PDF.');
 
             return self::SUCCESS;
         }
 
-        $this->info(sprintf('%d inzending(en) met een ontbrekende PDF gevonden.', $submissions->count()));
+        $submissions = $missing->take($limit);
+
+        $this->info(sprintf(
+            '%d inzending(en) met een ontbrekende PDF gevonden, deze run behandelt er %d.',
+            $missing->count(),
+            $submissions->count(),
+        ));
 
         $regenerated = 0;
         $failed = 0;
@@ -63,7 +78,12 @@ class RegenerateMissingSubmissionPdfs extends Command
 
         if (! $dryRun) {
             $this->newLine();
-            $this->info("{$regenerated} PDF('s) opnieuw gegenereerd, {$failed} mislukt.");
+            $this->info("{$regenerated} PDF-bestand(en) opnieuw gegenereerd, {$failed} mislukt.");
+
+            $remaining = $missing->count() - $submissions->count();
+            if ($remaining > 0) {
+                $this->info("Nog {$remaining} te gaan — draai het commando nogmaals om verder te gaan.");
+            }
         }
 
         return self::SUCCESS;

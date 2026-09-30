@@ -118,6 +118,26 @@ class RegenerateMissingSubmissionPdfsTest extends TestCase
     }
 
     #[Test]
+    public function limit_behandelt_maar_een_deel_zodat_een_hernieuwde_run_de_rest_afwerkt(): void
+    {
+        Storage::fake('public');
+
+        $eerste = $this->makeSubmission(null);
+        $tweede = $this->makeSubmission(null);
+
+        $this->artisan('quiz:regenerate-missing-pdfs', ['--limit' => 1])->assertSuccessful();
+
+        $verwerkt = collect([$eerste->refresh(), $tweede->refresh()])->filter(fn (Submission $s) => $s->pdf_path !== null);
+        $this->assertCount(1, $verwerkt, 'Met --limit=1 mag maar één van de twee inzendingen deze run een PDF krijgen.');
+
+        // Een tweede run zonder limiet werkt de rest gewoon af — dit is precies hoe we het op
+        // productie ook draaien als één run wordt afgebroken door een platformlimiet.
+        $this->artisan('quiz:regenerate-missing-pdfs')->assertSuccessful();
+        $this->assertNotNull($eerste->refresh()->pdf_path);
+        $this->assertNotNull($tweede->refresh()->pdf_path);
+    }
+
+    #[Test]
     public function dry_run_genereert_niets(): void
     {
         Storage::fake('public');
