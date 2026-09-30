@@ -177,14 +177,6 @@ body {
     margin-top: 0;
 }
 
-.materials-board-image {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 12px;
-}
-
 .moodboard-table {
     width: 100%;
     border-collapse: separate;
@@ -355,41 +347,38 @@ body {
 </div>
 @endif
 
-@if (!empty($primaryStyle['materials']) || !empty($primaryStyle['materialsImage']))
+@if (!empty($primaryStyle['materials']) || !empty($primaryStyle['materialsTip']))
 {{--
-    Toont het materialenbord van de primaire stijl, en alléén als de bestaande resultaatlogica een
-    tweede stijl als "invloed" heeft aangemerkt (QuizScoringService::determineResult(), hetzelfde
-    secondary_style-veld dat QuizResultTextComposer gebruikt voor "... met ...-invloeden" in de
-    titel) óók dat van de secundaire stijl — geen nieuwe/eigen drempel hier. Een secundaire stijl
-    zonder eigen materialenbord (nog niet ingevuld in Stijlprofielen) valt gewoon terug op de
-    enkele-stijl-weergave, zonder de PDF te laten crashen.
+    Toont materiaaladvies (naam-pillen + toelichting) van de primaire stijl, en alléén als de
+    bestaande resultaatlogica een tweede stijl als "invloed" heeft aangemerkt
+    (QuizScoringService::determineResult(), hetzelfde secondary_style-veld dat
+    QuizResultTextComposer gebruikt voor "... met ...-invloeden" in de titel) óók dat van de
+    secundaire stijl — geen nieuwe/eigen drempel hier. Een secundaire stijl zonder eigen
+    materiaaladvies valt gewoon terug op de enkele-stijl-weergave, zonder de PDF te laten crashen.
 
-    Eigen beeldverhouding (i.p.v. uitrekken/bijsnijden) én een eigen pagina: dit beeld is bewust
-    breed en verdient de ruimte om goed leesbaar te tonen, i.p.v. verdrukt tussen andere
-    onderdelen. maxWidth voorkomt dat dompdf een veel grotere bron-foto dan nodig moet verwerken.
-    Bij twee borden komen ze onder elkaar (nooit naast elkaar) zodat beide groot en leesbaar
-    blijven i.p.v. te verdrukken.
+    Bewust geen bordfoto meer (zie klantfeedback: een vast, gefotografeerd materialenbord sluit
+    niet aan op de afbeeldingen/producten die de bezoeker zelf koos in de test, en kon daardoor
+    persoonlijker/misleidender overkomen dan het is — het moodboard hieronder toont wél echt
+    gekozen producten). Alleen nog de stijlnaam-pillen en de tekstuele toelichting, dus puur
+    algemeen materiaaladvies als inspiratie, geen claim over wat de bezoeker zelf gekozen heeft.
 --}}
 @php
     $secondaryStyle = $result['secondaryStyle'] ?? null;
-    $hasSecondaryMaterials = $secondaryStyle && (!empty($secondaryStyle['materials']) || !empty($secondaryStyle['materialsImage']));
+    $hasSecondaryMaterials = $secondaryStyle && (!empty($secondaryStyle['materials']) || !empty($secondaryStyle['materialsTip']));
     $materialsBoards = $hasSecondaryMaterials ? [$primaryStyle, $secondaryStyle] : [$primaryStyle];
 @endphp
 <div class="section page-break">
     @if ($hasSecondaryMaterials)
-    <div class="section-title">Materialen die passen bij jouw stijlmix</div>
-    <div class="section-intro">Jouw woonstijl combineert elementen van {{ $primaryStyle['label'] }} met invloeden van {{ $secondaryStyle['label'] }}. Daarom laten we je de materialen van beide stijlen zien.</div>
+    <div class="section-title">Materiaalinspiratie bij jouw stijlmix</div>
+    <div class="section-intro">Jouw woonstijl combineert elementen van {{ $primaryStyle['label'] }} met invloeden van {{ $secondaryStyle['label'] }}. Hieronder materiaalinspiratie bij beide stijlen — als suggestie, niet per se wat je zelf koos in de test.</div>
     @else
-    <div class="section-title">Materialen die passen bij jouw stijl</div>
+    <div class="section-title">Materiaalinspiratie bij jouw stijl</div>
+    <div class="section-intro">Een greep uit materialen die goed bij deze stijl passen, als inspiratie — niet per se wat je zelf koos in de test.</div>
     @endif
 
     @foreach ($materialsBoards as $board)
         @if ($hasSecondaryMaterials)
         <div class="section-title materials-style-title">{{ $board['label'] }}</div>
-        @endif
-        @php $boardImage = $resolveImage($board['materialsImage'] ?? null, 2.3, 800); @endphp
-        @if ($boardImage)
-        <img src="{{ $boardImage }}" class="materials-board-image" alt="Materialen die bij de {{ $board['label'] }}-stijl passen" />
         @endif
         @if (!empty($board['materials']))
         <div class="pill-row">

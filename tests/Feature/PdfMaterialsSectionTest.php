@@ -7,11 +7,18 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Dekt het conditioneel tonen van één of twee materialenborden in de PDF: alleen het bord van de
- * primaire stijl, en alléén als de bestaande resultaatlogica een tweede stijl als "invloed" heeft
- * aangemerkt (zie QuizLeadController::buildPdfContent(), 'secondaryStyle') ook dat van de
- * secundaire stijl. Rendert de blade-view rechtstreeks met een handgebouwde $result-array, zodat
- * dit los staat van de daadwerkelijke scoring/PDF-verzendflow (al apart getest).
+ * Dekt het conditioneel tonen van één of twee materiaaladvies-blokken (naam-pillen + toelichting)
+ * in de PDF: alleen dat van de primaire stijl, en alléén als de bestaande resultaatlogica een
+ * tweede stijl als "invloed" heeft aangemerkt (zie QuizLeadController::buildPdfContent(),
+ * 'secondaryStyle') ook dat van de secundaire stijl. Rendert de blade-view rechtstreeks met een
+ * handgebouwde $result-array, zodat dit los staat van de daadwerkelijke scoring/PDF-verzendflow
+ * (al apart getest).
+ *
+ * Toont bewust nooit meer een gefotografeerd materialenbord (zie klantfeedback: een vast bord
+ * sluit niet aan op wat de bezoeker zelf koos) — zie de laatste test hieronder, die dat expliciet
+ * met een echte (niet-lege) materialsImage-waarde controleert; de overige tests gebruiken toevallig
+ * allemaal `materialsImage => null`, dus die bewijzen op zichzelf niet dat een gevulde waarde ook
+ * onderdrukt wordt.
  */
 class PdfMaterialsSectionTest extends TestCase
 {
@@ -43,17 +50,17 @@ class PdfMaterialsSectionTest extends TestCase
     }
 
     #[Test]
-    public function met_alleen_een_primaire_stijl_toont_de_pdf_één_materialenbord(): void
+    public function met_alleen_een_primaire_stijl_toont_de_pdf_één_materiaaladviesblok(): void
     {
         $html = view('pdf.quiz-result', ['result' => $this->baseResult()])->render();
 
-        $this->assertStringContainsString('Materialen die passen bij jouw stijl<', $html);
-        $this->assertStringNotContainsString('Materialen die passen bij jouw stijlmix', $html);
+        $this->assertStringContainsString('Materiaalinspiratie bij jouw stijl<', $html);
+        $this->assertStringNotContainsString('Materiaalinspiratie bij jouw stijlmix', $html);
         $this->assertStringNotContainsString('class="section-title materials-style-title"', $html);
     }
 
     #[Test]
-    public function hotel_luxe_met_landelijke_invloeden_toont_beide_materialenborden(): void
+    public function hotel_luxe_met_landelijke_invloeden_toont_beide_materiaaladviesblokken(): void
     {
         $result = $this->baseResult([
             'resultName' => 'Jouw woonstijl: Hotel luxe met Landelijk-invloeden',
@@ -68,7 +75,7 @@ class PdfMaterialsSectionTest extends TestCase
 
         $html = view('pdf.quiz-result', ['result' => $result])->render();
 
-        $this->assertStringContainsString('Materialen die passen bij jouw stijlmix', $html);
+        $this->assertStringContainsString('Materiaalinspiratie bij jouw stijlmix', $html);
         $this->assertStringContainsString('Jouw woonstijl combineert elementen van Hotel luxe met invloeden van Landelijk.', $html);
         $this->assertStringContainsString('>Hotel luxe<', $html);
         $this->assertStringContainsString('>Landelijk<', $html);
@@ -77,7 +84,7 @@ class PdfMaterialsSectionTest extends TestCase
     }
 
     #[Test]
-    public function japandi_met_scandinavische_invloeden_toont_beide_materialenborden(): void
+    public function japandi_met_scandinavische_invloeden_toont_beide_materiaaladviesblokken(): void
     {
         $result = $this->baseResult([
             'primaryStyle' => ['label' => 'Japandi', 'materials' => ['Bamboe'], 'materialsImage' => null, 'materialsTip' => null],
@@ -92,7 +99,7 @@ class PdfMaterialsSectionTest extends TestCase
 
         $html = view('pdf.quiz-result', ['result' => $result])->render();
 
-        $this->assertStringContainsString('Materialen die passen bij jouw stijlmix', $html);
+        $this->assertStringContainsString('Materiaalinspiratie bij jouw stijlmix', $html);
         $this->assertStringContainsString('>Japandi<', $html);
         $this->assertStringContainsString('>Scandinavisch<', $html);
         $this->assertStringContainsString('Bamboe', $html);
@@ -100,7 +107,7 @@ class PdfMaterialsSectionTest extends TestCase
     }
 
     #[Test]
-    public function een_secundaire_stijl_zonder_eigen_materialenbord_crasht_niet_en_valt_terug_op_één_bord(): void
+    public function een_secundaire_stijl_zonder_eigen_materiaaladvies_crasht_niet_en_valt_terug_op_één_blok(): void
     {
         $result = $this->baseResult([
             // Een secundaire stijl is aangemerkt als invloed, maar heeft nog geen materialen
@@ -116,11 +123,45 @@ class PdfMaterialsSectionTest extends TestCase
 
         $html = view('pdf.quiz-result', ['result' => $result])->render();
 
-        // Het omslagblok mag de invloedsstijl nog gewoon noemen ("Past ook goed bij jou:
-        // Landelijk") — dat is ongewijzigd, bestaand gedrag. Alleen het materialenblok zelf mag
-        // hier nooit een tweede bord/sub-titel tonen, omdat er geen materialendata voor is.
-        $this->assertStringContainsString('Materialen die passen bij jouw stijl<', $html);
-        $this->assertStringNotContainsString('Materialen die passen bij jouw stijlmix', $html);
+        // Het materialenblok zelf mag hier nooit een tweede blok/sub-titel tonen, omdat er geen
+        // materialendata voor de secundaire stijl is.
+        $this->assertStringContainsString('Materiaalinspiratie bij jouw stijl<', $html);
+        $this->assertStringNotContainsString('Materiaalinspiratie bij jouw stijlmix', $html);
         $this->assertStringNotContainsString('class="section-title materials-style-title"', $html);
+    }
+
+    #[Test]
+    public function een_gevulde_materialsimage_wordt_nooit_meer_als_afbeelding_getoond(): void
+    {
+        $result = $this->baseResult([
+            'primaryStyle' => [
+                'label' => 'Hotel luxe',
+                'materials' => ['Fluweel'],
+                'materialsImage' => 'materials/hotel-luxe.webp',
+                'materialsTip' => 'Combineer zachte en gladde materialen.',
+            ],
+            'secondaryStyle' => [
+                'label' => 'Landelijk',
+                'materials' => ['Grenen hout'],
+                'materialsImage' => 'materials/landelijk.webp',
+                'materialsTip' => 'Combineer warme, natuurlijke materialen.',
+            ],
+            'secondaryStyleLabel' => 'Landelijk',
+        ]);
+
+        $html = view('pdf.quiz-result', ['result' => $result])->render();
+
+        // De pillen/toelichting (algemeen materiaaladvies) blijven gewoon staan...
+        $this->assertStringContainsString('Fluweel', $html);
+        $this->assertStringContainsString('Grenen hout', $html);
+        // ...maar er verschijnt nooit meer een <img> voor een materialenbord, ook niet als
+        // materialsImage een echt pad bevat (de PDF-cover toont wel altijd het merklogo als
+        // <img>, dus specifiek op de materialenbord-class/paden controleren i.p.v. op <img in het
+        // algemeen).
+        $this->assertStringNotContainsString('materials-board-image', $html);
+        $this->assertStringNotContainsString('materials/hotel-luxe.webp', $html);
+        $this->assertStringNotContainsString('materials/landelijk.webp', $html);
+        // En de oude, expliciete "we laten je de materialen zien"-formulering is weg.
+        $this->assertStringNotContainsString('laten we je de materialen', $html);
     }
 }
