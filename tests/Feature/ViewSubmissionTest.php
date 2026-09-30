@@ -44,7 +44,13 @@ class ViewSubmissionTest extends TestCase
             'description' => 'Een korte klantomschrijving van de uitslag.',
             'primaryStyle' => [
                 'label' => $primaryLabel,
-                'furnitureAdvice' => 'Kies voor rustige, functionele meubels.',
+                // Zelfde vorm als StyleProfile::furniture_shapes (een array, geen platte string) —
+                // dit exacte verschil veroorzaakte een htmlspecialchars()-fout in productie omdat de
+                // eerdere testfixture hier per ongeluk een string gebruikte.
+                'furnitureAdvice' => [
+                    'intro' => 'Kies voor rustige, functionele meubels.',
+                    'items' => ['Een eenvoudige bank', 'Een houten tafel'],
+                ],
                 'recipe' => [
                     ['label' => 'Basis', 'value' => 'Zand, Wit'],
                     ['label' => 'Accentkleur', 'value' => 'Terracotta'],
@@ -189,5 +195,22 @@ class ViewSubmissionTest extends TestCase
         // realpath()-truc die op een absolute (S3/R2-)URL altijd faalde (zie moodboard-entry.blade.php,
         // nu verwijderd) en dat renderen zelf niet crasht op de echte publicImageUrl()-waarden.
         $this->viewSubmission($submission)->assertSee('Geen afbeelding');
+    }
+
+    #[Test]
+    public function een_oude_inzending_zonder_quiz_result_of_quiz_answers_crasht_niet(): void
+    {
+        $submission = Submission::create([
+            'style' => 'Landelijk',
+            'quiz_answers' => null,
+            'quiz_result' => null,
+            'name' => 'Oude Klant',
+            'email' => 'oud@example.com',
+            'email_opt_in' => false,
+            'result_id' => null,
+            'result_generated' => false,
+        ]);
+
+        $this->viewSubmission($submission)->assertSuccessful();
     }
 }

@@ -4,7 +4,12 @@
     $palette = $result['personalPalette'] ?? [];
     $accentColors = $result['accentColors'] ?? [];
     $explanation = $result['colorExplanation'] ?? null;
+    // StyleProfile::furniture_shapes (waar quiz_result.primaryStyle.furnitureAdvice rechtstreeks
+    // uit komt) is een array {intro, items[]}, geen platte string — {{ }} daar direct op loslaten
+    // gaf op productie een fatale htmlspecialchars()-fout (array i.p.v. string).
     $furnitureAdvice = $result['primaryStyle']['furnitureAdvice'] ?? null;
+    $furnitureIntro = is_array($furnitureAdvice) ? ($furnitureAdvice['intro'] ?? null) : $furnitureAdvice;
+    $furnitureItems = is_array($furnitureAdvice) ? ($furnitureAdvice['items'] ?? []) : [];
     $recipe = $result['primaryStyle']['recipe'] ?? [];
 @endphp
 
@@ -47,12 +52,20 @@
         <p class="text-sm text-gray-700 dark:text-gray-300">{{ $explanation }}</p>
     @endif
 
-    @if ($furnitureAdvice || ! empty($recipe))
+    @if ($furnitureIntro || ! empty($furnitureItems) || ! empty($recipe))
         <div>
             <p class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Interieuradvies</p>
 
-            @if ($furnitureAdvice)
-                <p class="mt-1.5 text-sm text-gray-700 dark:text-gray-300">{{ $furnitureAdvice }}</p>
+            @if ($furnitureIntro)
+                <p class="mt-1.5 text-sm text-gray-700 dark:text-gray-300">{{ $furnitureIntro }}</p>
+            @endif
+
+            @if (! empty($furnitureItems))
+                <ul class="mt-1.5 list-inside list-disc space-y-0.5 text-sm text-gray-700 dark:text-gray-300">
+                    @foreach ($furnitureItems as $item)
+                        <li>{{ $item }}</li>
+                    @endforeach
+                </ul>
             @endif
 
             @if (! empty($recipe))
