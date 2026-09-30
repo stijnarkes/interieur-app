@@ -26,7 +26,8 @@ class RegenerateMissingSubmissionPdfs extends Command
 {
     protected $signature = 'quiz:regenerate-missing-pdfs
         {--dry-run : Alleen tonen welke inzendingen het zou raken, niets genereren}
-        {--limit=15 : Maximaal aantal PDF-bestanden in deze run (draai het commando gewoon opnieuw voor de rest)}';
+        {--limit=15 : Maximaal aantal PDF-bestanden in deze run (draai het commando gewoon opnieuw voor de rest)}
+        {--skip= : Kommagescheiden inzending-ID'."'".'s die deze run overgeslagen moeten worden (bv. een inzending die blijft vastlopen)}';
 
     protected $description = 'Genereert de PDF opnieuw voor inzendingen waarvan het PDF-bestand niet meer op de geconfigureerde disk staat';
 
@@ -35,10 +36,13 @@ class RegenerateMissingSubmissionPdfs extends Command
         $disk = Storage::disk(config('filesystems.quiz_pdfs_disk'));
         $dryRun = (bool) $this->option('dry-run');
         $limit = (int) $this->option('limit');
+        $skipIds = array_filter(array_map('trim', explode(',', (string) $this->option('skip'))));
 
         $missing = Submission::query()
             ->whereNotNull('quiz_result')
+            ->orderBy('id')
             ->get()
+            ->reject(fn (Submission $submission): bool => in_array((string) $submission->id, $skipIds, true))
             ->filter(fn (Submission $submission): bool => ! $submission->pdf_path || ! $disk->exists($submission->pdf_path));
 
         if ($missing->isEmpty()) {
@@ -64,6 +68,12 @@ class RegenerateMissingSubmissionPdfs extends Command
 
                 continue;
             }
+
+            // Vóór de poging gelogd (niet pas na succes) — zodat als een specifieke inzending
+            // vastloopt (oneindig blijft hangen i.p.v. een nette exception te geven, bv. door een
+            // kapotte/trage afbeeldingsverwijzing), we uit de laatst zichtbare regel precies kunnen
+            // aflezen welke dat is, om 'm daarna gericht over te slaan met --skip.
+            $this->line("Bezig met inzending #{$submission->id} ({$submission->email})...");
 
             try {
                 $path = $pdfService->generate($submission);

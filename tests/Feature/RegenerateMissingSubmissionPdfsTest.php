@@ -138,6 +138,20 @@ class RegenerateMissingSubmissionPdfsTest extends TestCase
     }
 
     #[Test]
+    public function skip_slaat_de_opgegeven_inzending_over(): void
+    {
+        Storage::fake('public');
+
+        $overslaan = $this->makeSubmission(null);
+        $gewoon = $this->makeSubmission(null);
+
+        $this->artisan('quiz:regenerate-missing-pdfs', ['--skip' => (string) $overslaan->id])->assertSuccessful();
+
+        $this->assertNull($overslaan->refresh()->pdf_path, 'De overgeslagen inzending mag geen PDF krijgen.');
+        $this->assertNotNull($gewoon->refresh()->pdf_path);
+    }
+
+    #[Test]
     public function dry_run_genereert_niets(): void
     {
         Storage::fake('public');
