@@ -62,6 +62,15 @@ class QuizScoringService
      *     secondary_influence_max_gap: float,
      *     primary_style: ?string,
      *     secondary_style: ?string,
+     *     question_breakdown: array<int, array{
+     *         question_id: string,
+     *         question_title: string,
+     *         weight: float,
+     *         chosen_options: \Illuminate\Support\Collection<int, QuizOption>,
+     *         chosen_scores: array<string, float>,
+     *         question_means: array<string, float>,
+     *         contribution: array<string, float>,
+     *     }>,
      * }
      */
     public function explain(array $answers): array
@@ -88,6 +97,12 @@ class QuizScoringService
         // stijl boven het vraaggemiddelde van die stijl — zie de "invloed"-eis hieronder.
         $abovePerQuestionAverageCount = array_fill_keys($styleKeys, 0);
         $answeredQuestionCount = 0;
+        // Per-vraag-uitsplitsing (gekozen score, vraaggemiddelde, bijdrage aan elke stijl) —
+        // uitsluitend voor transparantie/controle (zie het admin-inzendingscherm en de interne
+        // "Scorecontrole"), berekent niets nieuws: exact dezelfde getallen die hieronder ook in
+        // ruwTotaal/normaalTotaal worden opgeteld, alleen nu ook per vraag bewaard i.p.v. meteen
+        // samengevoegd.
+        $questionBreakdown = [];
 
         foreach ($answers as $questionId => $optionIds) {
             $question = $questions->get($questionId);
@@ -123,6 +138,10 @@ class QuizScoringService
             $weight = (float) $question->weight;
             $answeredQuestionCount++;
 
+            $chosenScoresByStyle = [];
+            $meansByStyle = [];
+            $contributionByStyle = [];
+
             foreach ($styleKeys as $styleKey) {
                 $scoresForStyle = $optionsInQuestion
                     ->map(fn (QuizOption $option): float => $option->scoreFor($styleKey))
@@ -145,7 +164,21 @@ class QuizScoringService
                 if ($chosenScore > $mean) {
                     $abovePerQuestionAverageCount[$styleKey]++;
                 }
+
+                $chosenScoresByStyle[$styleKey] = $chosenScore;
+                $meansByStyle[$styleKey] = $mean;
+                $contributionByStyle[$styleKey] = $weight * ($chosenScore - $mean);
             }
+
+            $questionBreakdown[] = [
+                'question_id' => $questionId,
+                'question_title' => $question->title,
+                'weight' => $weight,
+                'chosen_options' => $chosenOptionModels,
+                'chosen_scores' => $chosenScoresByStyle,
+                'question_means' => $meansByStyle,
+                'contribution' => $contributionByStyle,
+            ];
         }
 
         $uitslagScores = [];
@@ -169,6 +202,7 @@ class QuizScoringService
             'secondary_influence_max_gap' => $secondaryInfluenceMaxGap,
             'primary_style' => $result['primary'],
             'secondary_style' => $result['secondary'],
+            'question_breakdown' => $questionBreakdown,
         ];
     }
 

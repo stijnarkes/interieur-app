@@ -152,20 +152,35 @@ class SubmissionResource extends Resource
     {
         return $infolist
             ->schema([
-                Section::make('Gebruikersinformatie')
+                Section::make('Klant')
                     ->schema([
+                        Actions::make([
+                            InfolistAction::make('view_pdf')
+                                ->label('Bekijk PDF')
+                                ->icon('heroicon-o-document-text')
+                                ->url(fn (Submission $record): string => route('admin.submissions.pdf', $record))
+                                ->openUrlInNewTab(),
+
+                            InfolistAction::make('download_pdf')
+                                ->label('Download PDF')
+                                ->icon('heroicon-o-arrow-down-tray')
+                                ->url(fn (Submission $record): string => route('admin.submissions.pdf.download', $record)),
+                        ])
+                            ->visible(fn (Submission $record): bool => filled($record->pdf_path))
+                            ->columnSpanFull(),
+
                         TextEntry::make('name')
                             ->label('Naam')
                             ->placeholder('—'),
                         TextEntry::make('email')
                             ->label('E-mail')
                             ->placeholder('—'),
+                        TextEntry::make('created_at')
+                            ->label('Datum')
+                            ->dateTime('d-m-Y H:i'),
                         IconEntry::make('email_opt_in')
                             ->label('Marketing opt-in')
                             ->boolean(),
-                        TextEntry::make('created_at')
-                            ->label('Aangemaakt op')
-                            ->dateTime('d-m-Y H:i'),
                         TextEntry::make('email_status')
                             ->label('E-mail status')
                             ->badge()
@@ -186,49 +201,29 @@ class SubmissionResource extends Resource
                             ->columnSpanFull()
                             ->visible(fn (Submission $record): bool => $record->email_status === 'failed'),
                     ])
-                    ->columns(2),
+                    ->columns(3),
 
-                Section::make('Stijltest resultaat')
+                Section::make('Uitslag')
                     ->schema([
-                        TextEntry::make('quiz_result.resultName')
-                            ->label('Woonstijl')
-                            ->badge()
-                            ->size(TextEntry\TextEntrySize::Large),
-
-                        TextEntry::make('quiz_result.description')
-                            ->label('Omschrijving')
-                            ->placeholder('—')
-                            ->columnSpanFull(),
-
-                        TextEntry::make('quiz_result.primaryStyle.label')
-                            ->label('Basisstijl')
-                            ->badge()
-                            ->color('success')
-                            ->placeholder('—'),
-
-                        TextEntry::make('quiz_result.secondaryStyleLabel')
-                            ->label('Invloed')
-                            ->badge()
-                            ->color('gray')
-                            ->placeholder('—'),
-                    ])
-                    ->columns(2),
-
-                Section::make('Kleurresultaat')
-                    ->visible(fn (Submission $record): bool => ! empty($record->quiz_result['personalPalette']))
-                    ->schema([
-                        ViewEntry::make('quiz_result.personalPalette')
+                        ViewEntry::make('quiz_result')
                             ->label('')
-                            ->view('filament.infolists.color-palette-entry')
+                            ->view('filament.infolists.result-summary-entry')
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Moodboard')
-                    ->visible(fn (Submission $record): bool => ! empty($record->quiz_result['moodboard']))
+                Section::make('Waarom deze uitslag?')
                     ->schema([
-                        ViewEntry::make('quiz_result.moodboard')
+                        ViewEntry::make('quiz_answers')
                             ->label('')
-                            ->view('filament.infolists.moodboard-entry')
+                            ->view('filament.infolists.result-evidence-entry')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Kleuren en advies')
+                    ->schema([
+                        ViewEntry::make('quiz_result')
+                            ->label('')
+                            ->view('filament.infolists.color-advice-entry')
                             ->columnSpanFull(),
                     ]),
 
@@ -240,29 +235,21 @@ class SubmissionResource extends Resource
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Resultaat')
+                Section::make('Scorecontrole (intern)')
+                    ->description('Technische controle-informatie — niet bedoeld voor de klant.')
+                    ->collapsible()
+                    ->collapsed()
                     ->schema([
-                        IconEntry::make('result_generated')
-                            ->label('Resultaat gegenereerd')
-                            ->boolean(),
                         TextEntry::make('result_id')
                             ->label('Result-ID')
                             ->placeholder('—')
                             ->copyable(),
-
-                        Actions::make([
-                            InfolistAction::make('view_pdf')
-                                ->label('Bekijk PDF')
-                                ->icon('heroicon-o-document-text')
-                                ->url(fn (Submission $record): string => route('admin.submissions.pdf', $record))
-                                ->openUrlInNewTab(),
-
-                            InfolistAction::make('download_pdf')
-                                ->label('Download PDF')
-                                ->icon('heroicon-o-arrow-down-tray')
-                                ->url(fn (Submission $record): string => route('admin.submissions.pdf.download', $record)),
-                        ])
-                            ->visible(fn (Submission $record): bool => filled($record->pdf_path))
+                        IconEntry::make('result_generated')
+                            ->label('Resultaat gegenereerd')
+                            ->boolean(),
+                        ViewEntry::make('quiz_answers')
+                            ->label('')
+                            ->view('filament.infolists.score-control-entry')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),

@@ -13,7 +13,12 @@ class ViewSubmission extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make(),
+            ])
+                ->label('Meer acties')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->color('gray'),
         ];
     }
 }
