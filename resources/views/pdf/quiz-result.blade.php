@@ -370,10 +370,10 @@ body {
 <div class="section page-break">
     @if ($hasSecondaryMaterials)
     <div class="section-title">Materiaalinspiratie bij jouw stijlmix</div>
-    <div class="section-intro">Jouw woonstijl combineert elementen van {{ $primaryStyle['label'] }} met invloeden van {{ $secondaryStyle['label'] }}. Hieronder materiaalinspiratie bij beide stijlen — als suggestie, niet per se wat je zelf koos in de test.</div>
+    <div class="section-intro">Jouw woonstijl combineert elementen van {{ $primaryStyle['label'] }} met invloeden van {{ $secondaryStyle['label'] }}. Hieronder materiaalinspiratie bij beide stijlen, als suggestie en niet per se wat je zelf koos in de test.</div>
     @else
     <div class="section-title">Materiaalinspiratie bij jouw stijl</div>
-    <div class="section-intro">Een greep uit materialen die goed bij deze stijl passen, als inspiratie — niet per se wat je zelf koos in de test.</div>
+    <div class="section-intro">Een greep uit materialen die goed bij deze stijl passen, als inspiratie en niet per se wat je zelf koos in de test.</div>
     @endif
 
     @foreach ($materialsBoards as $board)
