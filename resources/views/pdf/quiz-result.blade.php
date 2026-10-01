@@ -4,10 +4,14 @@
 <meta charset="UTF-8" />
 <title>Jouw woonstijl</title>
 <style>
+{{-- 'Clarendon LT Std' wordt niet via @font-face geladen maar rechtstreeks bij dompdf
+     geregistreerd, zie QuizResultPdfService::registerClarendonFont() — een CSS @font-face met een
+     url() naar een lokaal bestandspad bleek niet betrouwbaar door dompdf's eigen URL-parsing
+     herkend te worden. De naam hieronder matcht gewoon wat daar geregistreerd is. --}}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Clarendon LT Std', Arial, Helvetica, sans-serif;
     color: #2d2620;
     background: #ffffff;
     font-size: 10.5pt;
@@ -37,7 +41,7 @@ body {
 }
 
 .cover-title {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Clarendon LT Std', Georgia, 'Times New Roman', serif;
     font-size: 26pt;
     font-weight: bold;
     color: #2d2626;
@@ -63,7 +67,7 @@ body {
 }
 
 .section-title {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Clarendon LT Std', Georgia, 'Times New Roman', serif;
     font-size: 14.5pt;
     font-weight: bold;
     color: #2d2620;

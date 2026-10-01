@@ -6,9 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>@yield('title', config('app.name'))</title>
     <link rel="icon" type="image/png" href="{{ asset('images/branding/boer-staphorst-favicon.png') }}" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&display=swap" rel="stylesheet" />
+    {{-- Clarendon LT Std wordt zelf gehost via resources/fonts/clarendon (@font-face in app.css) —
+         geen Google Fonts meer nodig sinds Fraunces hierdoor is vervangen. --}}
     {{-- De partnerpagina's (resources/views/partner/*.blade.php) laden hun eigen, kleinere
          entry (resources/js/partner.js) i.p.v. app.js — anders zou app.js's eigen boot() óók
          #quizRoot in de ingesloten quiz-app-partial oppikken en initQuiz() een tweede keer

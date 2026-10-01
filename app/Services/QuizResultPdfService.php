@@ -30,11 +30,39 @@ class QuizResultPdfService
             'ctaUrl' => $siteContent->email_cta_url,
         ]);
 
+        $this->registerClarendonFont($pdf);
+
         $pdf->setPaper('A4', 'portrait');
 
         $path = "submissions/{$submission->id}/quiz-result.pdf";
         Storage::disk(config('filesystems.quiz_pdfs_disk'))->put($path, $pdf->output());
 
         return $path;
+    }
+
+    /**
+     * Registreert het huisstijllettertype rechtstreeks bij dompdf i.p.v. via een CSS @font-face
+     * met een url() naar een lokaal pad — dat laatste bleek dompdf's eigen URL-parsing te raken
+     * (een "C:\..."-achtig pad wordt daar niet altijd betrouwbaar herkend als lokaal bestand).
+     * registerFont() werkt rechtstreeks met het bestandspad en omzeilt die laag volledig. Moet vóór
+     * $pdf->output() gebeuren, maar de volgorde t.o.v. loadView() maakt verder niet uit — dit vult
+     * alleen dompdf's eigen fontlettertabel, dat gebeurt los van het al geladen HTML/CSS.
+     */
+    private function registerClarendonFont(\Barryvdh\DomPDF\PDF $pdf): void
+    {
+        $fontMetrics = $pdf->getDomPDF()->getFontMetrics();
+
+        $fontMetrics->registerFont(
+            ['family' => 'Clarendon LT Std', 'weight' => 300, 'style' => 'normal'],
+            resource_path('fonts/clarendon/ClarendonLTStd-Light.otf'),
+        );
+        $fontMetrics->registerFont(
+            ['family' => 'Clarendon LT Std', 'weight' => 'normal', 'style' => 'normal'],
+            resource_path('fonts/clarendon/ClarendonLTStd.otf'),
+        );
+        $fontMetrics->registerFont(
+            ['family' => 'Clarendon LT Std', 'weight' => 'bold', 'style' => 'normal'],
+            resource_path('fonts/clarendon/ClarendonLTStd-Bold.otf'),
+        );
     }
 }
