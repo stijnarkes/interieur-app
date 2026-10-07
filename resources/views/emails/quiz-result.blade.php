@@ -134,21 +134,29 @@
         <div class="body">
             <p>{{ $siteContent->email_greeting }}{{ $submission->name ? ' ' . $submission->name : '' }},</p>
             <p>{{ $siteContent->email_intro }}</p>
-            <p class="style-pill">{{ $submission->quiz_result['resultName'] ?? '' }}</p>
+            <p class="style-pill" style="display:inline-block; padding:8px 14px; border-radius:999px; background:#f0e3d4; color:#6b4225; font-weight:bold; margin:4px 0 18px;">{{ $submission->quiz_result['resultName'] ?? '' }}</p>
             <p>{{ $submission->quiz_result['description'] ?? '' }}</p>
             <p>{{ $siteContent->email_outro }}</p>
-            <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener">{{ $siteContent->email_cta_label }}</a>
+            {{--
+                Behalve de class ook dezelfde opmaak inline op elke knop/pil gezet: sommige
+                mailclients (o.a. webmail-varianten die we hebben gezien) passen de <style>-regels
+                in de <head> maar gedeeltelijk toe op knoppen — de achtergrondkleur komt dan wel
+                door, maar padding/afronding niet, waardoor tekst tegen de randen plakt en de
+                knop vierkant oogt. Inline wint altijd, dus dit is de betrouwbare fallback.
+            --}}
+            <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:20px; padding:12px 20px; border-radius:999px; background:#b7794d; color:#ffffff; text-decoration:none; font-weight:bold;">{{ $siteContent->email_cta_label }}</a>
 
             @if ($partnerInviteUrl)
                 <div class="partner-invite">
                     <h2>Ontdek jullie gezamenlijke woonstijl</h2>
                     <p>Deel de link hieronder met je partner. Die doet de test net als jij, helemaal zelfstandig, zonder dat jullie elkaars antwoorden zien. Aan het eind krijgt ieder van jullie een eigen persoonlijke woonstijl, plus een gezamenlijk advies over hoe je jullie stijlen goed kunt combineren in huis.</p>
-                    <a class="cta" href="{{ $partnerInviteUrl }}" target="_blank" rel="noopener">Nodig je partner uit</a>
+                    <a class="cta" href="{{ $partnerInviteUrl }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:0; margin-right:10px; padding:12px 20px; border-radius:999px; background:#b7794d; color:#ffffff; text-decoration:none; font-weight:bold;">Nodig je partner uit</a>
                     <a
                         class="cta-outline"
                         href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}"
                         target="_blank"
                         rel="noopener"
+                        style="display:inline-block; margin-top:10px; padding:11px 20px; border-radius:999px; border:1px solid #b7794d; color:#9f6239; text-decoration:none; font-weight:bold; background:transparent;"
                     >Deel via WhatsApp</a>
                 </div>
             @endif

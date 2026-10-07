@@ -86,8 +86,15 @@
         <div class="body">
             <p>Beste{{ $recipientName ? ' '.$recipientName : '' }},</p>
             <p>Jullie gezamenlijke woonstijladvies staat als PDF bij deze e-mail, met wat jullie delen, waarin jullie verschillen, en een advies dat bij beide stijlen past.</p>
+            {{--
+                Behalve de class ook dezelfde opmaak inline op de knop gezet: sommige mailclients
+                passen de <style>-regels in de <head> maar gedeeltelijk toe op knoppen — de
+                achtergrondkleur komt dan wel door, maar padding/afronding niet, waardoor tekst
+                tegen de randen plakt en de knop vierkant oogt. Inline wint altijd, dus dit is de
+                betrouwbare fallback.
+            --}}
             @if ($siteContent->email_cta_url && $siteContent->email_cta_label)
-                <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener">{{ $siteContent->email_cta_label }}</a>
+                <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:20px; padding:12px 20px; border-radius:999px; background:#b7794d; color:#ffffff; text-decoration:none; font-weight:bold;">{{ $siteContent->email_cta_label }}</a>
             @endif
         </div>
     </div>
