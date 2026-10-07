@@ -121,11 +121,17 @@
                 over, andere clients begrijpen deze MSO-syntax niet en tonen de inhoud gewoon.
                 mso-fit-shape-to-text laat de VML-knop meegroeien met de knoptekst, zodat dit ook
                 blijft werken als de (admin-bewerkbare) knoptekst verandert.
+
+                mso-fit-shape-to-text bleek niet overal betrouwbaar (de VML-knop viel terug op een
+                minimale breedte en de tekst werd afgeknipt tot "Plan"/"Nodi"/"Deel" i.p.v. de
+                volledige tekst) — in plaats daarvan nu een berekende, vaste breedte op basis van
+                het aantal tekens, met flinke marge zodat te smal nooit meer voorkomt.
             --}}
+            @php($ctaVmlWidth = max(120, mb_strlen($siteContent->email_cta_label) * 9 + 48))
             <!--[if mso]>
-            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $siteContent->email_cta_url }}" style="height:44px;v-text-anchor:middle;mso-fit-shape-to-text:true;margin-top:20px;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $siteContent->email_cta_url }}" style="height:44px;width:{{ $ctaVmlWidth }}px;v-text-anchor:middle;margin-top:20px;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
             <w:anchorlock/>
-            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">{{ $siteContent->email_cta_label }}</center>
+            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">{{ $siteContent->email_cta_label }}</center>
             </v:roundrect>
             <![endif]-->
             <!--[if !mso]><!-->
@@ -143,14 +149,14 @@
                     <h2>Ontdek jullie gezamenlijke woonstijl</h2>
                     <p>Deel de link hieronder met je partner. Die doet de test net als jij, helemaal zelfstandig, zonder dat jullie elkaars antwoorden zien. Aan het eind krijgt ieder van jullie een eigen persoonlijke woonstijl, plus een gezamenlijk advies over hoe je jullie stijlen goed kunt combineren in huis.</p>
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $partnerInviteUrl }}" style="height:44px;v-text-anchor:middle;mso-fit-shape-to-text:true;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $partnerInviteUrl }}" style="height:44px;width:190px;v-text-anchor:middle;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
                     <w:anchorlock/>
-                    <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">Nodig je partner uit</center>
+                    <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Nodig je partner uit</center>
                     </v:roundrect>
                     &nbsp;&nbsp;
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}" style="height:42px;v-text-anchor:middle;mso-fit-shape-to-text:true;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#f8f5f1">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}" style="height:42px;width:165px;v-text-anchor:middle;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#f8f5f1">
                     <w:anchorlock/>
-                    <center style="color:#9f6239;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">Deel via WhatsApp</center>
+                    <center style="color:#9f6239;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Deel via WhatsApp</center>
                     </v:roundrect>
                     <![endif]-->
                     <!--[if !mso]><!-->

@@ -80,15 +80,19 @@
                 Outlook (desktop/web, de Word-renderer) ziet — dat is de enige manier om daar écht
                 ronde hoeken te krijgen, want border-radius ondersteunt die renderer nergens, ook
                 niet op een tabelcel — en de gewone tabel/knop die alle andere clients (incl.
-                mobiel, waar dit al goed was) blijven zien. mso-fit-shape-to-text laat de
-                VML-knop meegroeien met de knoptekst, zodat dit ook blijft werken als de
-                (admin-bewerkbare) knoptekst verandert.
+                mobiel, waar dit al goed was) blijven zien.
+
+                mso-fit-shape-to-text bleek niet overal betrouwbaar (de VML-knop viel terug op een
+                minimale breedte en de tekst werd afgeknipt i.p.v. de volledige tekst) — in plaats
+                daarvan nu een berekende, vaste breedte op basis van het aantal tekens, met flinke
+                marge zodat te smal nooit meer voorkomt.
             --}}
+            @php($ctaVmlWidth = max(120, mb_strlen($siteContent->email_cta_label) * 9 + 48))
             @if ($siteContent->email_cta_url && $siteContent->email_cta_label)
                 <!--[if mso]>
-                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $siteContent->email_cta_url }}" style="height:44px;v-text-anchor:middle;mso-fit-shape-to-text:true;margin-top:20px;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $siteContent->email_cta_url }}" style="height:44px;width:{{ $ctaVmlWidth }}px;v-text-anchor:middle;margin-top:20px;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
                 <w:anchorlock/>
-                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">{{ $siteContent->email_cta_label }}</center>
+                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">{{ $siteContent->email_cta_label }}</center>
                 </v:roundrect>
                 <![endif]-->
                 <!--[if !mso]><!-->
