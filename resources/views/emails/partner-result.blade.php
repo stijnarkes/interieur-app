@@ -52,17 +52,6 @@
         .body p {
             line-height: 1.6;
         }
-
-        .cta {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 20px;
-            border-radius: 999px;
-            background: #b7794d;
-            color: #ffffff !important;
-            text-decoration: none;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -87,14 +76,24 @@
             <p>Beste{{ $recipientName ? ' '.$recipientName : '' }},</p>
             <p>Jullie gezamenlijke woonstijladvies staat als PDF bij deze e-mail, met wat jullie delen, waarin jullie verschillen, en een advies dat bij beide stijlen past.</p>
             {{--
-                Behalve de class ook dezelfde opmaak inline op de knop gezet: sommige mailclients
-                passen de <style>-regels in de <head> maar gedeeltelijk toe op knoppen — de
-                achtergrondkleur komt dan wel door, maar padding/afronding niet, waardoor tekst
-                tegen de randen plakt en de knop vierkant oogt. Inline wint altijd, dus dit is de
-                betrouwbare fallback.
+                Knop als tabel i.p.v. een <a> met padding: Outlook desktop/web rendert met Word
+                i.p.v. een browser-engine en past padding nooit toe op een inline-element als <a>,
+                ook niet als die padding inline (i.p.v. via een class) staat — dat is een
+                structurele beperking van die renderer, geen genegeerde CSS-regel. Een tabelcel
+                (<td>) ondersteunt padding daar wél, dus de padding/achtergrond/afronding staan nu
+                op de <td>, en de <a> erin is alleen nog de klikbare tekst. Afgeronde hoeken
+                (border-radius) blijven daar wel vierkant — dat ondersteunt die renderer nergens,
+                ook niet op een tabelcel — maar dat is een geaccepteerde, overal gangbare
+                beperking; de belangrijkste winst is dat de tekst niet meer tegen de rand plakt.
             --}}
             @if ($siteContent->email_cta_url && $siteContent->email_cta_label)
-                <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:20px; padding:12px 20px; border-radius:999px; background:#b7794d; color:#ffffff; text-decoration:none; font-weight:bold;">{{ $siteContent->email_cta_label }}</a>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+                    <tr>
+                        <td align="center" bgcolor="#b7794d" style="background:#b7794d; border-radius:999px; padding:12px 20px;">
+                            <a href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener" style="display:inline-block; color:#ffffff; text-decoration:none; font-weight:bold; font-family:Arial,Helvetica,sans-serif; font-size:14px;">{{ $siteContent->email_cta_label }}</a>
+                        </td>
+                    </tr>
+                </table>
             @endif
         </div>
     </div>

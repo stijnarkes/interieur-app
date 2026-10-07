@@ -63,17 +63,6 @@
             margin: 4px 0 18px;
         }
 
-        .cta {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 20px;
-            border-radius: 999px;
-            background: #b7794d;
-            color: #ffffff !important;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
         .partner-invite {
             margin-top: 28px;
             padding: 20px 22px;
@@ -94,22 +83,6 @@
             color: #4a3526;
         }
 
-        .partner-invite .cta {
-            margin-top: 0;
-            margin-right: 10px;
-        }
-
-        .partner-invite .cta-outline {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 11px 20px;
-            border-radius: 999px;
-            border: 1px solid #b7794d;
-            color: #9f6239 !important;
-            text-decoration: none;
-            font-weight: bold;
-            background: transparent;
-        }
     </style>
 </head>
 <body>
@@ -138,26 +111,44 @@
             <p>{{ $submission->quiz_result['description'] ?? '' }}</p>
             <p>{{ $siteContent->email_outro }}</p>
             {{--
-                Behalve de class ook dezelfde opmaak inline op elke knop/pil gezet: sommige
-                mailclients (o.a. webmail-varianten die we hebben gezien) passen de <style>-regels
-                in de <head> maar gedeeltelijk toe op knoppen — de achtergrondkleur komt dan wel
-                door, maar padding/afronding niet, waardoor tekst tegen de randen plakt en de
-                knop vierkant oogt. Inline wint altijd, dus dit is de betrouwbare fallback.
+                Knoppen als tabel i.p.v. een <a> met padding: Outlook desktop/web rendert met
+                Word i.p.v. een browser-engine en past padding nooit toe op een inline-element als
+                <a>, ook niet als die padding inline (i.p.v. via een class) staat — dat is een
+                structurele beperking van die renderer, geen genegeerde CSS-regel. Een tabelcel
+                (<td>) ondersteunt padding daar wél, dus de padding/achtergrond/afronding staan nu
+                op de <td>, en de <a> erin is alleen nog de klikbare tekst. Afgeronde hoeken
+                (border-radius) blijven daar wel vierkant — dat ondersteunt die renderer nergens,
+                ook niet op een tabelcel — maar dat is een geaccepteerde, overal gangbare
+                beperking; de belangrijkste winst is dat de tekst niet meer tegen de rand plakt.
             --}}
-            <a class="cta" href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:20px; padding:12px 20px; border-radius:999px; background:#b7794d; color:#ffffff; text-decoration:none; font-weight:bold;">{{ $siteContent->email_cta_label }}</a>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+                <tr>
+                    <td align="center" bgcolor="#b7794d" style="background:#b7794d; border-radius:999px; padding:12px 20px;">
+                        <a href="{{ $siteContent->email_cta_url }}" target="_blank" rel="noopener" style="display:inline-block; color:#ffffff; text-decoration:none; font-weight:bold; font-family:Arial,Helvetica,sans-serif; font-size:14px;">{{ $siteContent->email_cta_label }}</a>
+                    </td>
+                </tr>
+            </table>
 
             @if ($partnerInviteUrl)
                 <div class="partner-invite">
                     <h2>Ontdek jullie gezamenlijke woonstijl</h2>
                     <p>Deel de link hieronder met je partner. Die doet de test net als jij, helemaal zelfstandig, zonder dat jullie elkaars antwoorden zien. Aan het eind krijgt ieder van jullie een eigen persoonlijke woonstijl, plus een gezamenlijk advies over hoe je jullie stijlen goed kunt combineren in huis.</p>
-                    <a class="cta" href="{{ $partnerInviteUrl }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:0; margin-right:10px; padding:12px 20px; border-radius:999px; background:#b7794d; color:#ffffff; text-decoration:none; font-weight:bold;">Nodig je partner uit</a>
-                    <a
-                        class="cta-outline"
-                        href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}"
-                        target="_blank"
-                        rel="noopener"
-                        style="display:inline-block; margin-top:10px; padding:11px 20px; border-radius:999px; border:1px solid #b7794d; color:#9f6239; text-decoration:none; font-weight:bold; background:transparent;"
-                    >Deel via WhatsApp</a>
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td bgcolor="#b7794d" style="background:#b7794d; border-radius:999px; padding:12px 20px;">
+                                <a href="{{ $partnerInviteUrl }}" target="_blank" rel="noopener" style="display:inline-block; color:#ffffff; text-decoration:none; font-weight:bold; font-family:Arial,Helvetica,sans-serif; font-size:14px;">Nodig je partner uit</a>
+                            </td>
+                            <td style="width:10px; line-height:1px; font-size:1px;">&nbsp;</td>
+                            <td style="background:transparent; border:1px solid #b7794d; border-radius:999px; padding:11px 20px;">
+                                <a
+                                    href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}"
+                                    target="_blank"
+                                    rel="noopener"
+                                    style="display:inline-block; color:#9f6239; text-decoration:none; font-weight:bold; font-family:Arial,Helvetica,sans-serif; font-size:14px;"
+                                >Deel via WhatsApp</a>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             @endif
         </div>
