@@ -111,16 +111,24 @@
             <p>{{ $submission->quiz_result['description'] ?? '' }}</p>
             <p>{{ $siteContent->email_outro }}</p>
             {{--
-                Knoppen als tabel i.p.v. een <a> met padding: Outlook desktop/web rendert met
-                Word i.p.v. een browser-engine en past padding nooit toe op een inline-element als
-                <a>, ook niet als die padding inline (i.p.v. via een class) staat — dat is een
-                structurele beperking van die renderer, geen genegeerde CSS-regel. Een tabelcel
-                (<td>) ondersteunt padding daar wél, dus de padding/achtergrond/afronding staan nu
-                op de <td>, en de <a> erin is alleen nog de klikbare tekst. Afgeronde hoeken
-                (border-radius) blijven daar wel vierkant — dat ondersteunt die renderer nergens,
-                ook niet op een tabelcel — maar dat is een geaccepteerde, overal gangbare
-                beperking; de belangrijkste winst is dat de tekst niet meer tegen de rand plakt.
+                Knoppen in twee varianten naast elkaar: een VML-tekening (<v:roundrect>) die
+                alléén Outlook (desktop/web, de Word-renderer) ziet — dat is de enige manier om
+                daar écht ronde hoeken te krijgen, want border-radius ondersteunt die renderer
+                nergens, ook niet op een tabelcel — en de gewone tabel/knop die alle andere
+                clients (incl. mobiel, waar dit al goed was) blijven zien. De
+                "<!--[if !mso]><!-->...<!--<![endif]-->"-constructie is de standaardmanier om iets
+                voor Outlook te verbergen: Outlook leest dat als een commentaarblok en slaat het
+                over, andere clients begrijpen deze MSO-syntax niet en tonen de inhoud gewoon.
+                mso-fit-shape-to-text laat de VML-knop meegroeien met de knoptekst, zodat dit ook
+                blijft werken als de (admin-bewerkbare) knoptekst verandert.
             --}}
+            <!--[if mso]>
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $siteContent->email_cta_url }}" style="height:44px;v-text-anchor:middle;mso-fit-shape-to-text:true;margin-top:20px;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
+            <w:anchorlock/>
+            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">{{ $siteContent->email_cta_label }}</center>
+            </v:roundrect>
+            <![endif]-->
+            <!--[if !mso]><!-->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
                 <tr>
                     <td align="center" bgcolor="#b7794d" style="background:#b7794d; border-radius:999px; padding:12px 20px;">
@@ -128,11 +136,24 @@
                     </td>
                 </tr>
             </table>
+            <!--<![endif]-->
 
             @if ($partnerInviteUrl)
                 <div class="partner-invite">
                     <h2>Ontdek jullie gezamenlijke woonstijl</h2>
                     <p>Deel de link hieronder met je partner. Die doet de test net als jij, helemaal zelfstandig, zonder dat jullie elkaars antwoorden zien. Aan het eind krijgt ieder van jullie een eigen persoonlijke woonstijl, plus een gezamenlijk advies over hoe je jullie stijlen goed kunt combineren in huis.</p>
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $partnerInviteUrl }}" style="height:44px;v-text-anchor:middle;mso-fit-shape-to-text:true;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
+                    <w:anchorlock/>
+                    <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">Nodig je partner uit</center>
+                    </v:roundrect>
+                    &nbsp;&nbsp;
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}" style="height:42px;v-text-anchor:middle;mso-fit-shape-to-text:true;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#f8f5f1">
+                    <w:anchorlock/>
+                    <center style="color:#9f6239;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">Deel via WhatsApp</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                         <tr>
                             <td bgcolor="#b7794d" style="background:#b7794d; border-radius:999px; padding:12px 20px;">
@@ -149,6 +170,7 @@
                             </td>
                         </tr>
                     </table>
+                    <!--<![endif]-->
                 </div>
             @endif
         </div>

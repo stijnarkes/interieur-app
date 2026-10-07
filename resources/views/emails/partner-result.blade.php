@@ -76,17 +76,22 @@
             <p>Beste{{ $recipientName ? ' '.$recipientName : '' }},</p>
             <p>Jullie gezamenlijke woonstijladvies staat als PDF bij deze e-mail, met wat jullie delen, waarin jullie verschillen, en een advies dat bij beide stijlen past.</p>
             {{--
-                Knop als tabel i.p.v. een <a> met padding: Outlook desktop/web rendert met Word
-                i.p.v. een browser-engine en past padding nooit toe op een inline-element als <a>,
-                ook niet als die padding inline (i.p.v. via een class) staat — dat is een
-                structurele beperking van die renderer, geen genegeerde CSS-regel. Een tabelcel
-                (<td>) ondersteunt padding daar wél, dus de padding/achtergrond/afronding staan nu
-                op de <td>, en de <a> erin is alleen nog de klikbare tekst. Afgeronde hoeken
-                (border-radius) blijven daar wel vierkant — dat ondersteunt die renderer nergens,
-                ook niet op een tabelcel — maar dat is een geaccepteerde, overal gangbare
-                beperking; de belangrijkste winst is dat de tekst niet meer tegen de rand plakt.
+                Knop in twee varianten naast elkaar: een VML-tekening (<v:roundrect>) die alléén
+                Outlook (desktop/web, de Word-renderer) ziet — dat is de enige manier om daar écht
+                ronde hoeken te krijgen, want border-radius ondersteunt die renderer nergens, ook
+                niet op een tabelcel — en de gewone tabel/knop die alle andere clients (incl.
+                mobiel, waar dit al goed was) blijven zien. mso-fit-shape-to-text laat de
+                VML-knop meegroeien met de knoptekst, zodat dit ook blijft werken als de
+                (admin-bewerkbare) knoptekst verandert.
             --}}
             @if ($siteContent->email_cta_url && $siteContent->email_cta_label)
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $siteContent->email_cta_url }}" style="height:44px;v-text-anchor:middle;mso-fit-shape-to-text:true;margin-top:20px;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:0 20px;">{{ $siteContent->email_cta_label }}</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
                     <tr>
                         <td align="center" bgcolor="#b7794d" style="background:#b7794d; border-radius:999px; padding:12px 20px;">
@@ -94,6 +99,7 @@
                         </td>
                     </tr>
                 </table>
+                <!--<![endif]-->
             @endif
         </div>
     </div>
