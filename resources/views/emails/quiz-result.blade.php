@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <title>Jouw woonstijl van Boer Staphorst</title>
     <style>
         body {
@@ -104,6 +114,19 @@
 </head>
 <body>
     @php($partnerInviteUrl = $partnerInviteUrl ?? null)
+    {{--
+        Outlook desktop (Windows) rendert HTML-mail met Word i.p.v. een browser-engine en negeert
+        max-width op een <div> volledig — zonder deze tabel-fallback trekt .wrapper daar open tot
+        de volle breedte van het leesvenster i.p.v. als smalle, gecentreerde kaart te verschijnen.
+        Alle andere mailclients (incl. mobiel, waar dit al goed werkte) negeren deze
+        MSO-conditional-comments en zien gewoon de normale .wrapper-div hieronder.
+    --}}
+    <!--[if mso]>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td align="center">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0">
+    <tr><td>
+    <![endif]-->
     <div class="wrapper">
         <div class="header">
             <h1>{{ $siteContent->email_header }}</h1>
@@ -131,5 +154,11 @@
             @endif
         </div>
     </div>
+    <!--[if mso]>
+    </td></tr>
+    </table>
+    </td></tr>
+    </table>
+    <![endif]-->
 </body>
 </html>
