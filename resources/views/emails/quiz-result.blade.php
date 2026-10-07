@@ -148,7 +148,17 @@
                 <div class="partner-invite">
                     <h2>Ontdek jullie gezamenlijke woonstijl</h2>
                     <p>Deel de link hieronder met je partner. Die doet de test net als jij, helemaal zelfstandig, zonder dat jullie elkaars antwoorden zien. Aan het eind krijgt ieder van jullie een eigen persoonlijke woonstijl, plus een gezamenlijk advies over hoe je jullie stijlen goed kunt combineren in huis.</p>
+                    {{--
+                        Twee correcties puur voor Outlook, binnen dit mso-blok (raakt dus geen
+                        andere client): de box heeft zelf 22px linkerpadding, waardoor deze knoppen
+                        daar verder naar rechts begonnen dan de "Plan een interieuradvies"-knop
+                        erboven — margin-left compenseert dat exact. En een expliciete spacer
+                        erna, omdat de VML-tekenobjecten in Outlook niet altijd de volledige
+                        onderkant-padding van de box meetellen, waardoor de knoppen tegen de
+                        onderrand van de box aan kwamen te staan.
+                    --}}
                     <!--[if mso]>
+                    <div style="margin-left:-22px;">
                     <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $partnerInviteUrl }}" style="height:44px;width:190px;v-text-anchor:middle;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#b7794d">
                     <w:anchorlock/>
                     <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Nodig je partner uit</center>
@@ -158,6 +168,8 @@
                     <w:anchorlock/>
                     <center style="color:#9f6239;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Deel via WhatsApp</center>
                     </v:roundrect>
+                    </div>
+                    <div style="height:20px;line-height:20px;font-size:1px;mso-line-height-rule:exactly;">&nbsp;</div>
                     <![endif]-->
                     <!--[if !mso]><!-->
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
