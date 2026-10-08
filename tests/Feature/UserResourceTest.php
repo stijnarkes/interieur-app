@@ -87,6 +87,24 @@ class UserResourceTest extends TestCase
     }
 
     #[Test]
+    public function een_bestaande_gebruiker_kan_de_instelmail_opnieuw_krijgen(): void
+    {
+        // Bv. omdat de eerdere link (standaard 60 minuten geldig, zie SetPasswordNotification) al
+        // verlopen is voordat iemand 'm opende.
+        Notification::fake();
+
+        $gebruiker = User::factory()->create(['email' => 'kelly@boer-staphorst.nl']);
+
+        Livewire::actingAs($this->admin())
+            ->test(UserResource\Pages\ListUsers::class)
+            ->mountTableAction('resendSetPasswordLink', record: $gebruiker)
+            ->callMountedTableAction()
+            ->assertHasNoTableActionErrors();
+
+        Notification::assertSentTo($gebruiker, SetPasswordNotification::class);
+    }
+
+    #[Test]
     public function de_instelmail_is_nederlands_en_gaat_over_instellen_niet_over_resetten(): void
     {
         $gebruiker = User::factory()->create(['name' => 'Anna']);

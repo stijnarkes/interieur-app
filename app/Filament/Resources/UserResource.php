@@ -13,6 +13,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
@@ -187,6 +188,27 @@ class UserResource extends Resource
             ->actions([
                 EditAction::make()
                     ->form(fn (User $record): array => self::userForm('edit', $record)),
+
+                // Zelfde instelmail als bij het aanmaken (sendSetPasswordLink() hierboven) —
+                // nodig als de eerdere link verlopen is (zie SetPasswordNotification: standaard
+                // 60 minuten geldig) of de e-mail nooit aankwam, zonder dat iemand handmatig een
+                // wachtwoord hoeft te verzinnen en door te geven.
+                Action::make('resendSetPasswordLink')
+                    ->label('Wachtwoordmail versturen')
+                    ->icon('heroicon-o-envelope')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Wachtwoordmail versturen')
+                    ->modalDescription(fn (User $record): string => "Er wordt een nieuwe e-mail gestuurd naar {$record->email} om een wachtwoord in te stellen.")
+                    ->action(function (User $record): void {
+                        self::sendSetPasswordLink($record);
+
+                        Notification::make()
+                            ->title('E-mail verstuurd')
+                            ->body("{$record->email} heeft een nieuwe e-mail gekregen om een wachtwoord in te stellen.")
+                            ->success()
+                            ->send();
+                    }),
 
                 // Voorkomt dat je per ongeluk je eigen account verwijdert en jezelf buitensluit.
                 DeleteAction::make()
