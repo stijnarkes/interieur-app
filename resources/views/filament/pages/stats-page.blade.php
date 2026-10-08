@@ -1,8 +1,12 @@
 <x-filament-panels::page>
     <div class="space-y-8">
 
-        {{-- Periodefilter: leeg = alle tijd, zie StatsPage::filtersForm() --}}
-        {{ $this->filtersForm }}
+        {{-- Periodefilter: leeg = alle tijd, zie StatsPage::filtersForm(). In een section i.p.v.
+             los gerenderd, anders stonden de twee datumvelden zonder kaart/achtergrond op de
+             pagina en liepen ze niet netjes gelijk met de rest van de opmaak hieronder. --}}
+        <x-filament::section>
+            {{ $this->filtersForm }}
+        </x-filament::section>
 
         {{-- Kerncijfers over dezelfde (eventueel gefilterde) periode --}}
         @php($funnelStats = $this->getFunnelStats())
