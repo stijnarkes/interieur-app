@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Woondroomtest & Moodboard')
+@section('title', 'Woondroomtest')
 
 @section('content')
 @include('partials.quiz-app')
