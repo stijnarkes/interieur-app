@@ -612,7 +612,7 @@ function initQuiz(root, options = {}) {
     renderStep({ scroll: true, direction: "back" });
   });
 
-  // Landt altijd op het startscherm; "Start de stijltest" begint altijd fris.
+  // Landt altijd op het startscherm; "Start de Woondroomtest" begint altijd fris.
   showScreen("start");
   // Alvast de eerste overgangsfoto ophalen terwijl de bezoeker de intro leest — dat is het
   // eerstvolgende scherm na een klik op "Start de stijlanalyse".

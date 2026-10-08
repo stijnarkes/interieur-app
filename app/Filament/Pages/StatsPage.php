@@ -47,7 +47,7 @@ class StatsPage extends Page
             ]);
     }
 
-    /** Kenmerken (traits) van de winnende stijl, opgeteld over alle stijltest-inzendingen. */
+    /** Kenmerken (traits) van de winnende stijl, opgeteld over alle Woondroomtest-inzendingen. */
     public function getTopTraits(): Collection
     {
         return $this->topTraits ??= $this->computeTopTraits();

@@ -1,5 +1,5 @@
 /**
- * Rendert het korte overgangs-/introscherm tussen twee onderdelen van de stijltest.
+ * Rendert het korte overgangs-/introscherm tussen twee onderdelen van de Woondroomtest.
  * Bij een geüploade foto (zie QuizImageManifest) overlapt de tekstkaart de onderkant van de
  * foto — de `has-photo`-class op de container schakelt die overlap-marge in via CSS, en blijft
  * bewust uit als de foto ontbreekt/niet laadt, zodat de kaart dan gewoon los blijft staan.

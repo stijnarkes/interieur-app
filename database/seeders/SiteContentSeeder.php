@@ -70,7 +70,7 @@ class SiteContentSeeder extends Seeder
             'email_subject' => 'Jouw Woonstijl | Boer Staphorst',
             'email_header' => 'Jouw persoonlijke woonstijl',
             'email_greeting' => 'Hoi',
-            'email_intro' => 'Bedankt voor het doen van de interieurstijltest van Boer Staphorst. Jouw woonstijl:',
+            'email_intro' => 'Bedankt voor het doen van de Woondroomtest van Boer Staphorst. Jouw woonstijl:',
             'email_outro' => 'De volledige uitslag met jouw moodboard vind je in de bijgevoegde PDF.',
             'email_cta_label' => 'Plan een interieuradvies',
             'email_cta_url' => 'https://www.boer-staphorst.nl/wonen/interieuradvies',

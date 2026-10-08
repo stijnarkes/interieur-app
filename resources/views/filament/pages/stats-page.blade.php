@@ -35,7 +35,7 @@
             </div>
         </x-filament::section>
 
-        {{-- Top kenmerken (stijltest) --}}
+        {{-- Top kenmerken (Woondroomtest) --}}
         <x-filament::section>
             <x-slot name="heading">Populairste kenmerken</x-slot>
             <x-slot name="description">Kenmerken van de winnende woonstijl, opgeteld over alle Woondroomtest-inzendingen.</x-slot>

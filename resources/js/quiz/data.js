@@ -1,5 +1,5 @@
 /**
- * Centrale databron voor de interieurstijltest.
+ * Centrale databron voor de Woondroomtest.
  *
  * SECTIONS is vaste, niet-admin-bewerkbare copy voor de twee onderdelen van de test. QUESTIONS
  * begint bewust leeg: de vragen/opties zijn volledig admin-beheerd (zie QuizOptionsPage) en
