@@ -28,8 +28,8 @@ class QuizResultTextComposer
 
         return [
             'comboName' => $secondary
-                ? "Jouw woonstijl: {$primary->label} met {$secondary->label}-invloeden"
-                : "Jouw woonstijl: {$primary->label}",
+                ? "Jouw woonstijlmix: {$primary->label} met {$secondary->label}-invloeden"
+                : "Dit is jouw woonstijl: {$primary->label}",
             'intro' => $this->intro($primary, $secondary),
         ];
     }

@@ -134,7 +134,7 @@ class QuizPreviewControllerTest extends TestCase
         $response = $this->actingAs($this->admin())->get('/admin/voorbeeld/resultaat?style=japandi');
 
         $response->assertOk();
-        $response->assertSee('Jouw woonstijl: Japandi', false);
+        $response->assertSee('Dit is jouw woonstijl: Japandi', false);
         $response->assertDontSee('-invloeden');
     }
 

@@ -76,7 +76,7 @@ class PdfMaterialsSectionTest extends TestCase
         $html = view('pdf.quiz-result', ['result' => $result])->render();
 
         $this->assertStringContainsString('Materiaalinspiratie bij jouw stijlmix', $html);
-        $this->assertStringContainsString('Jouw woonstijl combineert elementen van Hotel luxe met invloeden van Landelijk.', $html);
+        $this->assertStringContainsString('Bij jou komen Hotel luxe en Landelijk mooi samen!', $html);
         $this->assertStringContainsString('>Hotel luxe<', $html);
         $this->assertStringContainsString('>Landelijk<', $html);
         $this->assertStringContainsString('Grenen hout', $html);

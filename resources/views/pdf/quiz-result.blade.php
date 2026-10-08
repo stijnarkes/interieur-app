@@ -320,7 +320,7 @@ body {
 
 @if (!empty($primaryStyle['traits']))
 <div class="section">
-    <div class="section-title">Dit typeert jouw woonstijl</div>
+    <div class="section-title">Dit past bij jouw woonstijl</div>
     @if (!empty($primaryStyle['traitsIntro']))
     <div class="section-intro">{{ $primaryStyle['traitsIntro'] }}</div>
     @endif
@@ -352,7 +352,7 @@ body {
 
     @if (!empty($result['accentColors']))
     <div class="section-title accent-colors-title">Jouw accentkleuren</div>
-    <div class="section-intro">Deze accentkleuren geven je gekozen basispalet een persoonlijke uitstraling.</div>
+    <div class="section-intro">Met deze accentkleuren geef je jouw interieur nét wat meer persoonlijkheid.</div>
     <div class="swatch-grid">
         @foreach ($result['accentColors'] as $color)
         <div class="swatch">
@@ -388,7 +388,7 @@ body {
 <div class="section page-break">
     @if ($hasSecondaryMaterials)
     <div class="section-title">Materiaalinspiratie bij jouw stijlmix</div>
-    <div class="section-intro">Jouw woonstijl combineert elementen van {{ $primaryStyle['label'] }} met invloeden van {{ $secondaryStyle['label'] }}. Hieronder materiaalinspiratie bij beide stijlen, als suggestie en niet per se wat je zelf koos in de test.</div>
+    <div class="section-intro">Bij jou komen {{ $primaryStyle['label'] }} en {{ $secondaryStyle['label'] }} mooi samen! Hieronder vind je materialen die bij beide stijlen passen. Laat je inspireren: het zijn ideeën om mee te spelen, niet per se de materialen die je tijdens de test hebt gekozen.</div>
     @else
     <div class="section-title">Materiaalinspiratie bij jouw stijl</div>
     <div class="section-intro">Een greep uit materialen die goed bij deze stijl passen, als inspiratie en niet per se wat je zelf koos in de test.</div>
@@ -416,7 +416,7 @@ body {
 {{-- Eigen pagina (.page-break): zonder eigen forced break begon dit blok gewoon halverwege de
      pagina waar de materialensectie toevallig ophield, waardoor de tegelrijen daarna nog eens
      onvoorspelbaar over een volgende pagina konden uitlopen — nu begint het moodboard altijd
-     schoon bovenaan een nieuwe pagina. Staat vóór "Kies meubels met deze uitstraling" (die zelf
+     schoon bovenaan een nieuwe pagina. Staat vóór "Deze meubels passen bij jou" (die zelf
      ook een eigen nieuwe pagina forceert), zodat dat kortere blok niet alvast ruimte inneemt vóór
      het moodboard. 2 (i.p.v. voorheen 3) bredere/hogere tegels per rij — beter zichtbaar dan de
      eerdere kleine tegeltjes. Een <table> i.p.v. inline-block tegels: dompdf's ondersteuning voor
@@ -450,7 +450,7 @@ body {
 
 @if (!empty($primaryStyle['furnitureAdvice']['items']))
 <div class="section page-break">
-    <div class="section-title">Kies meubels met deze uitstraling</div>
+    <div class="section-title">Deze meubels passen bij jou</div>
     @if (!empty($primaryStyle['furnitureAdvice']['intro']))
     <div class="section-intro">{{ $primaryStyle['furnitureAdvice']['intro'] }}</div>
     @endif
@@ -478,7 +478,7 @@ body {
 
 @if (!empty($primaryStyle['avoid']))
 <div class="section">
-    <div class="section-title">Zo kun je met deze stijl verder</div>
+    <div class="section-title">Zo maak je jouw woonstijl helemaal af</div>
     <div class="avoid-box">{{ $primaryStyle['avoid'] }}</div>
 </div>
 @endif

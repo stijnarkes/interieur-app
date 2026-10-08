@@ -54,7 +54,7 @@ class QuizResultTextComposerTest extends TestCase
 
         $advice = $this->composer->build($this->resultFor('hotelLuxe'));
 
-        $this->assertSame('Jouw woonstijl: Hotel luxe', $advice['comboName']);
+        $this->assertSame('Dit is jouw woonstijl: Hotel luxe', $advice['comboName']);
         $this->assertSame('Basistekst van Hotel luxe.', $advice['intro']);
     }
 
@@ -66,7 +66,7 @@ class QuizResultTextComposerTest extends TestCase
 
         $advice = $this->composer->build($this->resultFor('hotelLuxe', 'japandi'));
 
-        $this->assertSame('Jouw woonstijl: Hotel luxe met Japandi-invloeden', $advice['comboName']);
+        $this->assertSame('Jouw woonstijlmix: Hotel luxe met Japandi-invloeden', $advice['comboName']);
         $this->assertSame(
             'Basistekst van Hotel luxe. Ook Japandi komt in je keuzes naar voren. Natuurlijke materialen en eenvoudige vormen kunnen voor meer rust en warmte zorgen.',
             $advice['intro'],
