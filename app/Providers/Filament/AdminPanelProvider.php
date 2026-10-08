@@ -39,6 +39,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('1.75rem')
             ->favicon(asset('images/branding/boer-staphorst-favicon.png'))
             ->login()
+            ->passwordReset()
             ->colors([
                 'primary' => Color::Amber,
             ])

@@ -4,17 +4,25 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Notifications\Auth\ResetPassword as ResetPasswordNotification;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class UserResource extends Resource
 {
@@ -55,16 +63,21 @@ class UserResource extends Resource
                 ->maxLength(255)
                 ->unique(ignoreRecord: true),
 
+            // Bij het aanmaken geen wachtwoordveld meer: de nieuwe gebruiker krijgt een e-mail om
+            // zelf een wachtwoord in te stellen (zie CreateAction::using() hieronder) — niemand
+            // hoeft dus meer zelf een wachtwoord te verzinnen en veilig door te geven. Bij het
+            // bewerken blijft handmatig een nieuw wachtwoord zetten mogelijk, voor het geval de
+            // uitnodigingsmail nooit aankomt.
             TextInput::make('password')
                 ->label('Wachtwoord')
                 ->password()
                 ->revealable()
                 ->minLength(8)
-                ->required(fn (): bool => $context === 'create')
+                ->visible($context === 'edit')
                 // Laat het wachtwoord ongewijzigd als het veld bij het bewerken leeg blijft —
                 // de "hashed"-cast op User::password hasht een nieuwe waarde automatisch.
                 ->dehydrated(fn (?string $state): bool => filled($state))
-                ->helperText($context === 'create' ? null : 'Laat leeg om het huidige wachtwoord te behouden.'),
+                ->helperText('Laat leeg om het huidige wachtwoord te behouden.'),
 
             Section::make('Rechten')
                 ->schema([
@@ -87,6 +100,32 @@ class UserResource extends Resource
                         ->default(false),
                 ]),
         ];
+    }
+
+    /**
+     * Zelfde manier van versturen als Filament's eigen "wachtwoord vergeten"-pagina
+     * (vendor/filament/filament/src/Pages/Auth/PasswordReset/RequestPasswordReset.php) — niet de
+     * generieke Password::sendResetLink() van Laravel zelf, die zou linken naar een
+     * password.reset-route die in deze app niet bestaat. Zo wordt dit precies hetzelfde
+     * reset-wachtwoordscherm van het beheerpaneel als wanneer de gebruiker zelf op "Wachtwoord
+     * vergeten?" had geklikt.
+     *
+     * Filament\Notifications\Auth\ResetPassword implementeert ShouldQueue — $user->notify() zou
+     * 'm dus stil op de "jobs"-tabel laten staan, want deze app draait bewust zonder actieve
+     * queue-worker (zie GenerateAndSendQuizResultPdfJob voor hetzelfde patroon). sendNow() dwingt
+     * synchrone verzending af, net als overal elders in deze app.
+     */
+    private static function sendSetPasswordLink(User $user): void
+    {
+        Password::broker(Filament::getAuthPasswordBroker())->sendResetLink(
+            ['email' => $user->email],
+            function (CanResetPassword $user, string $token): void {
+                $notification = app(ResetPasswordNotification::class, ['token' => $token]);
+                $notification->url = Filament::getResetPasswordUrl($token, $user);
+
+                NotificationFacade::sendNow($user, $notification);
+            },
+        );
     }
 
     public static function form(Form $form): Form
@@ -128,7 +167,23 @@ class UserResource extends Resource
             ->headerActions([
                 CreateAction::make()
                     ->label('Gebruiker toevoegen')
-                    ->form(fn (): array => self::userForm('create')),
+                    ->form(fn (): array => self::userForm('create'))
+                    // Willekeurig, onbekend wachtwoord — niemand gebruikt dit ooit, de nieuwe
+                    // gebruiker stelt via de e-mail hieronder zelf het echte wachtwoord in.
+                    ->using(function (array $data): User {
+                        $data['password'] = Hash::make(Str::random(40));
+
+                        return User::create($data);
+                    })
+                    ->after(function (User $record): void {
+                        self::sendSetPasswordLink($record);
+
+                        Notification::make()
+                            ->title('Uitnodiging verstuurd')
+                            ->body("{$record->email} heeft een e-mail gekregen om een eigen wachtwoord in te stellen.")
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->actions([
                 EditAction::make()
