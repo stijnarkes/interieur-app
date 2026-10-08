@@ -4,12 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use App\Notifications\SetPasswordNotification;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
-use Filament\Notifications\Auth\ResetPassword as ResetPasswordNotification;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -20,7 +20,6 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -103,27 +102,27 @@ class UserResource extends Resource
     }
 
     /**
-     * Zelfde manier van versturen als Filament's eigen "wachtwoord vergeten"-pagina
+     * Genereert de reset-token via dezelfde route als Filament's eigen "wachtwoord vergeten"-pagina
      * (vendor/filament/filament/src/Pages/Auth/PasswordReset/RequestPasswordReset.php) — niet de
      * generieke Password::sendResetLink() van Laravel zelf, die zou linken naar een
-     * password.reset-route die in deze app niet bestaat. Zo wordt dit precies hetzelfde
-     * reset-wachtwoordscherm van het beheerpaneel als wanneer de gebruiker zelf op "Wachtwoord
-     * vergeten?" had geklikt.
-     *
-     * Filament\Notifications\Auth\ResetPassword implementeert ShouldQueue — $user->notify() zou
-     * 'm dus stil op de "jobs"-tabel laten staan, want deze app draait bewust zonder actieve
-     * queue-worker (zie GenerateAndSendQuizResultPdfJob voor hetzelfde patroon). sendNow() dwingt
-     * synchrone verzending af, net als overal elders in deze app.
+     * password.reset-route die in deze app niet bestaat — maar verstuurt een eigen, volledig
+     * Nederlandse e-mail (SetPasswordNotification) i.p.v. Filament\Notifications\Auth\ResetPassword:
+     * die laatste hergebruikt Laravel's eigen ResetPassword-tekst, die zonder gepubliceerde
+     * nl-vertaling altijd in het Engels blijft staan, en spreekt daarnaast over "wachtwoord
+     * resetten" terwijl dit voor een nieuwe gebruiker een eerste keer instellen is, geen reset.
+     * Landt desondanks op precies hetzelfde reset-wachtwoordscherm van het beheerpaneel.
      */
     private static function sendSetPasswordLink(User $user): void
     {
         Password::broker(Filament::getAuthPasswordBroker())->sendResetLink(
             ['email' => $user->email],
             function (CanResetPassword $user, string $token): void {
-                $notification = app(ResetPasswordNotification::class, ['token' => $token]);
-                $notification->url = Filament::getResetPasswordUrl($token, $user);
+                $url = Filament::getResetPasswordUrl($token, $user);
 
-                NotificationFacade::sendNow($user, $notification);
+                // Geen ShouldQueue op SetPasswordNotification, dus notify() is hier al synchroon —
+                // deze app draait bewust zonder actieve queue-worker (zie
+                // GenerateAndSendQuizResultPdfJob voor hetzelfde patroon).
+                $user->notify(new SetPasswordNotification($url));
             },
         );
     }

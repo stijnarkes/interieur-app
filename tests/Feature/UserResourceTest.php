@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\UserResource;
 use App\Models\User;
-use Filament\Notifications\Auth\ResetPassword as ResetPasswordNotification;
+use App\Notifications\SetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -60,17 +60,16 @@ class UserResourceTest extends TestCase
         // nieuwe gebruiker stelt via de mail hieronder zelf het echte wachtwoord in.
         $this->assertNotNull($nieuweGebruiker->password);
 
-        Notification::assertSentTo($nieuweGebruiker, ResetPasswordNotification::class);
+        Notification::assertSentTo($nieuweGebruiker, SetPasswordNotification::class);
     }
 
     #[Test]
     public function de_instelmail_wordt_niet_op_de_wachtrij_gezet(): void
     {
-        // Filament\Notifications\Auth\ResetPassword implementeert ShouldQueue — deze app draait
-        // bewust zonder actieve queue-worker, dus moet dit synchroon verstuurd worden (zie
-        // UserResource::sendSetPasswordLink()). Notification::fake() zou een queue-bug hier
-        // verbergen, dus bewust zonder fake: controleer dat er simpelweg niks in de jobs-tabel
-        // belandt.
+        // SetPasswordNotification heeft bewust geen ShouldQueue (deze app draait zonder actieve
+        // queue-worker, zie UserResource::sendSetPasswordLink()). Notification::fake() zou een
+        // toekomstige queue-regressie hier verbergen, dus bewust zonder fake: controleer dat er
+        // simpelweg niks in de jobs-tabel belandt.
         Livewire::actingAs($this->admin())
             ->test(UserResource\Pages\ListUsers::class)
             ->mountTableAction('create')
@@ -85,5 +84,18 @@ class UserResourceTest extends TestCase
             ->assertHasNoTableActionErrors();
 
         $this->assertDatabaseCount('jobs', 0);
+    }
+
+    #[Test]
+    public function de_instelmail_is_nederlands_en_gaat_over_instellen_niet_over_resetten(): void
+    {
+        $gebruiker = User::factory()->create(['name' => 'Anna']);
+
+        $mail = (new SetPasswordNotification('https://example.com/stel-wachtwoord-in'))->toMail($gebruiker);
+
+        $this->assertSame('Stel je wachtwoord in', $mail->subject);
+        $this->assertStringContainsString('Wachtwoord instellen', $mail->actionText);
+        $this->assertStringNotContainsString('reset', mb_strtolower($mail->subject));
+        $this->assertStringNotContainsString('reset', mb_strtolower($mail->actionText));
     }
 }
