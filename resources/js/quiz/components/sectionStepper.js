@@ -10,7 +10,7 @@ function createSectionStepper(sections, totalSteps) {
 
   const list = document.createElement("ol");
   list.className = "section-stepper";
-  list.setAttribute("aria-label", "Onderdelen van de stijltest");
+  list.setAttribute("aria-label", "Onderdelen van de Woondroomtest");
 
   const items = sections.map((section, index) => {
     const li = document.createElement("li");

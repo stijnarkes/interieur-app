@@ -45,7 +45,7 @@ class StatsOverviewWidget extends BaseWidget
                 ->icon('heroicon-o-inbox-stack')
                 ->color('primary'),
 
-            Stat::make('Voltooide stijltests', $totals->completed)
+            Stat::make('Voltooide Woondroomtests', $totals->completed)
                 ->icon('heroicon-o-check-circle')
                 ->color('success'),
 

@@ -38,7 +38,7 @@
         {{-- Top kenmerken (stijltest) --}}
         <x-filament::section>
             <x-slot name="heading">Populairste kenmerken</x-slot>
-            <x-slot name="description">Kenmerken van de winnende woonstijl, opgeteld over alle stijltest-inzendingen.</x-slot>
+            <x-slot name="description">Kenmerken van de winnende woonstijl, opgeteld over alle Woondroomtest-inzendingen.</x-slot>
 
             <div class="flex flex-wrap gap-2">
                 @foreach ($this->getTopTraits() as $item)

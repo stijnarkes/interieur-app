@@ -101,8 +101,8 @@ function initInvitePage(root) {
 
     const heading = document.createElement("h1");
     heading.textContent = preview.initiatorName
-      ? `${preview.initiatorName} nodigt je uit voor de woonstijltest`
-      : "Je bent uitgenodigd voor de woonstijltest";
+      ? `${preview.initiatorName} nodigt je uit voor de Woondroomtest`
+      : "Je bent uitgenodigd voor de Woondroomtest";
     landingMount.appendChild(heading);
 
     const intro = document.createElement("p");

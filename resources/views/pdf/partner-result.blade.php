@@ -194,7 +194,7 @@ body {
 
 <div class="cover">
     <img src="data:image/png;base64,{{ $logoBase64 }}" alt="Boer Staphorst" class="pdf-logo" />
-    <div class="brand-label">Woonstijltest</div>
+    <div class="brand-label">Woondroomtest</div>
     <div class="cover-title">Jullie gezamenlijke woonstijl</div>
     <div class="cover-subtitle">{{ $initiatorName }} &amp; {{ $partnerName }}</div>
     <div class="cover-description">Een overzicht van wat jullie delen én waarin jullie verschillen, met een advies dat bij beide stijlen past.</div>

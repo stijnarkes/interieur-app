@@ -285,7 +285,7 @@ body {
 
 <div class="cover">
     <img src="data:image/png;base64,{{ $logoBase64 }}" alt="Boer Staphorst" class="pdf-logo" />
-    <div class="brand-label">Interieuradvies</div>
+    <div class="brand-label">Woondroomtest</div>
     <div class="cover-title">{{ $result['resultName'] ?? 'Jouw woonstijl' }}</div>
     @if (!empty($primaryStyle['subtitle']))
     <div class="cover-subtitle">{{ $primaryStyle['subtitle'] }}</div>

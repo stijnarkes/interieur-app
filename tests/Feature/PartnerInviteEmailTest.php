@@ -110,7 +110,7 @@ class PartnerInviteEmailTest extends TestCase
 
         Mail::assertSent(QuizResultMail::class, function (QuizResultMail $mail) {
             $html = $mail->render();
-            $expectedHref = 'https://wa.me/?text='.rawurlencode('Doe je mee met mijn woonstijltest? '.$mail->partnerInvite['inviteUrl']);
+            $expectedHref = 'https://wa.me/?text='.rawurlencode('Doe je mee met mijn Woondroomtest? '.$mail->partnerInvite['inviteUrl']);
 
             return str_contains($html, $expectedHref);
         });

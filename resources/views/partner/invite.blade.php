@@ -1,6 +1,6 @@
 @extends('layouts.app', ['viteEntries' => ['resources/js/partner.js']])
 
-@section('title', 'Uitnodiging — Gezamenlijke woonstijltest')
+@section('title', 'Uitnodiging — Gezamenlijke Woondroomtest')
 
 @section('content')
 <div id="partnerInviteRoot" data-invite-token="{{ $inviteToken }}">

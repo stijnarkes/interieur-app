@@ -3,7 +3,7 @@
 
     <x-filament::section
         heading="Startscherm"
-        description="Titel, introductietekst en knoptekst op de allereerste pagina van de stijltest."
+        description="Titel, introductietekst en knoptekst op de allereerste pagina van de Woondroomtest."
         :header-actions="[$this->editStartScreenAction(), $this->buildPreviewAction(url('/'))]"
     >
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ $content->start_title }} — {{ $content->start_button_label }}</p>
@@ -11,7 +11,7 @@
 
     <x-filament::section
         heading="Overgangsschermen"
-        description="De twee tussenschermen tussen de onderdelen van de stijltest."
+        description="De twee tussenschermen tussen de onderdelen van de Woondroomtest."
     >
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             @foreach ($this->getTransitionSections() as $section)

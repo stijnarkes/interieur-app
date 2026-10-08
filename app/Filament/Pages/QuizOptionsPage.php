@@ -175,7 +175,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->maxLength(255),
 
                 FormSection::make('Stijlscores')
-                    ->description('Matchscore per stijl (0,00-1,00) — bepaalt zowel de uitslagberekening van de woonstijltest als bij welke stijlen deze optie hoort. Vul minstens één stijl hoger dan 0,00 in, anders verschijnt de optie nergens in de klant-quiz.')
+                    ->description('Matchscore per stijl (0,00-1,00) — bepaalt zowel de uitslagberekening van de Woondroomtest als bij welke stijlen deze optie hoort. Vul minstens één stijl hoger dan 0,00 in, anders verschijnt de optie nergens in de klant-quiz.')
                     ->schema($this->styleScoreFields()),
 
                 ...$this->internalNoteField(),
@@ -265,7 +265,7 @@ class QuizOptionsPage extends Page implements HasActions, HasForms
                     ->maxLength(255),
 
                 FormSection::make('Stijlscores')
-                    ->description('Matchscore per stijl (0,00-1,00) — bepaalt zowel de uitslagberekening van de woonstijltest als bij welke stijlen deze optie hoort. Vul minstens één stijl hoger dan 0,00 in, anders verschijnt de optie nergens in de klant-quiz.')
+                    ->description('Matchscore per stijl (0,00-1,00) — bepaalt zowel de uitslagberekening van de Woondroomtest als bij welke stijlen deze optie hoort. Vul minstens één stijl hoger dan 0,00 in, anders verschijnt de optie nergens in de klant-quiz.')
                     ->schema($this->styleScoreFields()),
 
                 ...$this->internalNoteField(),

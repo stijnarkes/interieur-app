@@ -168,7 +168,7 @@
                     <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Nodig je partner uit</center>
                     </v:roundrect>
                     &nbsp;&nbsp;
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}" style="height:44px;width:165px;v-text-anchor:middle;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#f8f5f1">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn Woondroomtest? '.$partnerInviteUrl) }}" style="height:44px;width:165px;v-text-anchor:middle;display:inline-block;" arcsize="50%" strokecolor="#b7794d" fillcolor="#f8f5f1">
                     <w:anchorlock/>
                     <center style="color:#9f6239;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Deel via WhatsApp</center>
                     </v:roundrect>
@@ -184,7 +184,7 @@
                             <td style="width:10px; line-height:1px; font-size:1px;">&nbsp;</td>
                             <td style="background:transparent; border:1px solid #b7794d; border-radius:999px; padding:11px 20px;">
                                 <a
-                                    href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn woonstijltest? '.$partnerInviteUrl) }}"
+                                    href="https://wa.me/?text={{ rawurlencode('Doe je mee met mijn Woondroomtest? '.$partnerInviteUrl) }}"
                                     target="_blank"
                                     rel="noopener"
                                     style="display:inline-block; color:#9f6239; text-decoration:none; font-weight:bold; font-family:Arial,Helvetica,sans-serif; font-size:14px;"
