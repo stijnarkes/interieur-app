@@ -5,6 +5,8 @@ namespace App\Filament\Widgets;
 use App\Models\QuizEvent;
 use App\Support\QuizStructure;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -15,6 +17,8 @@ use Illuminate\Support\Facades\Auth;
  */
 class QuizFunnelChartWidget extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?string $heading = 'Trechter: van start tot aanvraag';
 
     protected static ?int $sort = 4;
@@ -28,7 +32,12 @@ class QuizFunnelChartWidget extends ChartWidget
 
     protected function getData(): array
     {
+        $startDate = ($this->filters['startDate'] ?? null) ? Carbon::parse($this->filters['startDate'])->startOfDay() : null;
+        $endDate = ($this->filters['endDate'] ?? null) ? Carbon::parse($this->filters['endDate'])->endOfDay() : null;
+
         $counts = QuizEvent::query()
+            ->when($startDate, fn ($query, Carbon $date) => $query->where('created_at', '>=', $date))
+            ->when($endDate, fn ($query, Carbon $date) => $query->where('created_at', '<=', $date))
             ->selectRaw('name, question_key, COUNT(*) as total')
             ->groupBy('name', 'question_key')
             ->get();

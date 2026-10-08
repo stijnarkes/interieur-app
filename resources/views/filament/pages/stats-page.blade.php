@@ -1,8 +1,28 @@
 <x-filament-panels::page>
     <div class="space-y-8">
 
+        {{-- Periodefilter: leeg = alle tijd, zie StatsPage::filtersForm() --}}
+        {{ $this->filtersForm }}
+
+        {{-- Kerncijfers over dezelfde (eventueel gefilterde) periode --}}
+        @php($funnelStats = $this->getFunnelStats())
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            @foreach ([
+                ['label' => 'Keer gestart', 'value' => $funnelStats['started']],
+                ['label' => 'Keer afgerond', 'value' => $funnelStats['completed']],
+                ['label' => 'Aanvragen verstuurd', 'value' => $funnelStats['leadSubmitted']],
+                ['label' => 'Afrondingspercentage', 'value' => $funnelStats['completionRate'] . '%'],
+                ['label' => 'Conversiepercentage', 'value' => $funnelStats['conversionRate'] . '%'],
+            ] as $stat)
+                <x-filament::section>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $stat['label'] }}</p>
+                    <p class="text-2xl font-semibold text-gray-950 dark:text-white">{{ $stat['value'] }}</p>
+                </x-filament::section>
+            @endforeach
+        </div>
+
         {{-- Trechter: waar haken bezoekers af --}}
-        @livewire(\App\Filament\Widgets\QuizFunnelChartWidget::class)
+        @livewire(\App\Filament\Widgets\QuizFunnelChartWidget::class, ['filters' => $this->filters])
 
         {{-- Top stijlen --}}
         <x-filament::section>
