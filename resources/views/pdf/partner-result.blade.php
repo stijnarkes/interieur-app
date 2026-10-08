@@ -182,15 +182,29 @@ body {
     font-size: 8.5pt;
     margin-top: 2px;
 }
+
+.page-mark {
+    /* position: fixed laat dompdf dit op elke pagina herhalen (zie dompdf's ondersteuning voor
+       "running" headers/footers) — niet afhankelijk van waar dit element in de HTML staat. */
+    position: fixed;
+    bottom: 24px;
+    right: 44px;
+    width: 46px;
+}
 </style>
 </head>
 <body>
 
 @php
-    // Statisch, meegeleverd bestand (geen S3/QuizImageManifest-content), dus gewoon lokaal
-    // inlezen — geen cache nodig, dit is geen door de admin geüploade foto die kan wijzigen.
+    // Statisch, meegeleverde bestanden (geen S3/QuizImageManifest-content), dus gewoon lokaal
+    // inlezen — geen cache nodig, dit zijn geen door de admin geüploade foto's die kunnen wijzigen.
     $logoBase64 = base64_encode(file_get_contents(public_path('images/branding/boer-staphorst-logo.png')));
+    $markBase64 = base64_encode(file_get_contents(public_path('images/branding/boer-logo-pdf-footer.png')));
 @endphp
+
+<div class="page-mark">
+    <img src="data:image/png;base64,{{ $markBase64 }}" alt="" style="width: 100%; display: block;" />
+</div>
 
 <div class="cover">
     <img src="data:image/png;base64,{{ $logoBase64 }}" alt="Boer Staphorst" class="pdf-logo" />
